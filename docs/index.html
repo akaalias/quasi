@@ -61,14 +61,22 @@
 
   ul.plain { list-style: none; padding: 0; margin: 0 0 16px; } ul.plain li { padding: 12px 0; border-top: 1px solid var(--rule); }
   ul.plain li:first-child { border-top: 0; } ul.plain b { font-weight: 600; }
+  /* The corner ribbon: the way to the source. */
+  .ribbon { position: absolute; top: 0; right: 0; width: 150px; height: 150px; overflow: hidden; z-index: 10; }
+  .ribbon a { position: absolute; top: 34px; right: -52px; width: 220px; padding: 7px 0; transform: rotate(45deg);
+              background: var(--brand); color: #fff; font: 600 13px var(--app); letter-spacing: .04em; text-align: center;
+              box-shadow: 0 1px 6px rgba(0, 0, 0, .18); }
+  .ribbon a:hover { text-decoration: none; filter: brightness(1.06); }
+  @media (max-width: 560px) { .ribbon { width: 120px; height: 120px; } .ribbon a { top: 26px; right: -62px; font-size: 12px; padding: 5px 0; } }
   footer { color: var(--quiet); font-size: 14px; padding-top: 32px; padding-bottom: 56px; border-top: 1px solid var(--rule); }
 </style>
 </head>
 <body>
 
+<div class="ribbon"><a href="https://github.com/akaalias/quasi">Source on GitHub</a></div>
+
 <header>
   <div class="name"><img src="assets/icon.png" alt=""> Quasi</div>
-  <a href="https://github.com/akaalias/quasi">Source on GitHub</a>
 </header>
 
 <main>

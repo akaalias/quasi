@@ -1,6 +1,7 @@
 # Quasi
 
-**Say it, hear it done.** Quasi is a small experiment in computing without a screen. You speak
+**Say it, hear it done.** [The project's page](https://akaalias.github.io/quasi/) has the sounds to
+listen to. Quasi is a small experiment in computing without a screen. You speak
 into a pocket recorder. Your phone stays in your bag, dark and locked. A few notes of wood and
 chime tell you that you were heard, understood, and that the thing you asked for is done. If you
 ever want to check, there is a logbook. Most days you won't open it.
