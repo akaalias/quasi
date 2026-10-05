@@ -36,5 +36,5 @@ import sys
 if sys.argv[1:] == ["site"]:
     said = "Three tasks, all for tomorrow: call the school, return the parcel, book the car wash."
     notes[2] = {"id": "c", "date": at(0, 8, 47), "seconds": 9, "transcript": said, "outcome": "taskAdded",
-                "tasks": [added(title, said, due="tomorrow", dueDate="2026-10-06") for title in ("Call the school", "Return the parcel", "Book the car wash")]}
+                "tasks": [added(title, said, due="Tomorrow", dueDate="2026-10-06") for title in ("Call the school", "Return the parcel", "Book the car wash")]}
 print(json.dumps(notes, indent=1))
