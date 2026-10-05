@@ -4,7 +4,24 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Quasi: say it, hear it done</title>
-<meta name="description" content="Quasi is a small experiment in computing without a screen. Speak into a pocket recorder; a few notes of wood and chime tell you it is done.">
+<meta name="description" content="Quasi is a small experiment in computing without a screen. You speak into a pocket recorder while your phone stays locked and in your bag. A few short sounds from your phone tell you that you were heard, understood, and that the thing you asked for is done.">
+<link rel="canonical" href="https://alexisrondeau.me/quasi/">
+<meta name="theme-color" content="#FBF8F2">
+<!-- How the page looks when its link is shared. -->
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Quasi">
+<meta property="og:title" content="Quasi: say it, hear it done">
+<meta property="og:description" content="A small experiment in computing without a screen. You speak into a pocket recorder while your phone stays locked and in your bag, and a few notes from your phone tell you it is done.">
+<meta property="og:url" content="https://alexisrondeau.me/quasi/">
+<meta property="og:image" content="https://alexisrondeau.me/quasi/assets/social.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="Quasi. Say it, hear it done. A grey pocket recorder sends sound to an iPhone whose screen is off.">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Quasi: say it, hear it done">
+<meta name="twitter:description" content="A small experiment in computing without a screen. You speak into a pocket recorder while your phone stays locked and in your bag, and a few notes from your phone tell you it is done.">
+<meta name="twitter:image" content="https://alexisrondeau.me/quasi/assets/social.png">
+<meta name="twitter:image:alt" content="Quasi. Say it, hear it done. A grey pocket recorder sends sound to an iPhone whose screen is off.">
 <link rel="icon" href="assets/icon.png">
 <style>
   /* The Logbook look of the app: warm paper, dark ink, one burnt orange that only ever means
@@ -32,6 +49,17 @@
   h2 { font: 400 34px/1.15 var(--spoken); margin: 0 0 16px; }
   section { padding: 56px 0; border-top: 1px solid var(--rule); }
   section.first { border-top: 0; padding-top: 0; }
+  /* The problem, before anything about Quasi: the page's colours the other way round. */
+  .problem { border-top: 0; background: var(--ink); color: var(--paper); padding: clamp(72px, 12vw, 132px) 0; }
+  .problem div { max-width: 680px; margin: 0 auto; padding: 0 24px; }
+  /* Only the heading leaves the text column: on a wide window it is wider than the column and
+     centred on the page. Its lines are fixed (two, three on a tablet, four on a phone) and its size follows the width. */
+  .problem h2 { font: 400 calc((100vw - 48px) / 9.6)/1.06 var(--spoken); letter-spacing: -0.01em; margin: 0 0 32px; white-space: nowrap; }
+  @media (min-width: 560px) { .problem h2 { font-size: min(52px, calc((100vw - 48px) / 12.6)); } .problem h2 br.phone { display: none; } }
+  @media (min-width: 1000px) { .problem h2 { font-size: min(64px, calc((100vw - 160px) / 18.6)); width: max-content; margin-left: 50%; transform: translateX(-50%); text-align: center; }
+                               .problem h2 br.tablet { display: none; } }
+  .problem p { font: 400 22px/1.45 var(--spoken); margin: 0 0 20px; } .problem p:last-child { margin-bottom: 0; }
+  .problem .kicker { font: 600 13px/1.5 var(--app); color: var(--brand); }
   p { margin: 0 0 16px; } .lead { font: 400 22px/1.45 var(--spoken); } .quiet { color: var(--quiet); }
   .kicker { font-size: 13px; font-weight: 600; letter-spacing: .12em; text-transform: uppercase; color: var(--quiet); margin: 0 0 12px; }
 
@@ -62,9 +90,31 @@
   .example h3 { font: 400 24px/1.2 var(--spoken); margin: 0 0 4px; }
   h3.list-title { font: 400 24px/1.2 var(--spoken); margin: 0 0 14px; } h3.list-title + .sounds { margin-top: 0; }
   @media (max-width: 860px) { .example { width: 100%; margin-left: 0; } }
+  /* The recorder and the phone stand above the timeline. Each one is lit while it is the one
+     doing something: the recorder records, the phone makes the sounds. */
+  .devices { display: flex; justify-content: center; align-items: flex-end; gap: clamp(28px, 9vw, 110px); margin: 22px 0 10px; }
+  .devices figure { margin: 0; } .devices .device { display: block; height: 132px; width: auto; margin: 0 auto 8px; }
+  .devices .who { font-size: 13px; color: var(--quiet); text-align: center; transition: color .15s; }
   .timeline { display: flex; align-items: center; gap: 18px; margin: 10px 0 6px; }
   .timeline button { width: 52px; height: 52px; padding: 0; border-radius: 50%; font-size: 17px; flex: none; }
-  .track { position: relative; flex: 1; height: 120px; --done: 0%; }
+  .timeline .scroll { flex: 1; min-width: 0; }
+  .rec-text { font: 600 11.5px var(--app); fill: #F3EEE4; }
+  .device .rec-text { opacity: 0; transition: opacity .2s; } .device .waves path { stroke: var(--brand); opacity: 0; }
+  .example.recording .rec-text { opacity: 1; }
+  .example.recording .who.recorder, .example.sounding .who.phone { color: var(--ink); }
+  .example.sounding .waves path { animation: wave .9s ease-out infinite; }
+  .example.sounding .waves path:nth-child(even) { animation-delay: .18s; }
+  /* While it records, the recorder moves a little, as it does in a hand that is holding it. */
+  .example.recording .device.recorder { animation: held 1.7s ease-in-out infinite; transform-origin: 50% 85%; }
+  @keyframes held { 0%, 100% { transform: rotate(-1.6deg) translate(0, 0); } 22% { transform: rotate(1.2deg) translate(1px, -1.5px); }
+                    47% { transform: rotate(-.6deg) translate(-1px, .5px); } 71% { transform: rotate(2deg) translate(.5px, -1px); } }
+  .example.buzzing .device.phone { animation: buzz .11s linear infinite; }
+  .example.ticking .device.phone { animation: nudge .5s ease-out infinite; }
+  @keyframes buzz { 0%, 100% { transform: translateX(-2.5px) rotate(-1.2deg); } 50% { transform: translateX(2.5px) rotate(1.2deg); } }
+  @keyframes nudge { 0% { transform: translateX(-1.2px) rotate(-.5deg); } 12% { transform: translateX(1.2px) rotate(.5deg); } 24%, 100% { transform: none; } }
+  @keyframes wave { 0% { opacity: 0; } 30% { opacity: .9; } 100% { opacity: 0; } }
+  @media (prefers-reduced-motion: reduce) { .device, .device * { animation: none !important; } .example.sounding .waves path { opacity: .8; } }
+  .track { position: relative; height: 132px; --done: 0%; }
   .track .line, .track .progress { position: absolute; left: 0; top: 59px; height: 2px; border-radius: 2px; }
   .track .line { right: 0; background: var(--rule); } .track .progress { width: var(--done); background: var(--brand); }
   .track .head { position: absolute; top: 34px; left: var(--done); width: 2px; height: 52px; margin-left: -1px; background: var(--brand); opacity: 0; z-index: 3; }
@@ -88,14 +138,15 @@
   @media (prefers-reduced-motion: reduce) { .mark i.on, .mark b.on, .ticks i.on, .talk i.on { animation: none; } }
   .mark span, .track .label { position: absolute; left: 0; white-space: nowrap; font-size: 13px; color: var(--quiet); transition: color .15s; }
   .mark span.below { top: 24px; } .mark span.above { bottom: 24px; }
-  .track .label { transform: translateX(-50%); } .track .label.above { top: 6px; } .track .label.below { top: 84px; }
+  .track .label { transform: translateX(-50%); } .track .label.above { top: 6px; } .track .label.below { top: 84px; } .track .label.lower { top: 106px; }
   .mark span.on, .track .label.on { color: var(--ink); }
   .talk, .ticks { position: absolute; top: 60px; height: 44px; transform: translateY(-50%); display: flex; align-items: center; justify-content: space-between; }
   .talk i { display: block; width: 3px; border-radius: 2px; background: var(--rule); transition: background .12s; }
   .ticks i { display: block; width: 4px; height: 4px; border-radius: 50%; background: var(--rule); transition: background .12s; }
   .talk i.on, .ticks i.on { background: var(--brand); }
   .talk, .ticks { background: var(--paper); padding: 0 6px; }
-  @media (max-width: 560px) { .timeline { gap: 12px; } .timeline button { width: 44px; height: 44px; } .mark span, .track .label { font-size: 11px; } }
+  @media (max-width: 860px) { .timeline .scroll { overflow-x: auto; padding-bottom: 6px; } .track { min-width: 820px; } }
+  @media (max-width: 560px) { .timeline { gap: 12px; } .timeline button { width: 44px; height: 44px; } }
   /* The corner ribbon: the way to the source. */
   .ribbon { position: absolute; top: 0; right: 0; width: 150px; height: 150px; overflow: hidden; z-index: 10; }
   .ribbon a { position: absolute; top: 34px; right: -52px; width: 220px; padding: 7px 0; transform: rotate(45deg);
@@ -110,6 +161,15 @@
 
 <div class="ribbon"><a href="https://github.com/akaalias/quasi">View on GitHub</a></div>
 
+<section class="problem">
+  <div>
+    <p class="kicker">The problem</p>
+    <h2>We spend ten <br class="tablet">(or even <em>more</em>!) <br class="phone">hours a day <br>staring at screens.</h2>
+    <p>Between our laptops and our phones, ten hours of screen time a day has become normal. That is insane.</p>
+    <p>We urgently need a new way to use technology, including AI, in a life without screens.</p>
+  </div>
+</section>
+
 <header>
   <div class="name"><img src="assets/icon.png" alt=""> Quasi</div>
 </header>
@@ -117,7 +177,7 @@
 <main>
   <section class="first">
     <h1>Say it,<br>hear it done.</h1>
-    <p class="lead">Quasi is a small experiment in computing without a screen. You speak into <a href="https://store.comu.com/products/comulytic-note-pro" target="_blank" rel="noopener">a pocket recorder</a> while your phone stays locked and in your bag. A few notes of wood and chime tell you that you were heard, understood, and that the thing you asked for is done.</p>
+    <p class="lead">Quasi is a small experiment in computing without a screen. You speak into <a href="https://store.comu.com/products/comulytic-note-pro" target="_blank" rel="noopener">a pocket recorder</a> while your phone stays locked and in your bag. A few short sounds from your phone tell you that you were heard, understood, and that the thing you asked for is done.</p>
     <figure class="hero-art">
       <svg viewBox="0 0 680 352" role="img" aria-label="A grey pocket recorder sending sound to an iPhone whose screen is off">
         <defs>
@@ -135,9 +195,8 @@
           <rect x="-60" y="-88" width="124" height="196" rx="24" fill="#1E1B16" opacity=".22" filter="url(#soft)" transform="translate(6 12)"/>
           <rect x="-62" y="-98" width="124" height="196" rx="22" fill="url(#metal)" stroke="#A7A39A" stroke-width="1.5"/>
           <rect x="-49" y="-84" width="98" height="34" rx="17" fill="#24211D"/>
-          <circle cx="29" cy="-67" r="12.5" fill="#D6D3CC" stroke="#8D897F" stroke-width="1.2"/>
-          <circle cx="-33" cy="-67" r="3.4" fill="var(--brand)"/>
-          <g fill="#8A8173"><rect x="-24" y="-70" width="2.4" height="6" rx="1.2"/><rect x="-19" y="-73" width="2.4" height="12" rx="1.2"/><rect x="-14" y="-71" width="2.4" height="8" rx="1.2"/><rect x="-9" y="-74" width="2.4" height="14" rx="1.2"/><rect x="-4" y="-70" width="2.4" height="6" rx="1.2"/></g>
+          <circle cx="33" cy="-67" r="10.5" fill="#D6D3CC" stroke="#8D897F" stroke-width="1.2"/>
+          <text class="rec-text" x="-40" y="-62.9">Recording</text>
         </g>
         <!-- the phone, with its screen off -->
         <g transform="translate(508 168) rotate(7)">
@@ -162,20 +221,52 @@
     <p>Without a screen, you still need feedback. That's why Quasi speaks to you with a small vocabulary, so you know what it's doing and when it's done. Each word has its own sound, and the sounds are easy to learn.</p>
     <div class="example">
     <h3>A voice note with two tasks</h3>
+    <div class="devices">
+      <figure>
+      <!-- the same recorder as in the illustration at the top, upright -->
+      <svg class="device recorder" viewBox="-64 -100 128 200" role="img" aria-label="The recorder. Its screen says Recording while it records.">
+        <rect x="-62" y="-98" width="124" height="196" rx="22" fill="url(#metal)" stroke="#A7A39A" stroke-width="1.5"/>
+        <rect x="-49" y="-84" width="98" height="34" rx="17" fill="#24211D"/>
+        <circle cx="33" cy="-67" r="10.5" fill="#D6D3CC" stroke="#8D897F" stroke-width="1.2"/>
+        <text class="rec-text" x="-40" y="-62.9">Recording</text>
+      </svg>
+        <figcaption class="who recorder">Your recorder</figcaption>
+      </figure>
+      <figure>
+      <!-- the same phone as in the illustration at the top, upright -->
+      <svg class="device phone" viewBox="-116 -103 232 200" role="img" aria-label="The phone, with its screen off. Sound comes out of it when Quasi speaks.">
+        <g class="waves" fill="none" stroke-width="4.4" stroke-linecap="round">
+          <path d="M66 -27 a40 40 0 0 1 0 48"/><path d="M80 -42 a62 62 0 0 1 0 78"/><path d="M-66 -27 a40 40 0 0 0 0 48"/><path d="M-80 -42 a62 62 0 0 0 0 78"/>
+        </g>
+        <g transform="scale(.72)">
+        <g fill="#2A2723"><rect x="-70" y="-84" width="4" height="13" rx="1.5"/><rect x="-70" y="-60" width="4" height="24" rx="1.5"/><rect x="-70" y="-30" width="4" height="24" rx="1.5"/><rect x="66" y="-52" width="4" height="38" rx="1.5"/></g>
+        <rect x="-67" y="-138" width="134" height="270" rx="31" fill="#0E0D0C" stroke="#3B3731" stroke-width="1.5"/>
+        <rect x="-60" y="-131" width="120" height="256" rx="25" fill="#060606"/>
+        <path d="M-60 -131 h70 l-70 150 z" fill="#fff" opacity=".045" clip-path="url(#screen)"/>
+        <rect x="-21" y="-122" width="42" height="12" rx="6" fill="#000" stroke="#1B1917" stroke-width="1"/>
+        <circle cx="12" cy="-116" r="2.2" fill="#15171C"/>
+        </g>
+      </svg>
+        <figcaption class="who phone">Your phone</figcaption>
+      </figure>
+    </div>
     <div class="timeline" id="timeline">
       <button class="primary" id="whole" aria-label="Play one whole note">▶</button>
+      <div class="scroll">
       <div class="track">
         <div class="line"></div><div class="progress"></div><div class="head"></div>
-        <div class="mark chime" style="left:0%"><i data-at="0"></i><i data-at="220"></i><span class="below" data-at="0">I'm listening</span></div>
+        <div class="mark chime" style="left:0%"><i data-at="0"></i><i data-at="220"></i><span class="below" data-at="0">“I'm listening”</span></div>
         <div class="talk" style="left:9.6%;width:25.8%" data-from="1250" data-to="5000"></div>
-        <span class="label above" style="left:22.5%" data-at="1250">You talk</span>
-        <div class="mark wood" style="left:37.4%" ><i data-at="5200"></i><span class="below" data-at="5200">I've heard you</span></div>
+        <span class="label above" style="left:22.5%" data-at="1250">You talk into your recorder</span>
+        <span class="label lower" style="left:22.5%" data-at="1250">Streaming live audio to your phone</span>
+        <div class="mark wood" style="left:37.4%" ><i data-at="5200"></i><span class="below" data-at="5200">“I've heard you”</span></div>
         <div class="ticks" style="left:39.6%;width:12.6%" data-from="5500" data-to="7250"></div>
-        <span class="label above" style="left:45.9%" data-at="5500">I'm working on it</span>
-        <div class="mark wood" style="left:54.0%" ><i data-at="7500"></i><span class="below" data-at="7500">I've written it down</span></div>
+        <span class="label above" style="left:45.9%" data-at="5500">“I'm working on it”</span>
+        <div class="mark wood" style="left:54.0%" ><i data-at="7500"></i><span class="below" data-at="7500">“I've written it down”</span></div>
         <div class="ticks" style="left:56.1%;width:20.9%" data-from="7800" data-to="10700"></div>
-        <span class="label above" style="left:66.5%" data-at="7800">I'm working on it</span>
-        <div class="mark chime answer" style="left:77.0%" ><i data-at="10700"></i><i data-at="10900"></i><b data-at="11160"></b><span class="below" data-at="10700">I've added two tasks</span></div>
+        <span class="label above" style="left:66.5%" data-at="7800">“I'm working on it”</span>
+        <div class="mark chime answer" style="left:77.0%" ><i data-at="10700"></i><i data-at="10900"></i><b data-at="11160"></b><span class="below" data-at="10700">“I've added two tasks”</span></div>
+      </div>
       </div>
     </div>
     </div>
@@ -267,7 +358,24 @@
     const from = +element.dataset.from, to = +element.dataset.to, bars = element.children;
     [...bars].forEach((bar, n) => bar.classList.toggle("on", time >= from + (to - from) * n / bars.length && time > 0));
   };
+  // The recorder records from the press of its button until the note is stopped; the phone
+  // sounds from each of Quasi's words until that sound has ended.
+  const example = timeline.closest(".example");
+  const RECORDING = [300, 5200];
+  const PHONE = steps.filter(step => step[1] && step[1] !== "talking").map(([at, sound]) =>
+    [at, at + ({question: 1100, wood_1: 300, wood_2: 300, ticking_short: 1750, ticking: 2900, answer_tasks_2: 1900})[sound]]);
+  // The phone also shakes: hard while a note or a wood block sounds, slightly with each tick.
+  const BUZZ = steps.filter(step => ["question", "wood_1", "wood_2", "answer_tasks_2"].includes(step[1])).map(([at, sound]) =>
+    [at, at + ({question: 560, wood_1: 320, wood_2: 320, answer_tasks_2: 950})[sound]]);
+  const within = (spans, time) => time !== null && spans.some(([from, to]) => time >= from && time < to);
+  const act = time => {
+    example.classList.toggle("buzzing", within(BUZZ, time));
+    example.classList.toggle("ticking", within(PHONE, time) && !within(BUZZ, time));
+    example.classList.toggle("recording", time !== null && time >= RECORDING[0] && time < RECORDING[1]);
+    example.classList.toggle("sounding", time !== null && PHONE.some(([from, to]) => time >= from && time < to));
+  };
   const show = time => {
+    act(running || time > 0 ? time : null);
     track.style.setProperty("--done", `${Math.min(100, 100 * time / LENGTH)}%`);
     track.querySelectorAll("[data-at]").forEach(mark => mark.classList.toggle("on", time > 0 && time >= +mark.dataset.at));
     spread(talk, time); ticks.forEach(run => spread(run, time));
@@ -292,6 +400,7 @@
     if (running) {                               // pause: hold everything where it is
       elapsed += performance.now() - since;
       cancelAnimationFrame(frame);
+      act(null);
       sounding = sounding.filter(audio => !audio.ended);
       sounding.forEach(audio => audio.pause());
     } else {                                     // play, or carry on from the pause
