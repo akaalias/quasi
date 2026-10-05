@@ -19,7 +19,7 @@ xcrun simctl ui "$device" appearance light
 xcrun simctl install "$device" build/Build/Products/Debug-iphonesimulator/QuasiPhone.app
 data=$(xcrun simctl get_app_container "$device" com.alexisrondeau.Quasi data)
 mkdir -p "$data/Documents/Recordings"
-python3 tools/sample_log.py > "$data/Documents/Recordings/log.json"
+python3 tools/sample_log.py $SAMPLE > "$data/Documents/Recordings/log.json"     # SAMPLE=site for the web page's notes
 for screen in home live note settings; do
     xcrun simctl terminate "$device" com.alexisrondeau.Quasi 2>/dev/null || true
     xcrun simctl launch "$device" com.alexisrondeau.Quasi -demo "$screen" >/dev/null

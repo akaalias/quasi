@@ -38,12 +38,6 @@
           align-items: center; justify-content: center; gap: 6px; color: var(--quiet); margin-top: 40px; text-align: center; padding: 24px; }
   .film b { font: 400 24px/1.2 var(--spoken); color: var(--ink); }
 
-  /* An entry as the app's log shows one. */
-  .entry { padding: 18px 0; border-top: 1px solid var(--rule); } .entry:first-of-type { border-top: 0; }
-  .entry time { color: var(--quiet); }
-  .entry q { display: block; font: 400 22px/1.35 var(--spoken); margin: 4px 0 8px; quotes: "“" "”"; }
-  .entry .done { color: var(--brand); font-weight: 600; } .entry .more { color: var(--quiet); }
-
   .sounds { background: var(--card); border-radius: 22px; padding: 4px 20px; margin: 28px 0; }
   .sound { display: flex; align-items: center; gap: 14px; padding: 14px 0; border-top: 1px solid var(--rule); }
   .sound:first-child { border-top: 0; }
@@ -55,14 +49,17 @@
          border: 1px solid var(--rule); border-radius: 99px; padding: 1px 9px; margin-left: 6px; vertical-align: 2px; }
 
   .phones { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin: 28px -60px 8px; }
-  .phones figure { margin: 0; } .phones img { width: 100%; border-radius: 26px; border: 1px solid var(--rule); display: block; }
+  .phones figure { margin: 0; } .phones img { width: 100%; display: block; border: 7px solid #0c0c0d; border-radius: 34px; box-shadow: 0 18px 40px -18px rgba(30, 27, 22, .45); }
   .phones figcaption { font-size: 14px; color: var(--quiet); margin-top: 10px; }
   @media (max-width: 820px) { .phones { margin-left: 0; margin-right: 0; grid-template-columns: 1fr; max-width: 320px; } }
 
   ul.plain { list-style: none; padding: 0; margin: 0 0 16px; } ul.plain li { padding: 12px 0; border-top: 1px solid var(--rule); }
   ul.plain li:first-child { border-top: 0; } ul.plain b { font-weight: 600; }
-  /* One whole note laid out in time. */
-  .timeline { display: flex; align-items: center; gap: 18px; margin: 34px 0 6px; }
+  /* One whole note laid out in time, wider than the column of text. */
+  .example { width: min(80vw, 1180px); margin: 44px 0 36px calc(50% - min(40vw, 590px)); }
+  .example h3 { font: 400 24px/1.2 var(--spoken); margin: 0 0 4px; }
+  @media (max-width: 860px) { .example { width: 100%; margin-left: 0; } }
+  .timeline { display: flex; align-items: center; gap: 18px; margin: 10px 0 6px; }
   .timeline button { width: 52px; height: 52px; padding: 0; border-radius: 50%; font-size: 18px; flex: none; }
   .track { position: relative; flex: 1; height: 120px; --done: 0%; }
   .track .line, .track .progress { position: absolute; left: 0; top: 59px; height: 2px; border-radius: 2px; }
@@ -114,7 +111,8 @@
     <p class="kicker">The sound language</p>
     <h2>Two instruments, two meanings.</h2>
     <p>If you are not going to look, you have to be told. Quasi speaks in a few short sounds, each with a matching tap, and you learn them in a day.</p>
-    <p><b>Wood is the machinery.</b> Your note arrived; it was written down. <b>A soft chime is the conversation.</b> Starting a recording asks a question, two rising notes left hanging. The end answers it, and the answer says what happened.</p>
+    <div class="example">
+    <h3>A voice note with two tasks</h3>
     <div class="timeline" id="timeline">
       <button class="primary" id="whole" aria-label="Play one whole note">▶</button>
       <div class="track">
@@ -126,10 +124,11 @@
         <div class="mark wood" style="left:45.2%" data-at="6100"><i></i><span class="above">Written down</span></div>
         <div class="ticks" style="left:54.8%;width:19.5%" data-from="7400" data-to="10300"></div>
         <span class="label below" style="left:64.5%" data-at="7400">Working</span>
-        <div class="mark chime answer" style="left:76.3%" data-at="10300"><i></i><i></i><i></i><b></b><span class="above">Three tasks added</span></div>
+        <div class="mark chime answer" style="left:76.3%" data-at="10300"><i></i><i></i><b></b><span class="above">Two tasks added</span></div>
       </div>
     </div>
     <p class="quiet" id="caption">One whole note, as it sounds: press play.</p>
+    </div>
     <div class="sounds">
       <div class="sound"><div><b>The question <span class="tag">chime</span></b><span>You pressed record, and the phone is listening.</span></div><button data-sound="question">Play</button></div>
       <div class="sound"><div><b>Arrived <span class="tag">wood</span></b><span>You stopped. The whole note reached the phone.</span></div><button data-sound="wood_1">Play</button></div>
@@ -149,38 +148,14 @@
 
   <section>
     <p class="kicker">What it does</p>
-    <h2>A voice note goes in. A task comes out.</h2>
+    <h2>A voice note goes in. Tasks come out.</h2>
     <p>Press the button on the recorder and talk the way you think: rambling, correcting yourself, changing your mind. Somewhere in there you say "add that as a task", or list three things for tomorrow. When you stop, your phone has already transcribed the note, worked out what you asked for, and put it in your to-do list.</p>
-    <div class="entry">
-      <time>14:03</time>
-      <q>I should probably just test that on the train on Thursday. Oh, yes, add that as a task.</q>
-      <div class="done">✓ Added · Test recorder after airplane mode</div>
-      <div class="more">Thursday · Work</div>
-    </div>
-    <div class="entry">
-      <time>11:20</time>
-      <q>The light was really nice around five. I want to remember that.</q>
-      <div class="more">Kept as a note</div>
-    </div>
-    <div class="entry">
-      <time>08:47</time>
-      <q>Three tasks, all for tomorrow: call the school, return the parcel, book the car wash.</q>
-      <div class="done">✓ Added · Call the school</div>
-      <div class="done">✓ Added · Return the parcel</div>
-      <div class="done">✓ Added · Book the car wash</div>
-      <div class="more">Tomorrow</div>
-    </div>
-  </section>
-
-  <section>
-    <p class="kicker">The logbook</p>
-    <h2>The screen is for afterwards.</h2>
-    <p>The app is where you check what happened, not where things happen. It is a book of what you said and what was done about it: your words in a serif, the app's in plain type, and one orange that only ever means "I did something".</p>
     <div class="phones">
-      <figure><img src="assets/home.png" alt="The log: each note with what became of it"><figcaption>Every note, newest first, with one line saying what became of it.</figcaption></figure>
-      <figure><img src="assets/live.png" alt="The recording sheet with waveform and live transcript"><figcaption>If you do look while recording: the waveform and your words as you speak.</figcaption></figure>
+      <figure><img src="assets/home.png" alt="The log: each note with what became of it"><figcaption>The logbook: every note, newest first, with one line for each thing that was done about it.</figcaption></figure>
       <figure><img src="assets/note.png" alt="A note with its task and the sentence that asked for it marked"><figcaption>A note marks the sentence that asked for the task. Undo is one tap.</figcaption></figure>
+      <figure><img src="assets/live.png" alt="The recording sheet with waveform and live transcript"><figcaption>If you do look while recording: the waveform and your words as you speak.</figcaption></figure>
     </div>
+    <p>The screen is for afterwards. The app is where you check what happened, not where things happen: your words in a serif, the app's in plain type, and one orange that only ever means "I did something".</p>
   </section>
 
   <section>
@@ -220,7 +195,7 @@
     [5200,  "wood_1",         "You stop. It arrived."],
     [6100,  "wood_2",         "Written down."],
     [7400,  "ticking",        "Working out what you asked for…"],
-    [10300, "answer_tasks_3", "The answer: three tasks added."],
+    [10300, "answer_tasks_2", "The answer: two quick notes, then the chord. Two tasks added."],
   ];
   const LENGTH = 13500;
   const timeline = document.getElementById("timeline"), track = timeline.querySelector(".track"), caption = document.getElementById("caption");
