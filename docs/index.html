@@ -77,6 +77,11 @@
   button { font: 600 15px var(--app); color: var(--ink); background: var(--chip); border: 0; border-radius: 99px; padding: 9px 18px; cursor: pointer; }
   button:hover { filter: brightness(.96); } button.primary { background: var(--brand); color: #fff; padding: 12px 22px; font-size: 16px; }
   .sound button { min-width: 64px; }
+  /* Each word carries the mark it has on the line above, and the mark fills in while the word sounds. */
+  .sounds { --paper: var(--card); }
+  .sound .mark { position: static; transform: none; flex: none; width: 66px; justify-content: center; }
+  .sound .mark.tock { gap: 10px; } .sound .mark.tock i { width: 8px; height: 8px; border: 0; border-radius: 50%; background: var(--quiet); }
+  .sound.on .mark i, .sound.on .mark b { background: var(--brand); border-color: var(--brand); }
 
   .phones { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; margin: 32px -60px 44px; align-items: start; }
   .phones figure { margin: 0; } .phones img { width: 100%; display: block; border: 7px solid #0c0c0d; border-radius: 34px; box-shadow: 0 18px 40px -18px rgba(30, 27, 22, .45); }
@@ -86,16 +91,20 @@
   ul.plain { list-style: none; padding: 0; margin: 0 0 16px; } ul.plain li { padding: 12px 0; border-top: 1px solid var(--rule); }
   ul.plain li:first-child { border-top: 0; } ul.plain b { font-weight: 600; }
   /* One whole note laid out in time, wider than the column of text. */
-  .example { width: min(80vw, 1180px); margin: 44px 0 36px calc(50% - min(40vw, 590px)); }
+  /* The player: its title and who is doing what stand on the page itself, each centred; only the
+     line below them has a background. */
+  .example { width: min(80vw, 1180px); margin: 44px 0 40px calc(50% - min(40vw, 590px)); }
+  .example h3 { text-align: center; }
+  @media (max-width: 860px) { .example { width: 100%; margin-left: 0; } }
   .example h3 { font: 400 24px/1.2 var(--spoken); margin: 0 0 4px; }
   h3.list-title { font: 400 24px/1.2 var(--spoken); margin: 0 0 14px; } h3.list-title + .sounds { margin-top: 0; }
-  @media (max-width: 860px) { .example { width: 100%; margin-left: 0; } }
   /* Above the line, as wide as the line: who is doing what. Each part is lit only while it is
      at work: the recorder records, the phone makes the sounds and calls the two services. */
-  .timeline { display: flex; align-items: flex-end; gap: 18px; margin: 18px 0 6px; }
-  .timeline button { width: 52px; height: 52px; padding: 0; border-radius: 50%; font-size: 17px; flex: none; margin-bottom: 46px; }
+  /* The line is the player's control bar: the one part with a background. */
+  .timeline { display: flex; align-items: center; gap: 16px; margin: 0; background: var(--card); --paper: var(--card); border-radius: 22px; padding: 10px 28px 10px 14px; }
+  .timeline button { width: 52px; height: 52px; padding: 0; border-radius: 50%; font-size: 17px; flex: none; }
   .timeline .scroll { flex: 1; min-width: 0; }
-  .stage { display: block; width: 100%; height: auto; margin: 14px 0 22px; overflow: visible; }
+  .stage { display: block; width: min(100%, 720px); height: auto; margin: 26px auto 30px; overflow: visible; }
   .service rect { stroke: rgba(30, 27, 22, .14); stroke-width: 1; }
   .stage .service { opacity: .35; transition: opacity .2s; }
   .stage .stream circle, .stage .to-anthropic circle, .stage .to-todoist circle { fill: var(--rule); transition: fill .2s; }
@@ -118,16 +127,16 @@
                     47% { transform: rotate(-.6deg) translate(-1px, .5px); } 71% { transform: rotate(2deg) translate(.5px, -1px); } }
   @media (prefers-reduced-motion: reduce) { .stage * { animation: none !important; }
     .example.recording .stream circle, .example.asking .to-anthropic circle, .example.adding .to-todoist circle { fill: var(--brand); } }
-  .track { position: relative; height: 132px; --done: 0%; }
-  .track .line, .track .progress { position: absolute; left: 0; top: 59px; height: 2px; border-radius: 2px; }
+  .track { position: relative; height: 72px; --done: 0%; }
+  .track .line, .track .progress { position: absolute; left: 0; top: 35px; height: 2px; border-radius: 2px; }
   .track .line { right: 0; background: var(--rule); } .track .progress { width: var(--done); background: var(--brand); }
-  .track .head { position: absolute; top: 34px; left: var(--done); width: 2px; height: 52px; margin-left: -1px; background: var(--brand); opacity: 0; z-index: 3; }
+  .track .head { position: absolute; top: 10px; left: var(--done); width: 2px; height: 52px; margin-left: -1px; background: var(--brand); opacity: 0; z-index: 3; }
   .timeline.playing .head { opacity: 1; }
-  .mark { position: absolute; top: 60px; display: flex; align-items: center; gap: 3px; transform: translateY(-50%); }
-  .mark i, .mark b { display: block; background: var(--paper); border: 2px solid var(--quiet); transition: background .15s, border-color .15s, transform .15s; }
-  .mark.chime i { width: 11px; height: 11px; border-radius: 50%; } .mark.chime i + i { margin-top: -9px; }
-  .mark.answer i { margin-top: 0 !important; width: 8px; height: 8px; } .mark.answer b { width: 16px; height: 16px; border-radius: 50%; margin-left: 2px; }
-  .mark.wood i { width: 9px; height: 15px; border-radius: 3px; }
+  .mark { position: absolute; top: 36px; display: flex; align-items: center; gap: 5px; transform: translateY(-50%); }
+  .mark i, .mark b { display: block; background: var(--paper); border: 2.5px solid var(--quiet); transition: background .15s, border-color .15s, transform .15s; }
+  .mark.chime i { width: 18px; height: 18px; border-radius: 50%; } .mark.chime i + i { margin-top: -14px; }
+  .mark.answer i { margin-top: 0 !important; width: 14px; height: 14px; } .mark.answer b { width: 28px; height: 28px; border-radius: 50%; margin-left: 2px; }
+  .mark.wood i { width: 15px; height: 26px; border-radius: 5px; }
   .mark i.on, .mark b.on { background: var(--brand); border-color: var(--brand); }
   /* Each mark moves as its sound plays: a chime note rings outwards, wood is struck, a tick pops. */
   .mark.chime i.on, .mark.chime b.on { animation: ring .9s ease-out both; }
@@ -137,22 +146,21 @@
   @keyframes ring { 0% { transform: scale(.5); box-shadow: 0 0 0 0 color-mix(in srgb, var(--brand) 55%, transparent); }
                     35% { transform: scale(1.7); } 100% { transform: scale(1.12); box-shadow: 0 0 0 20px transparent; } }
   @keyframes knock { 0% { transform: translateY(-9px) rotate(-14deg); } 55% { transform: translateY(2px) rotate(4deg) scaleY(.82); } 100% { transform: none; } }
-  @keyframes pop { 0% { transform: scale(3.2); } 100% { transform: scale(1.4); } }
+  @keyframes pop { 0% { transform: scale(2.2); } 100% { transform: scale(1.25); } }
   @keyframes speak { 0% { transform: scaleY(1.7); } 100% { transform: none; } }
   @media (prefers-reduced-motion: reduce) { .mark i.on, .mark b.on, .ticks i.on, .talk i.on { animation: none; } }
-  .mark span, .track .label { position: absolute; left: 0; white-space: nowrap; font-size: 13px; color: var(--quiet); transition: color .15s; }
-  .mark span.below { top: 24px; } .mark span.above { bottom: 24px; }
-  /* Every label starts where the thing it names starts. */
-  .track .label { margin-left: 6px; } .track .label.above { top: 6px; } .track .label.below { top: 84px; } .track .label.lower { top: 106px; }
-  .mark span.on, .track .label.on { color: var(--ink); }
-  .talk, .ticks { position: absolute; top: 60px; height: 44px; transform: translateY(-50%); display: flex; align-items: center; justify-content: space-between; }
+  .talk, .ticks { position: absolute; top: 36px; height: 44px; transform: translateY(-50%); display: flex; align-items: center; justify-content: space-between; }
   .talk i { display: block; width: 3px; border-radius: 2px; background: var(--rule); transition: background .12s; }
-  .ticks i { display: block; width: 4px; height: 4px; border-radius: 50%; background: var(--rule); transition: background .12s; }
+  .ticks i { display: block; width: 8px; height: 8px; border-radius: 50%; background: var(--rule); transition: background .12s; }
   .talk i.on, .ticks i.on { background: var(--brand); }
   .talk, .ticks { background: var(--paper); padding: 0 6px; }
-  /* Below this width the labels would run into each other, so the line keeps its length and scrolls. */
-  @media (max-width: 1140px) { .timeline .scroll { overflow-x: auto; padding-bottom: 6px; } .lane { min-width: 860px; } }
-  @media (max-width: 560px) { .timeline { gap: 12px; } .timeline button { width: 44px; height: 44px; } }
+  /* On a phone the line is short, so its marks are smaller there; the list keeps the large ones. */
+  @media (max-width: 560px) { .timeline { gap: 10px; padding: 6px 14px 6px 8px; } .timeline button { width: 44px; height: 44px; }
+    .track .mark { gap: 3px; } .track .mark i, .track .mark b { border-width: 2px; }
+    .track .mark.chime i { width: 11px; height: 11px; } .track .mark.chime i + i { margin-top: -9px; }
+    .track .mark.answer i { width: 8px; height: 8px; } .track .mark.answer b { width: 17px; height: 17px; }
+    .track .mark.wood i { width: 9px; height: 17px; border-radius: 3px; } .ticks i { width: 4px; height: 4px; }
+    .talk i { width: 2px; } .talk, .ticks { padding: 0 3px; } .sound .mark { width: 54px; } }
   /* The corner ribbon: the way to the source. */
   .ribbon { position: absolute; top: 0; right: 0; width: 150px; height: 150px; overflow: hidden; z-index: 10; }
   .ribbon a { position: absolute; top: 34px; right: -52px; width: 220px; padding: 7px 0; transform: rotate(45deg);
@@ -170,7 +178,7 @@
 <section class="problem">
   <div>
     <p class="kicker">Okay, seriously. WTF?</p>
-    <h2>We spend ten <br class="phone">or more hours <br>every single day <br>staring at our screens.</h2>
+    <h2>We spend ten <br class="phone">or more hours <br>staring at our screens <br>every single day.</h2>
     <p>Between our laptops and our phones, ten hours of screen time a day has become normal. That is insane.</p>
     <p>We urgently need a new way to use technology, including AI, in a life without screens.</p>
   </div>
@@ -240,45 +248,41 @@
     <p>Without a screen, you still need feedback. That's why Quasi speaks to you with a small vocabulary, so you know what it's doing and when it's done. Each word has its own sound, and the sounds are easy to learn.</p>
     <div class="example">
     <h3>A voice note with two tasks</h3>
+    <!-- Who is doing what: the recorder, the phone and the two services, centred on the card. Same drawings as above. -->
+    <svg class="stage" viewBox="189 -8 700 166" role="img" aria-label="The recorder says Recording while it records and streams to the phone. The phone, with its screen off, makes the sounds, asks Anthropic for the tasks and adds them to Todoist.">
+      <g class="stream"><circle cx="300.0" cy="86.0" r="2.6"/><circle cx="332.6" cy="71.0" r="2.9"/><circle cx="365.1" cy="60.7" r="3.2"/><circle cx="397.5" cy="55.0" r="3.5"/><circle cx="429.8" cy="54.0" r="3.8"/><circle cx="461.9" cy="57.7" r="4.1"/><circle cx="494.0" cy="66.0" r="4.4"/></g>
+      <g transform="translate(243 76) scale(.66)"><g class="recorder">
+        <rect x="-62" y="-98" width="124" height="196" rx="22" fill="url(#metal)" stroke="#A7A39A" stroke-width="1.5"/>
+      <rect x="-49" y="-84" width="98" height="34" rx="17" fill="#24211D"/>
+      <circle cx="33" cy="-67" r="10.5" fill="#D6D3CC" stroke="#8D897F" stroke-width="1.2"/>
+      <text class="rec-text" x="-40" y="-62.9">Recording</text>
+      </g></g>
+      <!-- one ring per note, wood block or tick, drawn by the script at the moment it sounds -->
+      <g class="rings" fill="none"></g>
+      <g transform="translate(551 76) scale(.475)">
+        <g fill="#2A2723"><rect x="-70" y="-84" width="4" height="13" rx="1.5"/><rect x="-70" y="-60" width="4" height="24" rx="1.5"/><rect x="-70" y="-30" width="4" height="24" rx="1.5"/><rect x="66" y="-52" width="4" height="38" rx="1.5"/></g>
+      <rect x="-67" y="-138" width="134" height="270" rx="31" fill="#0E0D0C" stroke="#3B3731" stroke-width="1.5"/>
+      <rect x="-60" y="-131" width="120" height="256" rx="25" fill="#060606"/>
+      <path d="M-60 -131 h70 l-70 150 z" fill="#fff" opacity=".045" clip-path="url(#screen)"/>
+      <rect x="-21" y="-122" width="42" height="12" rx="6" fill="#000" stroke="#1B1917" stroke-width="1"/>
+      <circle cx="12" cy="-116" r="2.2" fill="#15171C"/>
+      </g>
+      <g class="to-anthropic"><circle cx="624.0" cy="62.0" r="2.6"/><circle cx="656.7" cy="51.6" r="2.9"/><circle cx="689.3" cy="43.1" r="3.2"/><circle cx="722.0" cy="36.5" r="3.5"/><circle cx="754.7" cy="31.8" r="3.8"/><circle cx="787.3" cy="28.9" r="4.1"/><circle cx="820.0" cy="28.0" r="4.4"/></g>
+      <g class="to-todoist"><circle cx="624.0" cy="90.0" r="2.6"/><circle cx="656.7" cy="100.4" r="2.9"/><circle cx="689.3" cy="108.9" r="3.2"/><circle cx="722.0" cy="115.5" r="3.5"/><circle cx="754.7" cy="120.2" r="3.8"/><circle cx="787.3" cy="123.1" r="4.1"/><circle cx="820.0" cy="124.0" r="4.4"/></g>
+      <g class="service anthropic" transform="translate(836 6)"><title>Anthropic</title><rect width="40" height="40" rx="9.4" fill="#181818"/><use href="#svc-anthropic" x="9.2" y="9.2" width="21.6" height="21.6" fill="#F0EEE6"/></g>
+      <g class="service todoist" transform="translate(836 102)"><title>Todoist</title><rect width="40" height="40" rx="9.4" fill="#FFFFFF"/><use clip-path="url(#tile)" href="#svc-todoist" width="40" height="40" fill="#E44332"/></g>
+    </svg>
     <div class="timeline" id="timeline">
       <button class="primary" id="whole" aria-label="Play one whole note">▶</button>
       <div class="scroll">
       <div class="lane">
-      <!-- Who is doing what, drawn over the part of the line it belongs to: the recorder over the
-           talking, the phone over its own words, the two services at the end. Same drawings as above. -->
-      <svg class="stage" viewBox="-48 0 1080 150" role="img" aria-label="The recorder says Recording while it records and streams to the phone. The phone, with its screen off, makes the sounds, asks Anthropic for the tasks and adds them to Todoist.">
-        <g class="stream"><circle cx="300.0" cy="86.0" r="2.6"/><circle cx="332.6" cy="71.0" r="2.9"/><circle cx="365.1" cy="60.7" r="3.2"/><circle cx="397.5" cy="55.0" r="3.5"/><circle cx="429.8" cy="54.0" r="3.8"/><circle cx="461.9" cy="57.7" r="4.1"/><circle cx="494.0" cy="66.0" r="4.4"/></g>
-        <g transform="translate(243 76) scale(.66)"><g class="recorder">
-          <rect x="-62" y="-98" width="124" height="196" rx="22" fill="url(#metal)" stroke="#A7A39A" stroke-width="1.5"/>
-        <rect x="-49" y="-84" width="98" height="34" rx="17" fill="#24211D"/>
-        <circle cx="33" cy="-67" r="10.5" fill="#D6D3CC" stroke="#8D897F" stroke-width="1.2"/>
-        <text class="rec-text" x="-40" y="-62.9">Recording</text>
-        </g></g>
-        <!-- one ring per note, wood block or tick, drawn by the script at the moment it sounds -->
-        <g class="rings" fill="none"></g>
-        <g transform="translate(551 76) scale(.475)">
-          <g fill="#2A2723"><rect x="-70" y="-84" width="4" height="13" rx="1.5"/><rect x="-70" y="-60" width="4" height="24" rx="1.5"/><rect x="-70" y="-30" width="4" height="24" rx="1.5"/><rect x="66" y="-52" width="4" height="38" rx="1.5"/></g>
-        <rect x="-67" y="-138" width="134" height="270" rx="31" fill="#0E0D0C" stroke="#3B3731" stroke-width="1.5"/>
-        <rect x="-60" y="-131" width="120" height="256" rx="25" fill="#060606"/>
-        <path d="M-60 -131 h70 l-70 150 z" fill="#fff" opacity=".045" clip-path="url(#screen)"/>
-        <rect x="-21" y="-122" width="42" height="12" rx="6" fill="#000" stroke="#1B1917" stroke-width="1"/>
-        <circle cx="12" cy="-116" r="2.2" fill="#15171C"/>
-        </g>
-        <g class="to-anthropic"><circle cx="624.0" cy="62.0" r="2.6"/><circle cx="656.7" cy="51.6" r="2.9"/><circle cx="689.3" cy="43.1" r="3.2"/><circle cx="722.0" cy="36.5" r="3.5"/><circle cx="754.7" cy="31.8" r="3.8"/><circle cx="787.3" cy="28.9" r="4.1"/><circle cx="820.0" cy="28.0" r="4.4"/></g>
-        <g class="to-todoist"><circle cx="624.0" cy="90.0" r="2.6"/><circle cx="656.7" cy="100.4" r="2.9"/><circle cx="689.3" cy="108.9" r="3.2"/><circle cx="722.0" cy="115.5" r="3.5"/><circle cx="754.7" cy="120.2" r="3.8"/><circle cx="787.3" cy="123.1" r="4.1"/><circle cx="820.0" cy="124.0" r="4.4"/></g>
-        <g class="service anthropic" transform="translate(836 6)"><title>Anthropic</title><rect width="40" height="40" rx="9.4" fill="#181818"/><use href="#svc-anthropic" x="9.2" y="9.2" width="21.6" height="21.6" fill="#F0EEE6"/></g>
-        <g class="service todoist" transform="translate(836 102)"><title>Todoist</title><rect width="40" height="40" rx="9.4" fill="#FFFFFF"/><use clip-path="url(#tile)" href="#svc-todoist" width="40" height="40" fill="#E44332"/></g>
-      </svg>
       <div class="track">
         <div class="line"></div><div class="progress"></div><div class="head"></div>
-        <div class="mark chime" style="left:0%"><i data-at="0"></i><i data-at="220"></i><span class="below" data-at="0">“I'm listening”</span></div>
-        <div class="talk" style="left:10.8%;width:32.3%" data-from="1250" data-to="5000"></div>
-        <span class="label above" style="left:10.8%" data-at="1250">You talk into your recorder</span>
-        <span class="label lower" style="left:10.8%" data-at="1250">Streaming live audio to your phone</span>
-        <div class="mark wood" style="left:44.8%" ><i data-at="5200"></i><span class="below" data-at="5200">“I've heard you”</span></div>
-        <div class="ticks" style="left:47.4%;width:25.0%" data-from="5500" data-to="8400"></div>
-        <span class="label above" style="left:47.4%" data-at="5500">“I'm working on it”</span>
-        <div class="mark chime answer" style="left:72.4%" ><i data-at="8400"></i><i data-at="8600"></i><b data-at="8860"></b><span class="below" data-at="8400">“I've added two tasks”</span></div>
+        <div class="mark chime" style="left:0%"><i data-at="0"></i><i data-at="220"></i></div>
+        <div class="talk" style="left:12.0%;width:36.1%" data-from="1250" data-to="5000"></div>
+        <div class="mark wood" style="left:50.0%" ><i data-at="5200"></i></div>
+        <div class="ticks" style="left:52.9%;width:27.9%" data-from="5500" data-to="8400"></div>
+        <div class="mark chime answer" style="left:80.8%" ><i data-at="8400"></i><i data-at="8600"></i><b data-at="8860"></b></div>
       </div>
       </div>
       </div>
@@ -286,10 +290,10 @@
     </div>
     <h3 class="list-title">Quasi's Vocabulary</h3>
     <div class="sounds">
-      <div class="sound"><div><b>I'm listening</b><span>You pressed record, and the recorder is streaming live audio to your locked phone.</span></div><button data-sound="question">Play</button></div>
-      <div class="sound"><div><b>I've heard you</b><span>You stopped recording, and your locked phone has received the whole voice note.</span></div><button data-sound="wood_1">Play</button></div>
-      <div class="sound"><div><b>I'm working on it</b><span>A quiet tick-tock plays while your phone works out which tasks you asked for.</span></div><button data-sound="ticking">Play</button></div>
-      <div class="sound"><div><b>I've added two tasks</b><span>Your phone has added both tasks to your to-do list. It plays one quick note for each task and then a chord, so you can count the tasks.</span></div><button data-sound="answer_tasks_2">Play</button></div>
+      <div class="sound"><span class="mark chime"><i></i><i></i></span><div><b>I'm listening</b><span>You pressed record, and the recorder is streaming live audio to your locked phone.</span></div><button data-sound="question">Play</button></div>
+      <div class="sound"><span class="mark wood"><i></i></span><div><b>I've heard you</b><span>You stopped recording, and your locked phone has received the whole voice note.</span></div><button data-sound="wood_1">Play</button></div>
+      <div class="sound"><span class="mark tock"><i></i><i></i><i></i></span><div><b>I'm working on it</b><span>A quiet tick-tock plays while your phone works out which tasks you asked for.</span></div><button data-sound="ticking">Play</button></div>
+      <div class="sound"><span class="mark chime answer"><i></i><i></i><b></b></span><div><b>I've added two tasks</b><span>Your phone has added both tasks to your to-do list. It plays one quick note for each task and then a chord, so you can count the tasks.</span></div><button data-sound="answer_tasks_2">Play</button></div>
     </div>
     <p class="quiet">A step that goes well climbs; a step that fails falls and rings longer, and nothing follows it. The sounds follow the phone's silent switch, and the taps say the same thing: one short tap for each good step, two long ones for a failure.</p>
   </section>
@@ -344,9 +348,9 @@
     [5200,  "wood_1"],
     [5500,  "ticking"],
     [8400,  "answer_tasks_2"],
-    [11100, null],
+    [10300, null],
   ];
-  const LENGTH = 11600;
+  const LENGTH = 10400;
   const timeline = document.getElementById("timeline"), track = timeline.querySelector(".track"), button = document.getElementById("whole");
   // The row of the list below that belongs to the sound now playing is lit.
   const light = sound => document.querySelectorAll(".sound").forEach(row =>
