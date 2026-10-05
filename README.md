@@ -257,6 +257,8 @@ set up once with the vendor's app, which gives it the bind code these apps read 
 | `app/PhoneShared`, `app/QuasiWidgets` | The Live Activity, the Lock Screen widgets and what they share with the app |
 | `evals/task-extraction` | The eval for turning transcripts into tasks |
 | `design/directions` | The three design directions the iPhone app was chosen from |
+| `site` | The project's web page (published from `docs/` in the public repository) |
 
-Quasi is an independent project and is not affiliated with or endorsed by Comulytic. The research
+Quasi is free software under the GNU General Public License, version 3 (see `LICENSE`). It is an
+independent project and is not affiliated with or endorsed by Comulytic. The research
 notes on the recorder itself are not part of this repository.
