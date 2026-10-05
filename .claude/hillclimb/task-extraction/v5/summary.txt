@@ -1,0 +1,47 @@
+Read correctly as a whole: 206 of 206 (100.0%, 95% interval 98% to 100%)
+
+Is there a task?
+  asked for one and found:      169 of 169 (100.0% recall)
+  did not ask and none made:    37 of 37 (100.0% specificity)
+  tasks invented:               0 (precision 100.0%)
+
+How many tasks?
+  right number of tasks:        206 of 206 (100.0%)
+  ... in notes asking for several: 32 of 32
+
+Fields, over the tasks that were found and paired:
+  title             210 of 210  100.0%
+  due_date          191 of 191  100.0%
+  due_time          209 of 209  100.0%
+  recurrence        210 of 210  100.0%
+  deadline_date     209 of 209  100.0%
+  priority          210 of 210  100.0%
+  duration_minutes  210 of 210  100.0%
+  project           209 of 209  100.0%
+  section           206 of 206  100.0%
+  labels            209 of 209  100.0%
+
+By kind of case (read correctly as a whole):
+  points back         8 of 8
+  basic               9 of 9
+  combined            8 of 8
+  german              8 of 8
+  deadline            5 of 5
+  due day            18 of 18
+  duration            5 of 5
+  self-correction     7 of 7
+  labels              7 of 7
+  long                3 of 3
+  one of several      3 of 3
+  several tasks      43 of 43
+  named as tasks      1 of 1
+  no task            37 of 37
+  noisy               5 of 5
+  priority           10 of 10
+  project            11 of 11
+  repeats             9 of 9
+  due time            9 of 9
+
+Latency: median 2.3 s, slowest 31.6 s
+Tokens: 559,075 in, 26,486 out, about $1.38 for this run ($0.0067 per note)
+Errors (not scored): 0

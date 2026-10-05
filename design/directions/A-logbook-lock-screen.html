@@ -1,0 +1,85 @@
+<!doctype html><html><head><meta charset="utf-8"><title>Quasi direction A: Lock Screen between recordings</title><style>:root{--paper:#FBF8F2; --text:#1E1B16; --soft:#7A7265; --rule:#E4DCCD; --accent:#C8551F;
+      --doc-body: "New York", "Iowan Old Style", Georgia, serif; --doc-h1: 400 34pt/1.05 "New York", "Iowan Old Style", Georgia, serif;
+      --doc-h2: 400 17pt/1.2 "New York", "Iowan Old Style", Georgia, serif; --sample: 400 15pt/1.3 "New York", "Iowan Old Style", Georgia, serif;
+      --bg:#FBF8F2; --surface:#F1EBDF; --sheet:#FFFDF9; --ink:#1E1B16; --mute:#8A8173; --line:#DDD3C1; --chip:#EDE5D6; --on-accent:#fff; --mark:#F6D9B8;
+      --ui: -apple-system, "SF Pro Text", Helvetica, sans-serif; --title: 400 15pt/1.1 "New York", "Iowan Old Style", Georgia, serif;
+      --lock1:#3B2A1E; --lock2:#15100C; --la:rgba(251,248,242,.94); --la-ink:#1E1B16;}
+@page { size: A4; margin: 0; }
+* { box-sizing: border-box; }
+body { margin: 0; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+.page { width: 210mm; height: 297mm; padding: 17mm 16mm 14mm; page-break-after: always; position: relative;
+        background: var(--paper); color: var(--text); font-family: var(--doc-body); font-size: 10.5pt; line-height: 1.5; overflow: hidden; }
+.kicker { font: 600 8pt/1 -apple-system, "SF Pro Text", Helvetica, sans-serif; letter-spacing: .16em; text-transform: uppercase; color: var(--accent); }
+h1 { font: var(--doc-h1); margin: 6mm 0 3mm; letter-spacing: -0.01em; }
+h2 { font: var(--doc-h2); margin: 0 0 3mm; }
+h3 { font: 600 9pt/1.3 -apple-system, "SF Pro Text", Helvetica, sans-serif; letter-spacing: .08em; text-transform: uppercase; color: var(--soft); margin: 6mm 0 2mm; }
+p { margin: 0 0 3mm; }
+.lead { font-size: 13pt; line-height: 1.45; max-width: 150mm; }
+.foot { position: absolute; left: 16mm; right: 16mm; bottom: 9mm; display: flex; justify-content: space-between;
+        font: 7.5pt -apple-system, Helvetica, sans-serif; color: var(--soft); }
+table { border-collapse: collapse; width: 100%; font-size: 9.5pt; }
+td, th { text-align: left; vertical-align: top; padding: 2.2mm 3mm 2.2mm 0; border-top: .3mm solid var(--rule); }
+th { width: 34mm; font-weight: 600; color: var(--soft); }
+ul { margin: 0 0 3mm; padding-left: 5mm; } li { margin-bottom: 1.4mm; break-inside: avoid; }
+.cols { display: grid; grid-template-columns: 1fr 1fr; gap: 9mm; }
+.phones { display: grid; grid-template-columns: repeat(3, 1fr); gap: 7mm; margin-top: 5mm; }
+.shot { display: flex; flex-direction: column; align-items: center; }
+.cap { margin-top: 4mm; font-size: 8.6pt; line-height: 1.4; color: var(--text); width: 56mm; }
+.cap b { display: block; font: 600 8pt -apple-system, Helvetica, sans-serif; letter-spacing: .06em; text-transform: uppercase; color: var(--accent); margin-bottom: 1mm; }
+.swatches { display: flex; gap: 3mm; margin: 2mm 0 0; } .sw { width: 13mm; height: 13mm; border-radius: 3mm; border: .3mm solid var(--rule); }
+.type { font: var(--sample); margin: 2mm 0 0; }
+
+/* ---- the phone ---- */
+.phone { width: 56mm; height: 119mm; border-radius: 9mm; border: 1.6mm solid #0c0c0d; background: var(--bg); color: var(--ink);
+         font-family: var(--ui); font-size: 6.6pt; line-height: 1.35; position: relative; overflow: hidden; }
+.island { position: absolute; top: 2mm; left: 50%; transform: translateX(-50%); width: 17mm; height: 4.6mm; border-radius: 3mm; background: #000; z-index: 9;
+          display: flex; align-items: center; justify-content: space-between; padding: 0 1.5mm; color: #fff; font: 600 5pt -apple-system, sans-serif; }
+.island.wide { width: 30mm; }
+.sb { height: 8.5mm; display: flex; justify-content: space-between; align-items: flex-end; padding: 0 5mm 1mm; font: 600 5.6pt -apple-system, sans-serif; }
+.pad { padding: 0 3.6mm; }
+.row { display: flex; align-items: center; justify-content: space-between; gap: 2mm; }
+.muted { color: var(--mute); } .accent { color: var(--accent); }
+.title { font: var(--title); margin: 1.5mm 0 2mm; }
+.chip { display: inline-block; padding: .5mm 1.6mm; border-radius: 3mm; background: var(--chip); font-size: 5.6pt; margin: .6mm .6mm 0 0; }
+.card { background: var(--surface); border-radius: 3mm; padding: 2.4mm 2.6mm; margin-bottom: 2mm; }
+.rule { border-top: .2mm solid var(--line); margin: 2mm 0; }
+.btn { display: inline-block; padding: 1.1mm 2.6mm; border-radius: 4mm; background: var(--chip); font-weight: 600; font-size: 5.8pt; margin-right: 1mm; }
+.btn.primary { background: var(--accent); color: var(--on-accent); }
+.wave { display: flex; align-items: center; gap: .5mm; height: 12mm; }
+.wave i { display: block; width: .7mm; border-radius: 1mm; background: var(--accent); }
+.sheet { position: absolute; left: 0; right: 0; bottom: 0; background: var(--sheet); border-radius: 6mm 6mm 0 0; padding: 2mm 3.6mm 4mm; box-shadow: 0 -2mm 8mm rgba(0,0,0,.18); }
+.grab { width: 9mm; height: 1mm; border-radius: 1mm; background: var(--line); margin: 0 auto 2.4mm; }
+.dim { position: absolute; inset: 0; background: rgba(0,0,0,.28); }
+.lock { background: linear-gradient(165deg, var(--lock1), var(--lock2)); color: #fff; }
+.clock { text-align: center; font: 300 22pt -apple-system, sans-serif; margin-top: 7mm; line-height: 1; }
+.date { text-align: center; font: 600 6pt -apple-system, sans-serif; opacity: .85; margin-top: 12mm; }
+.la { position: absolute; left: 2.4mm; right: 2.4mm; background: var(--la); color: var(--la-ink); border-radius: 5mm; padding: 2.6mm 3mm; }
+.toggle { width: 6.4mm; height: 3.8mm; border-radius: 2mm; background: var(--line); position: relative; flex: none; }
+.toggle.on { background: var(--accent); } .toggle::after { content: ""; position: absolute; top: .4mm; left: .4mm; width: 3mm; height: 3mm; border-radius: 50%; background: #fff; }
+.toggle.on::after { left: 3mm; }
+.set { background: var(--surface); border-radius: 3mm; padding: 0 2.6mm; margin-bottom: 2.4mm; }
+.set .row { padding: 1.9mm 0; border-top: .2mm solid var(--line); } .set .row:first-child { border-top: 0; }
+.sec { font: 600 5.2pt -apple-system, sans-serif; letter-spacing: .08em; text-transform: uppercase; color: var(--mute); margin: 2.4mm 0 1.2mm 1mm; }
+.dot { display: inline-block; width: 1.6mm; height: 1.6mm; border-radius: 50%; background: var(--accent); vertical-align: middle; }
+.dot.off { background: var(--line); } .dot.red { background: #e5484d; }
+.tabbar { position: absolute; left: 6mm; right: 6mm; bottom: 3mm; height: 9mm; border-radius: 5mm; background: rgba(255,255,255,.72); border: .2mm solid rgba(0,0,0,.08);
+          box-shadow: 0 1mm 4mm rgba(0,0,0,.12); display: flex; align-items: center; justify-content: space-around; font: 600 5.2pt -apple-system, sans-serif; }
+.acc { position: absolute; left: 6mm; right: 6mm; bottom: 13.5mm; height: 8mm; border-radius: 4mm; background: rgba(255,255,255,.82); border: .2mm solid rgba(0,0,0,.08);
+       box-shadow: 0 1mm 4mm rgba(0,0,0,.12); display: flex; align-items: center; justify-content: space-between; padding: 0 3mm; font-weight: 600; }
+mark { background: var(--mark); color: inherit; padding: 0 .4mm; border-radius: .6mm; }
+</style></head><body><div class="page"><div class="kicker">Direction A · Logbook · addendum</div><h2 style="margin-top:4mm">The Lock Screen between recordings</h2>
+      <p style="max-width:160mm">During a recording the Lock Screen shows the Live Activity from page 3. Between recordings it shows two small widgets under the clock and one line above it. They replace today's permanent “Recorder connected” banner.</p>
+      <div class="phones"><div class="shot"><div class="phone lock"><div class="island "></div><div class="date" style="margin-top:11mm">Recorder nearby</div><div class="clock" style="margin-top:1mm">9:41</div>
+      <div style="display:flex;gap:2mm;margin:4mm 4mm 0"><div style="flex:1;background:rgba(255,255,255,.14);border-radius:3.2mm;padding:1.8mm 2.2mm;font-size:5.8pt;line-height:1.4"><div style="font-weight:600">✓ Call the school office</div><div style="opacity:.7">Last note 14:03 · task added</div></div><div style="width:11mm;height:11mm;border-radius:50%;background:conic-gradient(#fff 82%, rgba(255,255,255,.25) 0);display:flex;align-items:center;justify-content:center;flex:none;"><div style="width:8.6mm;height:8.6mm;border-radius:50%;background:#2a1e16;display:flex;align-items:center;justify-content:center;font-size:6pt">82</div></div></div></div><div class="cap"><b>Idle and connected</b>Quiet. The widget shows your last note and what became of it, which is also the proof that things work. The ring is the recorder's battery.</div></div><div class="shot"><div class="phone lock"><div class="island "></div><div class="date" style="margin-top:11mm">Recorder out of reach</div><div class="clock" style="margin-top:1mm">9:41</div>
+      <div style="display:flex;gap:2mm;margin:4mm 4mm 0"><div style="flex:1;background:rgba(255,255,255,.14);border-radius:3.2mm;padding:1.8mm 2.2mm;font-size:5.8pt;line-height:1.4"><div style="font-weight:600">Recorder out of reach</div><div style="opacity:.7">since 15:40 · notes stay on it</div></div><div style="width:11mm;height:11mm;border-radius:50%;background:none;display:flex;align-items:center;justify-content:center;flex:none;border:.5mm dashed rgba(255,255,255,.55);"><div style="width:8.6mm;height:8.6mm;border-radius:50%;background:#2a1e16;display:flex;align-items:center;justify-content:center;font-size:6pt">–</div></div></div></div><div class="cap"><b>Recorder out of reach</b>Visible if you look, never announced. Nothing is lost: the recorder keeps recording and the notes are fetched when it is back.</div></div><div class="shot"><div class="phone lock"><div class="island "></div><div class="date" style="margin-top:11mm">Quasi is not running</div><div class="clock" style="margin-top:1mm">9:41</div>
+      <div style="display:flex;gap:2mm;margin:4mm 4mm 0"><div style="flex:1;background:rgba(255,255,255,.14);border-radius:3.2mm;padding:1.8mm 2.2mm;font-size:5.8pt;line-height:1.4"><div style="font-weight:600">No contact since 12:05</div><div style="opacity:.7">Open Quasi to reconnect</div></div><div style="width:11mm;height:11mm;border-radius:50%;background:none;display:flex;align-items:center;justify-content:center;flex:none;border:.5mm dashed rgba(255,255,255,.55);"><div style="width:8.6mm;height:8.6mm;border-radius:50%;background:#2a1e16;display:flex;align-items:center;justify-content:center;font-size:6pt">!</div></div></div></div><div class="cap"><b>The app has stopped</b>If the widget has not been refreshed for a while, it changes by itself to say so. This is the one state that also sends a notification.</div></div></div>
+      <div class="cols" style="margin-top:7mm"><div><h3 style="margin-top:0">Why widgets and not the banner</h3>
+        <ul><li>A widget stays for good. The banner is a Live Activity, which iOS ends after eight hours and only lets the app restart when it is opened.</li>
+        <li>It leaves the banner free to mean one thing: a recording is happening or has just finished.</li>
+        <li>It is your choice to place them; the app works the same without.</li></ul></div>
+      <div><h3 style="margin-top:0">What it costs</h3>
+        <ul><li>Widgets update on a budget iOS controls, so “out of reach” can appear a few minutes late. The banner updates at once.</li>
+        <li>Lock Screen widgets are one colour and very small: one fact each.</li>
+        <li>They are a new piece to build: a widget needs its own shared storage with the app.</li></ul></div></div>
+      <h3>If you would rather keep the banner</h3>
+      <p style="font-size:9.5pt;max-width:165mm">It can stay as an option: “Show the link on the Lock Screen”. It would look like today's, in the Logbook style, and turn into the recording banner when a note starts. The eight-hour limit remains, so after a night it is gone until the app is opened once.</p><div class="foot"><span>Quasi iPhone app · design direction A: Logbook · Lock Screen states</span><span>addendum</span></div></div></body></html>

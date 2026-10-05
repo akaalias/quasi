@@ -1,0 +1,156 @@
+<!doctype html><html><head><meta charset="utf-8"><title>Quasi design direction A: Logbook</title><style>:root{--paper:#FBF8F2; --text:#1E1B16; --soft:#7A7265; --rule:#E4DCCD; --accent:#C8551F;
+      --doc-body: "New York", "Iowan Old Style", Georgia, serif; --doc-h1: 400 34pt/1.05 "New York", "Iowan Old Style", Georgia, serif;
+      --doc-h2: 400 17pt/1.2 "New York", "Iowan Old Style", Georgia, serif; --sample: 400 15pt/1.3 "New York", "Iowan Old Style", Georgia, serif;
+      --bg:#FBF8F2; --surface:#F1EBDF; --sheet:#FFFDF9; --ink:#1E1B16; --mute:#8A8173; --line:#DDD3C1; --chip:#EDE5D6; --on-accent:#fff; --mark:#F6D9B8;
+      --ui: -apple-system, "SF Pro Text", Helvetica, sans-serif; --title: 400 15pt/1.1 "New York", "Iowan Old Style", Georgia, serif;
+      --lock1:#3B2A1E; --lock2:#15100C; --la:rgba(251,248,242,.94); --la-ink:#1E1B16;}
+@page { size: A4; margin: 0; }
+* { box-sizing: border-box; }
+body { margin: 0; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+.page { width: 210mm; height: 297mm; padding: 17mm 16mm 14mm; page-break-after: always; position: relative;
+        background: var(--paper); color: var(--text); font-family: var(--doc-body); font-size: 10.5pt; line-height: 1.5; overflow: hidden; }
+.kicker { font: 600 8pt/1 -apple-system, "SF Pro Text", Helvetica, sans-serif; letter-spacing: .16em; text-transform: uppercase; color: var(--accent); }
+h1 { font: var(--doc-h1); margin: 6mm 0 3mm; letter-spacing: -0.01em; }
+h2 { font: var(--doc-h2); margin: 0 0 3mm; }
+h3 { font: 600 9pt/1.3 -apple-system, "SF Pro Text", Helvetica, sans-serif; letter-spacing: .08em; text-transform: uppercase; color: var(--soft); margin: 6mm 0 2mm; }
+p { margin: 0 0 3mm; }
+.lead { font-size: 13pt; line-height: 1.45; max-width: 150mm; }
+.foot { position: absolute; left: 16mm; right: 16mm; bottom: 9mm; display: flex; justify-content: space-between;
+        font: 7.5pt -apple-system, Helvetica, sans-serif; color: var(--soft); }
+table { border-collapse: collapse; width: 100%; font-size: 9.5pt; }
+td, th { text-align: left; vertical-align: top; padding: 2.2mm 3mm 2.2mm 0; border-top: .3mm solid var(--rule); }
+th { width: 34mm; font-weight: 600; color: var(--soft); }
+ul { margin: 0 0 3mm; padding-left: 5mm; } li { margin-bottom: 1.4mm; break-inside: avoid; }
+.cols { display: grid; grid-template-columns: 1fr 1fr; gap: 9mm; }
+.phones { display: grid; grid-template-columns: repeat(3, 1fr); gap: 7mm; margin-top: 5mm; }
+.shot { display: flex; flex-direction: column; align-items: center; }
+.cap { margin-top: 4mm; font-size: 8.6pt; line-height: 1.4; color: var(--text); width: 56mm; }
+.cap b { display: block; font: 600 8pt -apple-system, Helvetica, sans-serif; letter-spacing: .06em; text-transform: uppercase; color: var(--accent); margin-bottom: 1mm; }
+.swatches { display: flex; gap: 3mm; margin: 2mm 0 0; } .sw { width: 13mm; height: 13mm; border-radius: 3mm; border: .3mm solid var(--rule); }
+.type { font: var(--sample); margin: 2mm 0 0; }
+
+/* ---- the phone ---- */
+.phone { width: 56mm; height: 119mm; border-radius: 9mm; border: 1.6mm solid #0c0c0d; background: var(--bg); color: var(--ink);
+         font-family: var(--ui); font-size: 6.6pt; line-height: 1.35; position: relative; overflow: hidden; }
+.island { position: absolute; top: 2mm; left: 50%; transform: translateX(-50%); width: 17mm; height: 4.6mm; border-radius: 3mm; background: #000; z-index: 9;
+          display: flex; align-items: center; justify-content: space-between; padding: 0 1.5mm; color: #fff; font: 600 5pt -apple-system, sans-serif; }
+.island.wide { width: 30mm; }
+.sb { height: 8.5mm; display: flex; justify-content: space-between; align-items: flex-end; padding: 0 5mm 1mm; font: 600 5.6pt -apple-system, sans-serif; }
+.pad { padding: 0 3.6mm; }
+.row { display: flex; align-items: center; justify-content: space-between; gap: 2mm; }
+.muted { color: var(--mute); } .accent { color: var(--accent); }
+.title { font: var(--title); margin: 1.5mm 0 2mm; }
+.chip { display: inline-block; padding: .5mm 1.6mm; border-radius: 3mm; background: var(--chip); font-size: 5.6pt; margin: .6mm .6mm 0 0; }
+.card { background: var(--surface); border-radius: 3mm; padding: 2.4mm 2.6mm; margin-bottom: 2mm; }
+.rule { border-top: .2mm solid var(--line); margin: 2mm 0; }
+.btn { display: inline-block; padding: 1.1mm 2.6mm; border-radius: 4mm; background: var(--chip); font-weight: 600; font-size: 5.8pt; margin-right: 1mm; }
+.btn.primary { background: var(--accent); color: var(--on-accent); }
+.wave { display: flex; align-items: center; gap: .5mm; height: 12mm; }
+.wave i { display: block; width: .7mm; border-radius: 1mm; background: var(--accent); }
+.sheet { position: absolute; left: 0; right: 0; bottom: 0; background: var(--sheet); border-radius: 6mm 6mm 0 0; padding: 2mm 3.6mm 4mm; box-shadow: 0 -2mm 8mm rgba(0,0,0,.18); }
+.grab { width: 9mm; height: 1mm; border-radius: 1mm; background: var(--line); margin: 0 auto 2.4mm; }
+.dim { position: absolute; inset: 0; background: rgba(0,0,0,.28); }
+.lock { background: linear-gradient(165deg, var(--lock1), var(--lock2)); color: #fff; }
+.clock { text-align: center; font: 300 22pt -apple-system, sans-serif; margin-top: 7mm; line-height: 1; }
+.date { text-align: center; font: 600 6pt -apple-system, sans-serif; opacity: .85; margin-top: 12mm; }
+.la { position: absolute; left: 2.4mm; right: 2.4mm; background: var(--la); color: var(--la-ink); border-radius: 5mm; padding: 2.6mm 3mm; }
+.toggle { width: 6.4mm; height: 3.8mm; border-radius: 2mm; background: var(--line); position: relative; flex: none; }
+.toggle.on { background: var(--accent); } .toggle::after { content: ""; position: absolute; top: .4mm; left: .4mm; width: 3mm; height: 3mm; border-radius: 50%; background: #fff; }
+.toggle.on::after { left: 3mm; }
+.set { background: var(--surface); border-radius: 3mm; padding: 0 2.6mm; margin-bottom: 2.4mm; }
+.set .row { padding: 1.9mm 0; border-top: .2mm solid var(--line); } .set .row:first-child { border-top: 0; }
+.sec { font: 600 5.2pt -apple-system, sans-serif; letter-spacing: .08em; text-transform: uppercase; color: var(--mute); margin: 2.4mm 0 1.2mm 1mm; }
+.dot { display: inline-block; width: 1.6mm; height: 1.6mm; border-radius: 50%; background: var(--accent); vertical-align: middle; }
+.dot.off { background: var(--line); } .dot.red { background: #e5484d; }
+.tabbar { position: absolute; left: 6mm; right: 6mm; bottom: 3mm; height: 9mm; border-radius: 5mm; background: rgba(255,255,255,.72); border: .2mm solid rgba(0,0,0,.08);
+          box-shadow: 0 1mm 4mm rgba(0,0,0,.12); display: flex; align-items: center; justify-content: space-around; font: 600 5.2pt -apple-system, sans-serif; }
+.acc { position: absolute; left: 6mm; right: 6mm; bottom: 13.5mm; height: 8mm; border-radius: 4mm; background: rgba(255,255,255,.82); border: .2mm solid rgba(0,0,0,.08);
+       box-shadow: 0 1mm 4mm rgba(0,0,0,.12); display: flex; align-items: center; justify-content: space-between; padding: 0 3mm; font-weight: 600; }
+mark { background: var(--mark); color: inherit; padding: 0 .4mm; border-radius: .6mm; }
+</style></head><body><div class="page"><div class="kicker">Quasi iPhone app · design direction A of three</div>
+      <h1>Logbook</h1><p class="lead">The app is a quiet book of what you said and what was done about it. You open it rarely, and when you do, it reads like a page, not a dashboard.</p>
+      <h3>What it bets on</h3><p style="max-width:150mm">That the only question you ever bring to the screen is “did that land, and what did it do with it?” Everything that is not an answer to that question moves off the home view.</p>
+      <h3>At a glance</h3><table><tr><th>Structure</th><td>One screen: a newest-first log, grouped by day. Live capture rises over it as a sheet. Settings behind one button.</td></tr><tr><th>Autonomy</th><td>Acts on its own, then shows a receipt. Every receipt has Undo and “Not a task”; every plain note has “Make this a task”.</td></tr><tr><th>Type</th><td>New York (Apple's serif) for everything you said; SF Pro for everything the app says. The two voices never mix.</td></tr><tr><th>Colour</th><td>Warm paper, dark ink, one burnt-orange accent that only ever means “the app did something”.</td></tr><tr><th>Sound and touch</th><td>The full sequence stays: question, wood, answer. Follows the silent switch; the tap pattern carries the same message.</td></tr><tr><th>Lock Screen</th><td>A Live Activity per recording that ends as a receipt for 15 minutes. Between recordings: nothing, or a small “last note” widget.</td></tr></table>
+      <div class="cols" style="margin-top:6mm"><div><h3>Colour</h3><div class="swatches">
+        <div class="sw" style="background:var(--bg)"></div><div class="sw" style="background:var(--surface)"></div><div class="sw" style="background:var(--ink)"></div><div class="sw" style="background:var(--accent)"></div></div></div>
+        <div><h3>Type</h3><div class="type">Call the dentist, tomorrow at three</div></div></div><div class="foot"><span>Quasi iPhone app · design direction A: Logbook</span><span>1 / 4</span></div></div><div class="page"><div class="kicker">Direction A · Logbook</div><h2 style="margin-top:4mm">The three screens you would see most</h2>
+      <div class="phones"><div class="shot"><div class="phone "><div class="island "></div><div class="sb"><span>9:41</span><span>●●● ▮</span></div><div class="pad">
+      <div class="row"><span class="muted">Recorder nearby · 82%</span><span class="muted">⚙︎</span></div>
+      <div class="title">Today</div>
+      <div class="muted">14:03</div>
+      <div style="font:var(--title);font-size:8.4pt;line-height:1.35;margin:.6mm 0 1mm">“I should probably just test that on the train on Thursday. Oh, yes, add that as a task.”</div>
+      <div class="accent" style="font-weight:600">✓ Added · Test recorder after airplane mode</div>
+      <div class="muted">Thursday · Work</div>
+      <div class="rule"></div>
+      <div class="muted">11:20</div>
+      <div style="font:var(--title);font-size:8.4pt;line-height:1.35;margin:.6mm 0 1mm">“The light was really nice around five. I want to remember that.”</div>
+      <div class="muted">Kept as a note</div>
+      <div class="rule"></div>
+      <div class="muted">08:47</div>
+      <div style="font:var(--title);font-size:8.4pt;line-height:1.35;margin:.6mm 0 1mm">“New task, call the school office tomorrow at three.”</div>
+      <div class="accent" style="font-weight:600">✓ Added · Call the school office</div>
+      <div class="muted">Tomorrow 15:00</div>
+      <div class="title" style="margin-top:4mm;font-size:11pt" >Yesterday</div>
+      <div class="muted">18:32</div>
+      <div style="font:var(--title);font-size:8.4pt;line-height:1.35;margin:.6mm 0 1mm">“Remind me to order a new water filter for the kitchen, we're almost out.”</div>
+    </div></div><div class="cap"><b>Home: the log</b>Each entry is your own sentence, then one line saying what the app did with it. No buttons, no waveform, no settings.</div></div><div class="shot"><div class="phone "><div class="island wide"><span style="color:#ff5a4d">●</span><span>0:42</span></div><div class="sb"><span>9:41</span><span>●●● ▮</span></div><div class="pad"><div class="title">Today</div><div class="muted">14:03</div>
+      <div style="font:var(--title);font-size:8.4pt;line-height:1.35">“…add that as a task.”</div></div><div class="dim"></div>
+      <div class="sheet" style="height:62mm"><div class="grab"></div>
+      <div class="row"><span><span class="dot red"></span> <b>Recording</b></span><span class="muted" style="font-variant-numeric:tabular-nums">0:42</span></div>
+      <div class="wave"><i style="height:7.5mm"></i><i style="height:10.5mm"></i><i style="height:10.5mm"></i><i style="height:1.5mm"></i><i style="height:1.5mm"></i><i style="height:3.5mm"></i><i style="height:5.5mm"></i><i style="height:8.5mm"></i><i style="height:2.5mm"></i><i style="height:4.5mm"></i><i style="height:6.5mm"></i><i style="height:5.5mm"></i><i style="height:2.5mm"></i><i style="height:9.5mm"></i><i style="height:9.5mm"></i><i style="height:8.5mm"></i><i style="height:8.5mm"></i><i style="height:3.5mm"></i><i style="height:4.5mm"></i><i style="height:1.5mm"></i><i style="height:7.5mm"></i><i style="height:5.5mm"></i><i style="height:3.5mm"></i><i style="height:4.5mm"></i><i style="height:7.5mm"></i><i style="height:10.5mm"></i><i style="height:10.5mm"></i><i style="height:1.5mm"></i><i style="height:1.5mm"></i><i style="height:3.5mm"></i><i style="height:5.5mm"></i><i style="height:8.5mm"></i><i style="height:2.5mm"></i><i style="height:4.5mm"></i></div>
+      <div style="font:var(--title);font-size:8.6pt;line-height:1.4;margin-top:1.5mm">So I was at the bank this morning and they need a form from me, the one for the joint account<span class="muted"> and they said it has to</span></div>
+      </div></div><div class="cap"><b>Live: a sheet over the log</b>If you unlock while recording, the capture view is already up. Swipe it down and the log is underneath. It leaves when the note is done.</div></div><div class="shot"><div class="phone "><div class="island "></div><div class="sb"><span>9:41</span><span>●●● ▮</span></div><div class="pad">
+      <div class="row"><span class="accent">‹ Today</span><span class="muted">•••</span></div>
+      <div class="muted" style="margin-top:2mm">Monday 14:03 · 38 seconds</div>
+      <div style="font:var(--title);font-size:8.6pt;line-height:1.45;margin:1.5mm 0 3mm">I've been thinking about the battery thing on the recorder. So the phone holds the link all day and it costs maybe eight percent a day, which is fine. What I really don't know is how it behaves when I'm traveling and the phone is in airplane mode and then comes back. <mark>I should probably just test that on the train on Thursday. Oh, yes, add that as a task.</mark></div>
+      <div class="card"><div class="accent" style="font-weight:600;margin-bottom:1mm">✓ Added to Todoist</div>
+        <div style="font-weight:600;font-size:7.4pt">Test recorder after airplane mode</div>
+        <div class="rule"></div>
+        <div class="row"><span class="muted">Due</span><span>Thu 8 Oct</span></div>
+        <div class="row"><span class="muted">Project</span><span>Work</span></div>
+        <div class="row"><span class="muted">Priority</span><span>None said</span></div>
+      </div>
+      <div><span class="btn">Undo</span><span class="btn">Edit</span><span class="btn">Not a task</span></div>
+    </div></div><div class="cap"><b>A note: heard, decided, done</b>The sentence that triggered the task is marked in the transcript, so the reason is visible. Every field can be changed; the task can be undone.</div></div></div><div class="foot"><span>Quasi iPhone app · design direction A: Logbook</span><span>2 / 4</span></div></div><div class="page"><div class="kicker">Direction A · Logbook</div><h2 style="margin-top:4mm">Off the screen, in settings, and when something goes wrong</h2>
+      <div class="phones"><div class="shot"><div class="phone lock"><div class="island wide"><span style="color:#ff5a4d">●</span><span>0:42</span></div><div class="clock">9:41</div><div class="date" style="margin-top:2mm">Monday 5 October</div>
+      <div class="la" style="top:44mm"><div class="row"><span><span class="dot red"></span> <b>Recording</b></span><b style="font-variant-numeric:tabular-nums">0:42</b></div></div>
+      <div class="la" style="top:62mm"><div class="muted" style="font-size:5.4pt">A MOMENT LATER · STAYS 15 MIN</div>
+        <div style="font-weight:600;margin-top:.6mm">✓ Added to Todoist</div><div>Test recorder after airplane mode · Thursday</div></div>
+      <div class="la" style="top:86mm"><div class="muted" style="font-size:5.4pt">WITH “HIDE TEXT ON LOCK SCREEN”</div>
+        <div style="font-weight:600;margin-top:.6mm">✓ One task added</div></div>
+      </div><div class="cap"><b>Lock Screen: a receipt, then gone</b>One fact per glance. The activity belongs to a recording, not to the connection, and its last state is the receipt.</div></div><div class="shot"><div class="phone "><div class="island "></div><div class="sb"><span>9:41</span><span>●●● ▮</span></div><div class="pad"><div class="row"><b style="font-size:8pt">Settings</b><span class="accent"><b>Done</b></span></div>
+      <div class="sec">Recorder</div><div class="set"><div class="row"><span>Comulytic Note Pro</span><span class="muted">Nearby · 82%</span></div><div class="row"><span>Fetch stored recordings</span><span class="muted">›</span></div></div>
+      <div class="sec">Understanding</div><div class="set"><div class="row"><span>Language</span><span class="muted">English ›</span></div><div class="row"><span>Claude</span><span class="muted">Connected ›</span></div></div>
+      <div class="sec">Tasks</div><div class="set"><div class="row"><span>Todoist</span><span class="muted">Connected ›</span></div><div class="row"><span>When unsure</span><span class="muted">Keep as a note ›</span></div></div>
+      <div class="sec">Feedback</div><div class="set"><div class="row"><span>Sounds</span><span class="muted">Every step ›</span></div><div class="row"><span>Taps</span><div class="toggle on"></div></div><div class="row"><span>Play when silenced</span><div class="toggle"></div></div><div class="row"><span>Hide text on Lock Screen</span><div class="toggle"></div></div></div>
+      </div></div><div class="cap"><b>Settings: one sheet</b>Four groups, opened from the gear. Keys are entered once and then just read “Connected”. The recorder is found without being asked for.</div></div><div class="shot"><div class="phone "><div class="island "></div><div class="sb"><span>9:41</span><span>●●● ▮</span></div><div class="pad"><div class="title">Today</div>
+      <div class="muted">16:10</div>
+      <div style="font:var(--title);font-size:8.4pt;line-height:1.35;margin:.6mm 0 1mm">“Add a task, send the contract to the lawyer by Friday.”</div>
+      <div style="font-weight:600">Not added yet · Todoist didn't answer</div>
+      <div class="muted" style="margin-bottom:1.4mm">Your note is safe. Trying again in a minute.</div>
+      <span class="btn">Try now</span>
+      <div class="rule"></div>
+      <div class="muted">15:52</div>
+      <div class="muted" style="font:var(--title);font-size:8.4pt;line-height:1.35;margin:.6mm 0 1mm;font-style:italic">A recording was made, but its audio did not reach the phone.</div>
+      <div class="muted" style="margin-bottom:1.4mm">It is still on the recorder.</div>
+      <span class="btn">Fetch it</span>
+      <div class="rule"></div>
+      <div class="muted">14:03</div>
+      <div style="font:var(--title);font-size:8.4pt;line-height:1.35;margin:.6mm 0 1mm">“…add that as a task.”</div>
+      <div class="accent" style="font-weight:600">✓ Added · Test recorder after airplane mode</div>
+    </div></div><div class="cap"><b>When something fails</b>A failure is an entry in the same log, in plain words, with the one thing to do. The first sentence is always that the note is safe.</div></div></div><div class="foot"><span>Quasi iPhone app · design direction A: Logbook</span><span>3 / 4</span></div></div><div class="page"><div class="kicker">Direction A · Logbook</div><h2 style="margin-top:4mm">Why this direction, and what it costs</h2>
+      <div class="cols" style="margin-top:4mm"><div><h3 style="margin-top:0">Grounding in the research</h3><p>The research's main finding is that the app should be where you check what happened, with the moment itself carried by sound, touch and the Lock Screen. This direction takes that literally: the home view is the audit log, and nothing else.</p><p>Voice Memos, Apple Notes and Things all use a single list with capture rising from the same screen. Published guidance on AI agents asks for a chronological record of actions, each with its reason and an undo. Your transcript list is already most of that.</p><p>Two typefaces separate the two voices: what you said (serif) and what the app did (sans, accent). Apple ships New York for long-form reading, so this costs nothing and keeps Dynamic Type.</p></div>
+      <div><h3 style="margin-top:0">Risks and costs</h3><ul><li>It is the least “app-like” of the three. There is no dashboard to admire, and no at-a-glance device panel.</li><li>The live view is one step removed. That is deliberate, but if you often watch the waveform, B serves you better.</li><li>It acts without asking. A wrong task is one tap to undo, but it will exist in Todoist for a moment.</li></ul>
+      <h3>What would be built first</h3><ul><li>The log with the heard / done line per note</li><li>The note view with marked source sentence, Undo and “Not a task”</li><li>Settings as one sheet</li><li>Live Activity per recording, ending as a receipt</li></ul></div></div>
+      <h3>True of all three directions</h3>
+      <ul style="columns:2;column-gap:9mm;font-size:9.5pt">
+        <li>The recorder is found automatically; keys are entered once and kept in the keychain.</li>
+        <li>“Your note is safe” is said first in every failure, because the recorder keeps the full copy.</li>
+        <li>The Live Activity belongs to a recording and ends as a receipt. Today's permanent “connected” banner goes away.</li>
+        <li>Lock Screen text can be hidden.</li>
+        <li>Every state is available by sound, by touch and by sight; each can be switched off.</li>
+        <li>Sounds follow the silent switch unless you choose otherwise.</li>
+      </ul>
+      <h3>Not settled yet</h3>
+      <p style="font-size:9.5pt">The mock-ups are drawn by hand in HTML to show structure and character; they are not final visual design and no screenshots of other apps were consulted.
+      One technical question affects all three: whether iOS lets the app start a Live Activity when a recording begins while the phone is locked. Apple's guidance assumes it is started from the app or by a push. This needs a small test before the Lock Screen design is relied on.</p><div class="foot"><span>Quasi iPhone app · design direction A: Logbook</span><span>4 / 4</span></div></div></body></html>

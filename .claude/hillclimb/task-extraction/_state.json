@@ -1,0 +1,5 @@
+{"metrics": [{"id": "exact", "kind": "binary", "label": "Read right"},
+             {"id": "detect", "kind": "binary", "label": "Task or not"},
+             {"id": "count", "kind": "binary", "label": "How many"},
+             {"id": "fields", "kind": "float", "label": "Fields right"}],
+ "perf_fields": [{"id": "latency_s", "label": "Latency", "unit": "s"}]}

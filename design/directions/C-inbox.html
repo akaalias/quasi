@@ -1,0 +1,133 @@
+<!doctype html><html><head><meta charset="utf-8"><title>Quasi design direction C: Inbox</title><style>:root{--paper:#FFFFFF; --text:#16181D; --soft:#6E7480; --rule:#E3E5EA; --accent:#4F46D8;
+      --doc-body: -apple-system, "SF Pro Text", Helvetica, sans-serif; --doc-h1: 700 32pt/1.05 -apple-system, "SF Pro Display", Helvetica, sans-serif;
+      --doc-h2: 600 16pt/1.2 -apple-system, "SF Pro Display", Helvetica, sans-serif; --sample: 600 15pt/1.3 -apple-system, "SF Pro Display", Helvetica, sans-serif;
+      --bg:#F2F2F7; --surface:#FFFFFF; --sheet:#FFFFFF; --ink:#16181D; --mute:#8A8F9A; --line:#E1E3E8; --chip:#ECEBFB; --on-accent:#fff; --mark:#E2E0FB;
+      --ui: -apple-system, "SF Pro Text", Helvetica, sans-serif; --title: 700 15pt/1.1 -apple-system, "SF Pro Display", Helvetica, sans-serif;
+      --lock1:#3a3f73; --lock2:#101225; --la:rgba(255,255,255,.92); --la-ink:#16181D;}
+@page { size: A4; margin: 0; }
+* { box-sizing: border-box; }
+body { margin: 0; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+.page { width: 210mm; height: 297mm; padding: 17mm 16mm 14mm; page-break-after: always; position: relative;
+        background: var(--paper); color: var(--text); font-family: var(--doc-body); font-size: 10.5pt; line-height: 1.5; overflow: hidden; }
+.kicker { font: 600 8pt/1 -apple-system, "SF Pro Text", Helvetica, sans-serif; letter-spacing: .16em; text-transform: uppercase; color: var(--accent); }
+h1 { font: var(--doc-h1); margin: 6mm 0 3mm; letter-spacing: -0.01em; }
+h2 { font: var(--doc-h2); margin: 0 0 3mm; }
+h3 { font: 600 9pt/1.3 -apple-system, "SF Pro Text", Helvetica, sans-serif; letter-spacing: .08em; text-transform: uppercase; color: var(--soft); margin: 6mm 0 2mm; }
+p { margin: 0 0 3mm; }
+.lead { font-size: 13pt; line-height: 1.45; max-width: 150mm; }
+.foot { position: absolute; left: 16mm; right: 16mm; bottom: 9mm; display: flex; justify-content: space-between;
+        font: 7.5pt -apple-system, Helvetica, sans-serif; color: var(--soft); }
+table { border-collapse: collapse; width: 100%; font-size: 9.5pt; }
+td, th { text-align: left; vertical-align: top; padding: 2.2mm 3mm 2.2mm 0; border-top: .3mm solid var(--rule); }
+th { width: 34mm; font-weight: 600; color: var(--soft); }
+ul { margin: 0 0 3mm; padding-left: 5mm; } li { margin-bottom: 1.4mm; break-inside: avoid; }
+.cols { display: grid; grid-template-columns: 1fr 1fr; gap: 9mm; }
+.phones { display: grid; grid-template-columns: repeat(3, 1fr); gap: 7mm; margin-top: 5mm; }
+.shot { display: flex; flex-direction: column; align-items: center; }
+.cap { margin-top: 4mm; font-size: 8.6pt; line-height: 1.4; color: var(--text); width: 56mm; }
+.cap b { display: block; font: 600 8pt -apple-system, Helvetica, sans-serif; letter-spacing: .06em; text-transform: uppercase; color: var(--accent); margin-bottom: 1mm; }
+.swatches { display: flex; gap: 3mm; margin: 2mm 0 0; } .sw { width: 13mm; height: 13mm; border-radius: 3mm; border: .3mm solid var(--rule); }
+.type { font: var(--sample); margin: 2mm 0 0; }
+
+/* ---- the phone ---- */
+.phone { width: 56mm; height: 119mm; border-radius: 9mm; border: 1.6mm solid #0c0c0d; background: var(--bg); color: var(--ink);
+         font-family: var(--ui); font-size: 6.6pt; line-height: 1.35; position: relative; overflow: hidden; }
+.island { position: absolute; top: 2mm; left: 50%; transform: translateX(-50%); width: 17mm; height: 4.6mm; border-radius: 3mm; background: #000; z-index: 9;
+          display: flex; align-items: center; justify-content: space-between; padding: 0 1.5mm; color: #fff; font: 600 5pt -apple-system, sans-serif; }
+.island.wide { width: 30mm; }
+.sb { height: 8.5mm; display: flex; justify-content: space-between; align-items: flex-end; padding: 0 5mm 1mm; font: 600 5.6pt -apple-system, sans-serif; }
+.pad { padding: 0 3.6mm; }
+.row { display: flex; align-items: center; justify-content: space-between; gap: 2mm; }
+.muted { color: var(--mute); } .accent { color: var(--accent); }
+.title { font: var(--title); margin: 1.5mm 0 2mm; }
+.chip { display: inline-block; padding: .5mm 1.6mm; border-radius: 3mm; background: var(--chip); font-size: 5.6pt; margin: .6mm .6mm 0 0; }
+.card { background: var(--surface); border-radius: 3mm; padding: 2.4mm 2.6mm; margin-bottom: 2mm; }
+.rule { border-top: .2mm solid var(--line); margin: 2mm 0; }
+.btn { display: inline-block; padding: 1.1mm 2.6mm; border-radius: 4mm; background: var(--chip); font-weight: 600; font-size: 5.8pt; margin-right: 1mm; }
+.btn.primary { background: var(--accent); color: var(--on-accent); }
+.wave { display: flex; align-items: center; gap: .5mm; height: 12mm; }
+.wave i { display: block; width: .7mm; border-radius: 1mm; background: var(--accent); }
+.sheet { position: absolute; left: 0; right: 0; bottom: 0; background: var(--sheet); border-radius: 6mm 6mm 0 0; padding: 2mm 3.6mm 4mm; box-shadow: 0 -2mm 8mm rgba(0,0,0,.18); }
+.grab { width: 9mm; height: 1mm; border-radius: 1mm; background: var(--line); margin: 0 auto 2.4mm; }
+.dim { position: absolute; inset: 0; background: rgba(0,0,0,.28); }
+.lock { background: linear-gradient(165deg, var(--lock1), var(--lock2)); color: #fff; }
+.clock { text-align: center; font: 300 22pt -apple-system, sans-serif; margin-top: 7mm; line-height: 1; }
+.date { text-align: center; font: 600 6pt -apple-system, sans-serif; opacity: .85; margin-top: 12mm; }
+.la { position: absolute; left: 2.4mm; right: 2.4mm; background: var(--la); color: var(--la-ink); border-radius: 5mm; padding: 2.6mm 3mm; }
+.toggle { width: 6.4mm; height: 3.8mm; border-radius: 2mm; background: var(--line); position: relative; flex: none; }
+.toggle.on { background: var(--accent); } .toggle::after { content: ""; position: absolute; top: .4mm; left: .4mm; width: 3mm; height: 3mm; border-radius: 50%; background: #fff; }
+.toggle.on::after { left: 3mm; }
+.set { background: var(--surface); border-radius: 3mm; padding: 0 2.6mm; margin-bottom: 2.4mm; }
+.set .row { padding: 1.9mm 0; border-top: .2mm solid var(--line); } .set .row:first-child { border-top: 0; }
+.sec { font: 600 5.2pt -apple-system, sans-serif; letter-spacing: .08em; text-transform: uppercase; color: var(--mute); margin: 2.4mm 0 1.2mm 1mm; }
+.dot { display: inline-block; width: 1.6mm; height: 1.6mm; border-radius: 50%; background: var(--accent); vertical-align: middle; }
+.dot.off { background: var(--line); } .dot.red { background: #e5484d; }
+.tabbar { position: absolute; left: 6mm; right: 6mm; bottom: 3mm; height: 9mm; border-radius: 5mm; background: rgba(255,255,255,.72); border: .2mm solid rgba(0,0,0,.08);
+          box-shadow: 0 1mm 4mm rgba(0,0,0,.12); display: flex; align-items: center; justify-content: space-around; font: 600 5.2pt -apple-system, sans-serif; }
+.acc { position: absolute; left: 6mm; right: 6mm; bottom: 13.5mm; height: 8mm; border-radius: 4mm; background: rgba(255,255,255,.82); border: .2mm solid rgba(0,0,0,.08);
+       box-shadow: 0 1mm 4mm rgba(0,0,0,.12); display: flex; align-items: center; justify-content: space-between; padding: 0 3mm; font-weight: 600; }
+mark { background: var(--mark); color: inherit; padding: 0 .4mm; border-radius: .6mm; }
+</style></head><body><div class="page"><div class="kicker">Quasi iPhone app · design direction C of three</div>
+      <h1>Inbox</h1><p class="lead">The app is an inbox for what the agent did and what it was not sure about. It looks and behaves like a stock iOS 26 app, and it asks you only when it has a real question.</p>
+      <h3>What it bets on</h3><p style="max-width:150mm">That as the agent learns to do more than add one task, the thing you need is a place to review its work, with the doubtful cases sorted to the top.</p>
+      <h3>At a glance</h3><table><tr><th>Structure</th><td>Two tabs, Notes and Tasks, in the iOS 26 floating tab bar. A live strip rides above the tab bar while recording.</td></tr><tr><th>Autonomy</th><td>Acts when it is sure. When it is not, the note waits under “Needs a look” with a one-tap yes or no.</td></tr><tr><th>Type</th><td>SF Pro throughout, system text styles, Dynamic Type for free.</td></tr><tr><th>Colour</th><td>System greys and white. One indigo that marks anything the agent produced.</td></tr><tr><th>Sound and touch</th><td>The start and the answer are heard. The middle steps become taps only, to keep daily use quiet.</td></tr><tr><th>Lock Screen</th><td>A Live Activity per recording. It ends as a receipt, or as a question if the note needs a look.</td></tr></table>
+      <div class="cols" style="margin-top:6mm"><div><h3>Colour</h3><div class="swatches">
+        <div class="sw" style="background:var(--bg)"></div><div class="sw" style="background:var(--surface)"></div><div class="sw" style="background:var(--ink)"></div><div class="sw" style="background:var(--accent)"></div></div></div>
+        <div><h3>Type</h3><div class="type">Call the dentist, tomorrow at three</div></div></div><div class="foot"><span>Quasi iPhone app · design direction C: Inbox</span><span>1 / 4</span></div></div><div class="page"><div class="kicker">Direction C · Inbox</div><h2 style="margin-top:4mm">The three screens you would see most</h2>
+      <div class="phones"><div class="shot"><div class="phone "><div class="island "></div><div class="sb"><span>9:41</span><span>●●● ▮</span></div><div class="pad"><div class="row"><span class="muted">&nbsp;</span><span class="muted">⚙︎</span></div><div class="title">Notes</div>
+      <div class="sec">Today</div><div class="set">
+        <div class="row"><div><div style="font-weight:600">Test recorder after airplane mode</div><div class="accent">✓ Task added · Thu</div></div><span class="muted">14:03</span></div>
+        <div class="row"><div><div style="font-weight:600">The light was really nice around five</div><div class="muted">Note</div></div><span class="muted">11:20</span></div>
+        <div class="row"><div><div style="font-weight:600">Call the school office</div><div class="accent">✓ Task added · Tomorrow 15:00</div></div><span class="muted">08:47</span></div></div>
+      <div class="sec">Yesterday</div><div class="set">
+        <div class="row"><div><div style="font-weight:600">I should water the plants more often</div><div class="accent">? Needs a look</div></div><span class="muted">18:40</span></div>
+        <div class="row"><div><div style="font-weight:600">Order a new water filter</div><div class="accent">✓ Task added</div></div><span class="muted">18:32</span></div></div>
+      </div>
+      <div class="acc"><span><span class="dot red"></span> Recording</span><span class="muted" style="font-variant-numeric:tabular-nums">0:42 ▂▅▃▆▂</span></div><div class="tabbar"><span class="accent">▤ Notes</span><span class="muted">☑ Tasks <span class="chip" style="background:var(--accent);color:#fff;margin:0">1</span></span><span class="muted">⌕</span></div></div><div class="cap"><b>Notes, with the live strip</b>A standard grouped list. While recording, a strip sits above the tab bar the way the player does in Music; tap it for the full live view.</div></div><div class="shot"><div class="phone "><div class="island "></div><div class="sb"><span>9:41</span><span>●●● ▮</span></div><div class="pad"><div class="row"><span class="muted">&nbsp;</span><span class="muted">⚙︎</span></div><div class="title">Tasks</div>
+      <div class="sec">Needs a look</div>
+      <div class="card"><div class="muted">Yesterday 18:40 · you said</div><div style="font-weight:600;margin:.8mm 0 1.6mm">“I should really water the plants more often.”</div>
+        <div class="accent" style="margin-bottom:1.6mm">Did you want a task for this?</div><span class="btn primary">Add task</span><span class="btn">No</span></div>
+      <div class="sec">Added today</div><div class="set">
+        <div class="row"><span>◯ &nbsp;<b>Test recorder after airplane mode</b><br><span class="chip">Thu</span><span class="chip">Work</span></span><span class="muted">Undo</span></div>
+        <div class="row"><span>◯ &nbsp;<b>Call the school office</b><br><span class="chip">Tomorrow 15:00</span><span class="chip">p2</span><span class="chip">calls</span></span><span class="muted">Undo</span></div></div>
+      <div class="sec">Earlier</div><div class="set"><div class="row"><span>◯ &nbsp;<b>Order a new water filter</b></span><span class="muted">›</span></div></div>
+      </div><div class="tabbar"><span class="muted">▤ Notes</span><span class="accent">☑ Tasks <span class="chip" style="background:var(--accent);color:#fff;margin:0">1</span></span><span class="muted">⌕</span></div></div><div class="cap"><b>Tasks: what the agent did</b>Doubtful notes come first, each with one question. Below, everything it added, with the fields as chips and Undo on the row.</div></div><div class="shot"><div class="phone "><div class="island "></div><div class="sb"><span>9:41</span><span>●●● ▮</span></div><div class="pad"><div class="row"><span class="accent">‹ Notes</span><span class="muted">•••</span></div>
+      <div style="font:var(--title);font-size:10pt;margin:2mm 0 .6mm">Monday 14:03</div><div class="muted" style="margin-bottom:2mm">38 seconds · English</div>
+      <div class="card" style="line-height:1.5">I've been thinking about the battery thing on the recorder. What I don't know is how it behaves in airplane mode. <mark>I should probably just test that on the train on Thursday. Oh, yes, add that as a task.</mark></div>
+      <div class="sec">Task</div><div class="set">
+        <div class="row"><span>Title</span><span class="muted">Test recorder after… ›</span></div><div class="row"><span>Due</span><span class="muted">Thu 8 Oct ›</span></div>
+        <div class="row"><span>Project</span><span class="muted">Work ›</span></div><div class="row"><span>Priority</span><span class="muted">None ›</span></div><div class="row"><span>Labels</span><span class="muted">None ›</span></div></div>
+      <div class="set"><div class="row"><span style="color:#d33">Remove task from Todoist</span></div></div>
+      </div></div><div class="cap"><b>A note and its task</b>The transcript on top with the source sentence marked, then the task as an ordinary editable form. Changes go straight to Todoist.</div></div></div><div class="foot"><span>Quasi iPhone app · design direction C: Inbox</span><span>2 / 4</span></div></div><div class="page"><div class="kicker">Direction C · Inbox</div><h2 style="margin-top:4mm">Off the screen, in settings, and when something goes wrong</h2>
+      <div class="phones"><div class="shot"><div class="phone lock"><div class="island wide"><span style="color:#ff5a4d">●</span><span>0:42</span></div><div class="clock">9:41</div><div class="date" style="margin-top:2mm">Monday 5 October</div>
+      <div class="la" style="top:44mm"><div class="row"><span><span class="dot red"></span> <b>Recording</b></span><b style="font-variant-numeric:tabular-nums">0:42</b></div></div>
+      <div class="la" style="top:62mm"><div class="accent" style="font-weight:600">✓ Task added</div><div>Test recorder after airplane mode · Thu</div></div>
+      <div class="la" style="top:82mm"><div class="accent" style="font-weight:600">? Did you want a task?</div><div>“I should really water the plants…”</div><div style="margin-top:1.4mm"><span class="btn primary">Add</span><span class="btn">No</span></div></div>
+      </div><div class="cap"><b>Lock Screen: receipt or question</b>The activity ends one of two ways: a receipt, or the single question, answerable without unlocking.</div></div><div class="shot"><div class="phone "><div class="island "></div><div class="sb"><span>9:41</span><span>●●● ▮</span></div><div class="pad"><div class="row"><b style="font-size:8pt">Settings</b><span class="accent"><b>Done</b></span></div>
+      <div class="sec">Recorder</div><div class="set"><div class="row"><span>Comulytic Note Pro</span><span class="muted">Connected · 82%</span></div><div class="row"><span>Download stored recordings</span><span class="muted">›</span></div></div>
+      <div class="sec">Agent</div><div class="set"><div class="row"><span>How sure before acting</span><span class="muted">Fairly sure ›</span></div><div class="row"><span>Claude API key</span><span class="muted">Stored ›</span></div><div class="row"><span>Todoist</span><span class="muted">Connected ›</span></div><div class="row"><span>Default project</span><span class="muted">Inbox ›</span></div></div>
+      <div class="sec">Transcription</div><div class="set"><div class="row"><span>Language</span><span class="muted">English ›</span></div></div>
+      <div class="sec">Feedback</div><div class="set"><div class="row"><span>Sounds</span><span class="muted">Start and answer ›</span></div><div class="row"><span>Haptics</span><div class="toggle on"></div></div><div class="row"><span>Lock Screen previews</span><span class="muted">When unlocked ›</span></div></div>
+      </div></div><div class="cap"><b>Settings: stock grouped list</b>The one setting that is new here is how sure the agent must be before it acts by itself.</div></div><div class="shot"><div class="phone "><div class="island "></div><div class="sb"><span>9:41</span><span>●●● ▮</span></div><div class="pad"><div class="row"><span class="muted">&nbsp;</span><span class="muted">⚙︎</span></div><div class="title">Tasks</div>
+      <div class="sec">Needs a look</div>
+      <div class="card"><div class="muted">Today 16:10</div><div style="font-weight:600;margin:.8mm 0 1mm">Send the contract to the lawyer</div>
+        <div style="color:#c2410c;margin-bottom:1.6mm">Not in Todoist yet: the token was rejected.</div><span class="btn primary">Open settings</span><span class="btn">Try again</span></div>
+      <div class="card"><div class="muted">Today 15:52</div><div style="font-weight:600;margin:.8mm 0 1mm">A recording did not reach the phone</div>
+        <div class="muted" style="margin-bottom:1.6mm">It is still on the recorder.</div><span class="btn primary">Download it</span></div>
+      <div class="sec">Added today</div><div class="set"><div class="row"><span>◯ &nbsp;<b>Test recorder after airplane mode</b></span><span class="muted">Undo</span></div></div>
+      </div><div class="tabbar"><span class="muted">▤ Notes</span><span class="accent">☑ Tasks <span class="chip" style="background:var(--accent);color:#fff;margin:0">1</span></span><span class="muted">⌕</span></div></div><div class="cap"><b>When something fails</b>Failures join the same “Needs a look” queue as doubtful notes, so there is one place to check and one badge to clear.</div></div></div><div class="foot"><span>Quasi iPhone app · design direction C: Inbox</span><span>3 / 4</span></div></div><div class="page"><div class="kicker">Direction C · Inbox</div><h2 style="margin-top:4mm">Why this direction, and what it costs</h2>
+      <div class="cols" style="margin-top:4mm"><div><h3 style="margin-top:0">Grounding in the research</h3><p>It follows the iOS 26 rules most closely: glass only on the tab bar and the live strip, content on plain opaque surfaces, one tinted action per screen. Apple documents the strip above the tab bar for exactly this kind of ongoing activity.</p><p>Todoist's own voice feature, Ramble, works from the principle “easy correction beats perfect first-time accuracy”. The research adds that people want no confirmation when things went right and an explicit question once something is in doubt. The “Needs a look” queue is that idea.</p><p>It scales. When the agent can do more than one task per note, or more than tasks, each new kind of action is another row type in the same Tasks tab.</p></div>
+      <div><h3 style="margin-top:0">Risks and costs</h3><ul><li>With one task per note and a reliable extractor, the Tasks tab mostly repeats the Notes tab. Two tabs may be more structure than today's feature set needs.</li><li>A review queue is a second inbox to keep empty. If it fills with trivial questions, it becomes the thing you avoid.</li><li>It needs a notion of “not sure” from the extractor, which does not exist yet: today it answers task or no task.</li><li>It is the least distinctive of the three; it will look like many other iOS 26 apps.</li></ul>
+      <h3>What would be built first</h3><ul><li>A confidence answer from the extractor (sure / unsure), with eval cases for it</li><li>The Notes list and note form</li><li>The Tasks tab with “Needs a look”</li><li>The live strip above the tab bar</li></ul></div></div>
+      <h3>True of all three directions</h3>
+      <ul style="columns:2;column-gap:9mm;font-size:9.5pt">
+        <li>The recorder is found automatically; keys are entered once and kept in the keychain.</li>
+        <li>“Your note is safe” is said first in every failure, because the recorder keeps the full copy.</li>
+        <li>The Live Activity belongs to a recording and ends as a receipt. Today's permanent “connected” banner goes away.</li>
+        <li>Lock Screen text can be hidden.</li>
+        <li>Every state is available by sound, by touch and by sight; each can be switched off.</li>
+        <li>Sounds follow the silent switch unless you choose otherwise.</li>
+      </ul>
+      <h3>Not settled yet</h3>
+      <p style="font-size:9.5pt">The mock-ups are drawn by hand in HTML to show structure and character; they are not final visual design and no screenshots of other apps were consulted.
+      One technical question affects all three: whether iOS lets the app start a Live Activity when a recording begins while the phone is locked. Apple's guidance assumes it is started from the app or by a push. This needs a small test before the Lock Screen design is relied on.</p><div class="foot"><span>Quasi iPhone app · design direction C: Inbox</span><span>4 / 4</span></div></div></body></html>

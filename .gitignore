@@ -1,0 +1,25 @@
+# Build output and Xcode user state
+app/build/
+xcuserdata/
+.DS_Store
+
+# Vendor app and third-party reverse-engineering tools (large, not ours)
+/apk/
+/tools/
+
+# Bluetooth captures and personal audio
+/captures/
+/recordings/
+/scratch_audio/
+
+# Local secrets (API keys for testing)
+.env*
+
+# Eval runs: keep the scores, leave out the bulk and what can be regenerated
+.claude/hillclimb/*/bin/
+.claude/hillclimb/*/report.html
+.claude/hillclimb/*/trajectory/
+.claude/hillclimb/*/*/traces/
+.claude/hillclimb/*/*/outputs.jsonl
+
+__pycache__/

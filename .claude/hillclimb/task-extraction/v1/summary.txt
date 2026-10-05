@@ -1,0 +1,50 @@
+Read correctly as a whole: 315 of 320 (98.4%, 95% interval 96% to 99%)
+
+Is there a task?
+  asked for one and found:      250 of 250 (100.0% recall)
+  did not ask and none made:    70 of 70 (100.0% specificity)
+  tasks invented:               0 (precision 100.0%)
+
+Fields, over the tasks that were found:
+  title             250 of 250  100.0%
+  due_date          214 of 214  100.0%
+  due_time          248 of 248  100.0%
+  recurrence        248 of 250  99.2%
+  deadline_date     248 of 248  100.0%
+  priority          250 of 250  100.0%
+  duration_minutes  250 of 250  100.0%
+  project           247 of 250  98.8%
+  section           243 of 244  99.6%
+  labels            248 of 248  100.0%
+
+By kind of case (read correctly as a whole):
+  points back        16 of 16
+  basic              18 of 18
+  combined           14 of 16
+  german             16 of 16
+  deadline           10 of 10
+  due day            36 of 36
+  duration           10 of 10
+  self-correction    13 of 14
+  labels             14 of 14
+  long                6 of 6
+  one of several      5 of 6
+  no task            70 of 70
+  noisy              10 of 10
+  priority           20 of 20
+  project            21 of 22
+  repeats            18 of 18
+  due time           18 of 18
+
+Latency: median 2.0 s, slowest 13.2 s
+Tokens: 679,604 in, 31,504 out, about $1.67 for this run ($0.0052 per note)
+Errors (not scored): 0
+
+Not read correctly:
+  combo-7: project '', expected 'Work'; section '', expected 'Admin'
+  combo-8: project '', expected 'Home'
+  fix-priority: recurrence 'project', expected none
+  mixed-1: recurrence 'project', expected none
+  proj-garbled: project '', expected 'Mosey'
+
+(Rows for cases that were real recordings were removed from results.jsonl afterwards; the counts above include them.)
