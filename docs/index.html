@@ -26,7 +26,8 @@
   header { display: flex; align-items: center; justify-content: space-between; padding-top: 28px; color: var(--quiet); }
   header .name { display: flex; align-items: center; gap: 10px; color: var(--ink); font-weight: 600; }
   header img { width: 30px; height: 30px; border-radius: 7px; }
-  a { color: var(--brand); text-decoration: none; } a:hover { text-decoration: underline; }
+  a { color: var(--brand); text-decoration: underline; text-decoration-thickness: 1px; text-underline-offset: 3px; }
+  a:hover { text-decoration-thickness: 2px; }
   h1 { font: 400 clamp(44px, 9vw, 68px)/1.05 var(--spoken); letter-spacing: -0.01em; margin: 72px 0 24px; }
   h2 { font: 400 34px/1.15 var(--spoken); margin: 0 0 16px; }
   section { padding: 56px 0; border-top: 1px solid var(--rule); }
@@ -34,6 +35,7 @@
   p { margin: 0 0 16px; } .lead { font: 400 22px/1.45 var(--spoken); } .quiet { color: var(--quiet); }
   .kicker { font-size: 13px; font-weight: 600; letter-spacing: .12em; text-transform: uppercase; color: var(--quiet); margin: 0 0 12px; }
 
+  .hero-art { margin: 28px 0 0; } .hero-art svg { display: block; width: 100%; height: auto; }
   .film { aspect-ratio: 16 / 9; background: var(--card); border-radius: 22px; display: flex; flex-direction: column;
           align-items: center; justify-content: center; gap: 6px; color: var(--quiet); margin-top: 40px; text-align: center; padding: 24px; }
   .film b { font: 400 24px/1.2 var(--spoken); color: var(--ink); }
@@ -47,8 +49,6 @@
   button { font: 600 15px var(--app); color: var(--ink); background: var(--chip); border: 0; border-radius: 99px; padding: 9px 18px; cursor: pointer; }
   button:hover { filter: brightness(.96); } button.primary { background: var(--brand); color: #fff; padding: 12px 22px; font-size: 16px; }
   .sound button { min-width: 64px; }
-  .tag { display: inline-block; font-size: 12px; font-weight: 600; letter-spacing: .08em; text-transform: uppercase; color: var(--quiet);
-         border: 1px solid var(--rule); border-radius: 99px; padding: 1px 9px; margin-left: 6px; vertical-align: 2px; }
 
   .phones { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; margin: 32px -60px 44px; align-items: start; }
   .phones figure { margin: 0; } .phones img { width: 100%; display: block; border: 7px solid #0c0c0d; border-radius: 34px; box-shadow: 0 18px 40px -18px rgba(30, 27, 22, .45); }
@@ -60,9 +60,10 @@
   /* One whole note laid out in time, wider than the column of text. */
   .example { width: min(80vw, 1180px); margin: 44px 0 36px calc(50% - min(40vw, 590px)); }
   .example h3 { font: 400 24px/1.2 var(--spoken); margin: 0 0 4px; }
+  h3.list-title { font: 400 24px/1.2 var(--spoken); margin: 0 0 14px; } h3.list-title + .sounds { margin-top: 0; }
   @media (max-width: 860px) { .example { width: 100%; margin-left: 0; } }
   .timeline { display: flex; align-items: center; gap: 18px; margin: 10px 0 6px; }
-  .timeline button { width: 52px; height: 52px; padding: 0; border-radius: 50%; font-size: 18px; flex: none; }
+  .timeline button { width: 52px; height: 52px; padding: 0; border-radius: 50%; font-size: 17px; flex: none; }
   .track { position: relative; flex: 1; height: 120px; --done: 0%; }
   .track .line, .track .progress { position: absolute; left: 0; top: 59px; height: 2px; border-radius: 2px; }
   .track .line { right: 0; background: var(--rule); } .track .progress { width: var(--done); background: var(--brand); }
@@ -73,11 +74,22 @@
   .mark.chime i { width: 11px; height: 11px; border-radius: 50%; } .mark.chime i + i { margin-top: -9px; }
   .mark.answer i { margin-top: 0 !important; width: 8px; height: 8px; } .mark.answer b { width: 16px; height: 16px; border-radius: 50%; margin-left: 2px; }
   .mark.wood i { width: 9px; height: 15px; border-radius: 3px; }
-  .mark.on i, .mark.on b { background: var(--brand); border-color: var(--brand); transform: scale(1.12); }
+  .mark i.on, .mark b.on { background: var(--brand); border-color: var(--brand); }
+  /* Each mark moves as its sound plays: a chime note rings outwards, wood is struck, a tick pops. */
+  .mark.chime i.on, .mark.chime b.on { animation: ring .9s ease-out both; }
+  .mark.wood i.on { animation: knock .45s ease-out both; }
+  .ticks i.on { animation: pop .35s ease-out both; }
+  .talk i.on { animation: speak .3s ease-out both; }
+  @keyframes ring { 0% { transform: scale(.5); box-shadow: 0 0 0 0 color-mix(in srgb, var(--brand) 55%, transparent); }
+                    35% { transform: scale(1.7); } 100% { transform: scale(1.12); box-shadow: 0 0 0 20px transparent; } }
+  @keyframes knock { 0% { transform: translateY(-9px) rotate(-14deg); } 55% { transform: translateY(2px) rotate(4deg) scaleY(.82); } 100% { transform: none; } }
+  @keyframes pop { 0% { transform: scale(3.2); } 100% { transform: scale(1.4); } }
+  @keyframes speak { 0% { transform: scaleY(1.7); } 100% { transform: none; } }
+  @media (prefers-reduced-motion: reduce) { .mark i.on, .mark b.on, .ticks i.on, .talk i.on { animation: none; } }
   .mark span, .track .label { position: absolute; left: 0; white-space: nowrap; font-size: 13px; color: var(--quiet); transition: color .15s; }
   .mark span.below { top: 24px; } .mark span.above { bottom: 24px; }
   .track .label { transform: translateX(-50%); } .track .label.above { top: 6px; } .track .label.below { top: 84px; }
-  .mark.on span, .track .label.on { color: var(--ink); }
+  .mark span.on, .track .label.on { color: var(--ink); }
   .talk, .ticks { position: absolute; top: 60px; height: 44px; transform: translateY(-50%); display: flex; align-items: center; justify-content: space-between; }
   .talk i { display: block; width: 3px; border-radius: 2px; background: var(--rule); transition: background .12s; }
   .ticks i { display: block; width: 4px; height: 4px; border-radius: 50%; background: var(--rule); transition: background .12s; }
@@ -89,7 +101,7 @@
   .ribbon a { position: absolute; top: 34px; right: -52px; width: 220px; padding: 7px 0; transform: rotate(45deg);
               background: var(--brand); color: #fff; font: 600 13px var(--app); letter-spacing: .04em; text-align: center;
               box-shadow: 0 1px 6px rgba(0, 0, 0, .18); }
-  .ribbon a:hover { text-decoration: none; filter: brightness(1.06); }
+  .ribbon a, .ribbon a:hover { text-decoration: none; } .ribbon a:hover { filter: brightness(1.06); }
   @media (max-width: 560px) { .ribbon { width: 120px; height: 120px; } .ribbon a { top: 26px; right: -62px; font-size: 12px; padding: 5px 0; } }
   footer { color: var(--quiet); font-size: 14px; padding-top: 32px; padding-bottom: 56px; border-top: 1px solid var(--rule); }
 </style>
@@ -105,39 +117,75 @@
 <main>
   <section class="first">
     <h1>Say it,<br>hear it done.</h1>
-    <p class="lead">Quasi is a small experiment in computing without a screen. You speak into a pocket recorder. Your phone stays in your bag, dark and locked. A few notes of wood and chime tell you that you were heard, understood, and that the thing you asked for is done.</p>
+    <p class="lead">Quasi is a small experiment in computing without a screen. You speak into <a href="https://store.comu.com/products/comulytic-note-pro" target="_blank" rel="noopener">a pocket recorder</a> while your phone stays locked and in your bag. A few notes of wood and chime tell you that you were heard, understood, and that the thing you asked for is done.</p>
+    <figure class="hero-art">
+      <svg viewBox="0 0 680 352" role="img" aria-label="A grey pocket recorder sending sound to an iPhone whose screen is off">
+        <defs>
+          <linearGradient id="metal" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#E2DFD8"/><stop offset="1" stop-color="#BFBBB2"/></linearGradient>
+          <linearGradient id="glass" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#24211D"/><stop offset="1" stop-color="#131110"/></linearGradient>
+          <filter id="soft" x="-30%" y="-30%" width="160%" height="160%"><feGaussianBlur stdDeviation="9"/></filter>
+        </defs>
+        <!-- the sound on its way from the recorder to the phone -->
+        <g fill="var(--brand)">
+          <circle cx="262" cy="118" r="3.2" opacity=".35"/><circle cx="289" cy="104" r="3.6" opacity=".5"/><circle cx="318" cy="96" r="4" opacity=".65"/>
+          <circle cx="348" cy="95" r="4.4" opacity=".8"/><circle cx="378" cy="101" r="4.8"/><circle cx="407" cy="114" r="5.2"/>
+        </g>
+        <!-- the recorder -->
+        <g transform="translate(170 172) rotate(-9)">
+          <rect x="-60" y="-88" width="124" height="196" rx="24" fill="#1E1B16" opacity=".22" filter="url(#soft)" transform="translate(6 12)"/>
+          <rect x="-62" y="-98" width="124" height="196" rx="22" fill="url(#metal)" stroke="#A7A39A" stroke-width="1.5"/>
+          <rect x="-49" y="-84" width="98" height="34" rx="17" fill="#24211D"/>
+          <circle cx="29" cy="-67" r="12.5" fill="#D6D3CC" stroke="#8D897F" stroke-width="1.2"/>
+          <circle cx="-33" cy="-67" r="3.4" fill="var(--brand)"/>
+          <g fill="#8A8173"><rect x="-24" y="-70" width="2.4" height="6" rx="1.2"/><rect x="-19" y="-73" width="2.4" height="12" rx="1.2"/><rect x="-14" y="-71" width="2.4" height="8" rx="1.2"/><rect x="-9" y="-74" width="2.4" height="14" rx="1.2"/><rect x="-4" y="-70" width="2.4" height="6" rx="1.2"/></g>
+        </g>
+        <!-- the phone, with its screen off -->
+        <g transform="translate(508 168) rotate(7)">
+          <rect x="-64" y="-126" width="134" height="270" rx="32" fill="#1E1B16" opacity=".25" filter="url(#soft)" transform="translate(6 12)"/>
+          <!-- the side buttons: action and volume on the left, power on the right -->
+          <g fill="#2A2723"><rect x="-70" y="-84" width="4" height="13" rx="1.5"/><rect x="-70" y="-60" width="4" height="24" rx="1.5"/><rect x="-70" y="-30" width="4" height="24" rx="1.5"/><rect x="66" y="-52" width="4" height="38" rx="1.5"/></g>
+          <rect x="-67" y="-138" width="134" height="270" rx="31" fill="#0E0D0C" stroke="#3B3731" stroke-width="1.5"/>
+          <rect x="-60" y="-131" width="120" height="256" rx="25" fill="#060606"/>
+          <!-- a faint reflection, so the dark glass reads as glass -->
+          <clipPath id="screen"><rect x="-60" y="-131" width="120" height="256" rx="25"/></clipPath>
+          <path d="M-60 -131 h70 l-70 150 z" fill="#fff" opacity=".045" clip-path="url(#screen)"/>
+          <rect x="-21" y="-122" width="42" height="12" rx="6" fill="#000" stroke="#1B1917" stroke-width="1"/>
+          <circle cx="12" cy="-116" r="2.2" fill="#15171C"/>
+        </g>
+      </svg>
+    </figure>
   </section>
 
   <section>
     <p class="kicker">The sound language</p>
     <h2>An aural language for screen-free life</h2>
-    <p>If you are not going to look, you have to be told. Quasi speaks in a few short sounds, each with a matching tap, and you learn them in a day.</p>
+    <p>Without a screen, you still need feedback. That's why Quasi speaks to you with a small vocabulary, so you know what it's doing and when it's done. Each word has its own sound, and the sounds are easy to learn.</p>
     <div class="example">
     <h3>A voice note with two tasks</h3>
     <div class="timeline" id="timeline">
       <button class="primary" id="whole" aria-label="Play one whole note">▶</button>
       <div class="track">
         <div class="line"></div><div class="progress"></div><div class="head"></div>
-        <div class="mark chime" style="left:0%" data-at="0"><i></i><i></i><span class="below">The question</span></div>
-        <div class="talk" style="left:9%;width:27.5%" data-from="1250" data-to="5000"></div>
-        <span class="label above" style="left:22.75%" data-at="1250">You talk</span>
-        <div class="mark wood" style="left:38.5%" data-at="5200"><i></i><span class="below">Arrived</span></div>
-        <div class="mark wood" style="left:45.2%" data-at="6100"><i></i><span class="above">Written down</span></div>
-        <div class="ticks" style="left:54.8%;width:19.5%" data-from="7400" data-to="10300"></div>
-        <span class="label below" style="left:64.5%" data-at="7400">Working</span>
-        <div class="mark chime answer" style="left:76.3%" data-at="10300"><i></i><i></i><b></b><span class="above">Two tasks added</span></div>
+        <div class="mark chime" style="left:0%"><i data-at="0"></i><i data-at="220"></i><span class="below" data-at="0">I'm listening</span></div>
+        <div class="talk" style="left:9.6%;width:25.8%" data-from="1250" data-to="5000"></div>
+        <span class="label above" style="left:22.5%" data-at="1250">You talk</span>
+        <div class="mark wood" style="left:37.4%" ><i data-at="5200"></i><span class="below" data-at="5200">I've heard you</span></div>
+        <div class="ticks" style="left:39.6%;width:12.6%" data-from="5500" data-to="7250"></div>
+        <span class="label above" style="left:45.9%" data-at="5500">I'm working on it</span>
+        <div class="mark wood" style="left:54.0%" ><i data-at="7500"></i><span class="below" data-at="7500">I've written it down</span></div>
+        <div class="ticks" style="left:56.1%;width:20.9%" data-from="7800" data-to="10700"></div>
+        <span class="label above" style="left:66.5%" data-at="7800">I'm working on it</span>
+        <div class="mark chime answer" style="left:77.0%" ><i data-at="10700"></i><i data-at="10900"></i><b data-at="11160"></b><span class="below" data-at="10700">I've added two tasks</span></div>
       </div>
     </div>
     </div>
+    <h3 class="list-title">Quasi's Vocabulary</h3>
     <div class="sounds">
-      <div class="sound"><div><b>The question <span class="tag">chime</span></b><span>You pressed record, and the phone is listening.</span></div><button data-sound="question">Play</button></div>
-      <div class="sound"><div><b>Arrived <span class="tag">wood</span></b><span>You stopped recording, and the whole note has reached the phone.</span></div><button data-sound="wood_1">Play</button></div>
-      <div class="sound"><div><b>Written down <span class="tag">wood</span></b><span>The phone has saved the transcript of your note.</span></div><button data-sound="wood_2">Play</button></div>
-      <div class="sound"><div><b>Still working <span class="tag">wood</span></b><span>A quiet tick-tock plays only when a step takes more than a moment.</span></div><button data-sound="ticking">Play</button></div>
-      <div class="sound"><div><b>The answer: nothing to do <span class="tag">chime</span></b><span>Your note was not a request, so the phone plays the plain home note.</span></div><button data-sound="answer_nothing">Play</button></div>
-      <div class="sound"><div><b>The answer: one task <span class="tag">chime</span></b><span>The phone plays one quick note and then the home chord.</span></div><button data-sound="answer_tasks_1">Play</button></div>
-      <div class="sound"><div><b>The answer: two tasks <span class="tag">chime</span></b><span>The phone plays one quick note for each task and then the chord, so you can count the tasks.</span></div><button data-sound="answer_tasks_2">Play</button></div>
-      <div class="sound"><div><b>Something failed <span class="tag">chime</span></b><span>The question falls away unanswered and rings out. Your note is still safe on the recorder.</span></div><button data-sound="answer_failed">Play</button></div>
+      <div class="sound"><div><b>I'm listening</b><span>You pressed record, and the recorder is streaming live audio to your locked phone.</span></div><button data-sound="question">Play</button></div>
+      <div class="sound"><div><b>I've heard you</b><span>You stopped recording, and your locked phone has received the whole voice note.</span></div><button data-sound="wood_1">Play</button></div>
+      <div class="sound"><div><b>I've written it down</b><span>Your phone has transcribed the note and saved the transcript.</span></div><button data-sound="wood_2">Play</button></div>
+      <div class="sound"><div><b>I'm working on it</b><span>A quiet tick-tock plays while your phone works out which tasks you asked for.</span></div><button data-sound="ticking">Play</button></div>
+      <div class="sound"><div><b>I've added two tasks</b><span>Your phone has added both tasks to your to-do list. It plays one quick note for each task and then a chord, so you can count the tasks.</span></div><button data-sound="answer_tasks_2">Play</button></div>
     </div>
     <p class="quiet">A step that goes well climbs; a step that fails falls and rings longer, and nothing follows it. The sounds follow the phone's silent switch, and the taps say the same thing: one short tap for each good step, two long ones for a failure.</p>
   </section>
@@ -188,31 +236,33 @@
   document.querySelectorAll("button[data-sound]").forEach(button =>
     button.addEventListener("click", () => play(button.dataset.sound)));
 
-  // One whole note, with roughly the pauses it has in real life. The timeline shows it as it plays.
+  // One whole note, with roughly the pauses it has in real life. The timeline shows it as it
+  // plays, and the big button plays and pauses it.
   const steps = [
     [0,     "question"],
-    [1250,  null],
+    [1250,  "talking"],
     [5200,  "wood_1"],
-    [6100,  "wood_2"],
-    [7400,  "ticking"],
-    [10300, "answer_tasks_2"],
-    [13000, null],
+    [5500,  "ticking_short"],
+    [7500,  "wood_2"],
+    [7800,  "ticking"],
+    [10700, "answer_tasks_2"],
+    [13400, null],
   ];
-  const LENGTH = 13500;
-  const timeline = document.getElementById("timeline"), track = timeline.querySelector(".track");
+  const LENGTH = 13900;
+  const timeline = document.getElementById("timeline"), track = timeline.querySelector(".track"), button = document.getElementById("whole");
   // The row of the list below that belongs to the sound now playing is lit.
   const light = sound => document.querySelectorAll(".sound").forEach(row =>
-    row.classList.toggle("on", sound !== null && row.querySelector("button").dataset.sound === sound));
-  // The talking as a little cloud of sound, the working as ticks.
-  const talk = track.querySelector(".talk"), ticks = track.querySelector(".ticks");
-  let seed = 7;
-  for (let n = 0; n < 34; n++) {
-    seed = (seed * 73 + 41) % 97;
+    row.classList.toggle("on", sound !== null && row.querySelector("button").dataset.sound === sound.replace("_short", "")));
+  // The talking as a little cloud of sound (the loudness of talking.wav, slice by slice), the working as ticks.
+  const talk = track.querySelector(".talk"), ticks = [...track.querySelectorAll(".ticks")];
+  const loudness = [0.45, 1.0, 0.26, 0.74, 0.27, 0.97, 0.52, 0.25, 0.1, 0.98, 0.67, 0.0, 0.0, 0.0, 0.52, 0.45, 0.14, 0.14, 0.35, 0.25, 0.56, 0.02, 0.0, 0.0, 0.77, 0.72, 0.18, 0.28, 0.15, 0.73, 0.19, 0.27, 0.0, 0.0];
+  loudness.forEach(level => {
     const bar = document.createElement("i");
-    bar.style.height = `${8 + (seed % 10) * 3.6 * Math.sin(Math.PI * (n + 0.5) / 34)}px`;
+    bar.style.height = `${3 + level * 38}px`;
     talk.appendChild(bar);
-  }
-  for (let n = 0; n < 6; n++) ticks.appendChild(document.createElement("i"));
+  });
+  // One dot per tick: the ticks are half a second apart.
+  ticks.forEach(run => { for (let n = 0; n < Math.round((run.dataset.to - run.dataset.from) / 500); n++) run.appendChild(document.createElement("i")); });
   const spread = (element, time) => {
     const from = +element.dataset.from, to = +element.dataset.to, bars = element.children;
     [...bars].forEach((bar, n) => bar.classList.toggle("on", time >= from + (to - from) * n / bars.length && time > 0));
@@ -220,26 +270,42 @@
   const show = time => {
     track.style.setProperty("--done", `${Math.min(100, 100 * time / LENGTH)}%`);
     track.querySelectorAll("[data-at]").forEach(mark => mark.classList.toggle("on", time > 0 && time >= +mark.dataset.at));
-    spread(talk, time); spread(ticks, time);
+    spread(talk, time); ticks.forEach(run => spread(run, time));
   };
-  let timers = [], frame = 0, playing = [];
-  const stop = () => { timers.forEach(clearTimeout); cancelAnimationFrame(frame); playing.forEach(audio => audio.pause()); playing = []; timeline.classList.remove("playing"); light(null); };
-  document.getElementById("whole").addEventListener("click", () => {
-    stop();
-    timeline.classList.add("playing");
-    const started = performance.now();
-    timers = steps.map(([at, sound]) => setTimeout(() => { if (sound) playing.push(play(sound)); light(sound); }, at));
-    const tick = () => {
-      const time = performance.now() - started;
-      show(time);
-      if (time < LENGTH) frame = requestAnimationFrame(tick);
-      else { timeline.classList.remove("playing"); show(0); light(null); }
-    };
-    tick();
+
+  // Where the note is: how far in, which steps have sounded, and what is audible right now.
+  let elapsed = 0, since = 0, next = 0, frame = 0, running = false, sounding = [];
+  const label = () => { button.textContent = running ? "❚❚" : "▶"; button.setAttribute("aria-label", running ? "Pause" : "Play one whole note"); };
+  const reset = () => { elapsed = 0; next = 0; sounding.forEach(audio => audio.pause()); sounding = []; show(0); light(null); timeline.classList.remove("playing"); };
+  const tick = () => {
+    const time = elapsed + performance.now() - since;
+    while (next < steps.length && steps[next][0] <= time) {
+      const sound = steps[next++][1];
+      if (sound) sounding.push(play(sound));
+      light(sound === "talking" ? null : sound);
+    }
+    show(time);
+    if (time < LENGTH) frame = requestAnimationFrame(tick);
+    else { running = false; reset(); label(); }
+  };
+  button.addEventListener("click", () => {
+    if (running) {                               // pause: hold everything where it is
+      elapsed += performance.now() - since;
+      cancelAnimationFrame(frame);
+      sounding = sounding.filter(audio => !audio.ended);
+      sounding.forEach(audio => audio.pause());
+    } else {                                     // play, or carry on from the pause
+      since = performance.now();
+      sounding.forEach(audio => audio.play());
+      timeline.classList.add("playing");
+      frame = requestAnimationFrame(tick);
+    }
+    running = !running;
+    label();
   });
   // ?at=7000 shows the timeline as it stands at that moment, without sound (for checking the layout).
   const at = new URLSearchParams(location.search).get("at");
-  if (at) { timeline.classList.add("playing"); show(+at); light([...steps].reverse().find(step => step[0] <= +at)?.[1] ?? null); }
+  if (at) { timeline.classList.add("playing"); show(+at); light([...steps].reverse().find(step => step[0] <= +at && step[1] !== "talking")?.[1] ?? null); }
 </script>
 </body>
 </html>
