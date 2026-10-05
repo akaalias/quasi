@@ -61,6 +61,30 @@
 
   ul.plain { list-style: none; padding: 0; margin: 0 0 16px; } ul.plain li { padding: 12px 0; border-top: 1px solid var(--rule); }
   ul.plain li:first-child { border-top: 0; } ul.plain b { font-weight: 600; }
+  /* One whole note laid out in time. */
+  .timeline { display: flex; align-items: center; gap: 18px; margin: 34px 0 6px; }
+  .timeline button { width: 52px; height: 52px; padding: 0; border-radius: 50%; font-size: 18px; flex: none; }
+  .track { position: relative; flex: 1; height: 120px; --done: 0%; }
+  .track .line, .track .progress { position: absolute; left: 0; top: 59px; height: 2px; border-radius: 2px; }
+  .track .line { right: 0; background: var(--rule); } .track .progress { width: var(--done); background: var(--brand); }
+  .track .head { position: absolute; top: 34px; left: var(--done); width: 2px; height: 52px; margin-left: -1px; background: var(--brand); opacity: 0; z-index: 3; }
+  .timeline.playing .head { opacity: 1; }
+  .mark { position: absolute; top: 60px; display: flex; align-items: center; gap: 3px; transform: translateY(-50%); }
+  .mark i, .mark b { display: block; background: var(--paper); border: 2px solid var(--quiet); transition: background .15s, border-color .15s, transform .15s; }
+  .mark.chime i { width: 11px; height: 11px; border-radius: 50%; } .mark.chime i + i { margin-top: -9px; }
+  .mark.answer i { margin-top: 0 !important; width: 8px; height: 8px; } .mark.answer b { width: 16px; height: 16px; border-radius: 50%; margin-left: 2px; }
+  .mark.wood i { width: 9px; height: 15px; border-radius: 3px; }
+  .mark.on i, .mark.on b { background: var(--brand); border-color: var(--brand); transform: scale(1.12); }
+  .mark span, .track .label { position: absolute; left: 0; white-space: nowrap; font-size: 13px; color: var(--quiet); transition: color .15s; }
+  .mark span.below { top: 24px; } .mark span.above { bottom: 24px; }
+  .track .label { transform: translateX(-50%); } .track .label.above { top: 6px; } .track .label.below { top: 84px; }
+  .mark.on span, .track .label.on { color: var(--ink); }
+  .talk, .ticks { position: absolute; top: 60px; height: 44px; transform: translateY(-50%); display: flex; align-items: center; justify-content: space-between; }
+  .talk i { display: block; width: 3px; border-radius: 2px; background: var(--rule); transition: background .12s; }
+  .ticks i { display: block; width: 4px; height: 4px; border-radius: 50%; background: var(--rule); transition: background .12s; }
+  .talk i.on, .ticks i.on { background: var(--brand); }
+  .talk, .ticks { background: var(--paper); padding: 0 6px; }
+  @media (max-width: 560px) { .timeline { gap: 12px; } .timeline button { width: 44px; height: 44px; } .mark span, .track .label { font-size: 11px; } }
   /* The corner ribbon: the way to the source. */
   .ribbon { position: absolute; top: 0; right: 0; width: 150px; height: 150px; overflow: hidden; z-index: 10; }
   .ribbon a { position: absolute; top: 34px; right: -52px; width: 220px; padding: 7px 0; transform: rotate(45deg);
@@ -73,7 +97,7 @@
 </head>
 <body>
 
-<div class="ribbon"><a href="https://github.com/akaalias/quasi">Source on GitHub</a></div>
+<div class="ribbon"><a href="https://github.com/akaalias/quasi">View on GitHub</a></div>
 
 <header>
   <div class="name"><img src="assets/icon.png" alt=""> Quasi</div>
@@ -84,7 +108,43 @@
     <h1>Say it,<br>hear it done.</h1>
     <p class="lead">Quasi is a small experiment in computing without a screen. You speak into a pocket recorder. Your phone stays in your bag, dark and locked. A few notes of wood and chime tell you that you were heard, understood, and that the thing you asked for is done.</p>
     <p class="quiet">If you ever want to check, there is a logbook. Most days you won't open it.</p>
-    <div class="film"><b>A short film is on its way</b><span>One recording, start to finish, with the phone face down on the table.</span></div>
+  </section>
+
+  <section>
+    <p class="kicker">The sound language</p>
+    <h2>Two instruments, two meanings.</h2>
+    <p>If you are not going to look, you have to be told. Quasi speaks in a few short sounds, each with a matching tap, and you learn them in a day.</p>
+    <p><b>Wood is the machinery.</b> Your note arrived; it was written down. <b>A soft chime is the conversation.</b> Starting a recording asks a question, two rising notes left hanging. The end answers it, and the answer says what happened.</p>
+    <div class="timeline" id="timeline">
+      <button class="primary" id="whole" aria-label="Play one whole note">▶</button>
+      <div class="track">
+        <div class="line"></div><div class="progress"></div><div class="head"></div>
+        <div class="mark chime" style="left:0%" data-at="0"><i></i><i></i><span class="below">The question</span></div>
+        <div class="talk" style="left:9%;width:27.5%" data-from="1250" data-to="5000"></div>
+        <span class="label above" style="left:22.75%" data-at="1250">You talk</span>
+        <div class="mark wood" style="left:38.5%" data-at="5200"><i></i><span class="below">Arrived</span></div>
+        <div class="mark wood" style="left:45.2%" data-at="6100"><i></i><span class="above">Written down</span></div>
+        <div class="ticks" style="left:54.8%;width:19.5%" data-from="7400" data-to="10300"></div>
+        <span class="label below" style="left:64.5%" data-at="7400">Working</span>
+        <div class="mark chime answer" style="left:76.3%" data-at="10300"><i></i><i></i><i></i><b></b><span class="above">Three tasks added</span></div>
+      </div>
+    </div>
+    <p class="quiet" id="caption">One whole note, as it sounds: press play.</p>
+    <div class="sounds">
+      <div class="sound"><div><b>The question <span class="tag">chime</span></b><span>You pressed record, and the phone is listening.</span></div><button data-sound="question">Play</button></div>
+      <div class="sound"><div><b>Arrived <span class="tag">wood</span></b><span>You stopped. The whole note reached the phone.</span></div><button data-sound="wood_1">Play</button></div>
+      <div class="sound"><div><b>Written down <span class="tag">wood</span></b><span>The transcript is saved.</span></div><button data-sound="wood_2">Play</button></div>
+      <div class="sound"><div><b>Still working <span class="tag">wood</span></b><span>A quiet tick-tock, only when a step takes a moment.</span></div><button data-sound="ticking">Play</button></div>
+      <div class="sound"><div><b>The answer: nothing to do <span class="tag">chime</span></b><span>It was a note, not a request. The plain home note.</span></div><button data-sound="answer_nothing">Play</button></div>
+      <div class="sound"><div><b>The answer: one task <span class="tag">chime</span></b><span>One quick note, then the home chord.</span></div><button data-sound="answer_tasks_1">Play</button></div>
+      <div class="sound"><div><b>The answer: three tasks <span class="tag">chime</span></b><span>One quick note for each task, then the chord. You can count them.</span></div><button data-sound="answer_tasks_3">Play</button></div>
+      <div class="sound"><div><b>Something failed <span class="tag">chime</span></b><span>The question falls away unanswered, and rings. Your note is still safe on the recorder.</span></div><button data-sound="answer_failed">Play</button></div>
+    </div>
+    <p class="quiet">A step that goes well climbs; a step that fails falls and rings longer, and nothing follows it. The sounds follow the phone's silent switch, and the taps say the same thing: one short tap for each good step, two long ones for a failure.</p>
+  </section>
+
+  <section>
+    <div class="film" style="margin-top:0"><b>A short film is on its way</b><span>A minute about where our eyes could be instead.</span></div>
   </section>
 
   <section>
@@ -110,25 +170,6 @@
       <div class="done">✓ Added · Book the car wash</div>
       <div class="more">Tomorrow</div>
     </div>
-  </section>
-
-  <section>
-    <p class="kicker">The sound language</p>
-    <h2>Two instruments, two meanings.</h2>
-    <p>If you are not going to look, you have to be told. Quasi speaks in a few short sounds, each with a matching tap, and you learn them in a day.</p>
-    <p><b>Wood is the machinery.</b> Your note arrived; it was written down. <b>A soft chime is the conversation.</b> Starting a recording asks a question, two rising notes left hanging. The end answers it, and the answer says what happened.</p>
-    <p><button class="primary" id="whole">▶ Play one whole note</button> <span class="quiet" id="caption" style="margin-left:10px"></span></p>
-    <div class="sounds">
-      <div class="sound"><div><b>The question <span class="tag">chime</span></b><span>You pressed record, and the phone is listening.</span></div><button data-sound="question">Play</button></div>
-      <div class="sound"><div><b>Arrived <span class="tag">wood</span></b><span>You stopped. The whole note reached the phone.</span></div><button data-sound="wood_1">Play</button></div>
-      <div class="sound"><div><b>Written down <span class="tag">wood</span></b><span>The transcript is saved.</span></div><button data-sound="wood_2">Play</button></div>
-      <div class="sound"><div><b>Still working <span class="tag">wood</span></b><span>A quiet tick-tock, only when a step takes a moment.</span></div><button data-sound="ticking">Play</button></div>
-      <div class="sound"><div><b>The answer: nothing to do <span class="tag">chime</span></b><span>It was a note, not a request. The plain home note.</span></div><button data-sound="answer_nothing">Play</button></div>
-      <div class="sound"><div><b>The answer: one task <span class="tag">chime</span></b><span>One quick note, then the home chord.</span></div><button data-sound="answer_tasks_1">Play</button></div>
-      <div class="sound"><div><b>The answer: three tasks <span class="tag">chime</span></b><span>One quick note for each task, then the chord. You can count them.</span></div><button data-sound="answer_tasks_3">Play</button></div>
-      <div class="sound"><div><b>Something failed <span class="tag">chime</span></b><span>The question falls away unanswered, and rings. Your note is still safe on the recorder.</span></div><button data-sound="answer_failed">Play</button></div>
-    </div>
-    <p class="quiet">A step that goes well climbs; a step that fails falls and rings longer, and nothing follows it. The sounds follow the phone's silent switch, and the taps say the same thing: one short tap for each good step, two long ones for a failure.</p>
   </section>
 
   <section>
@@ -172,22 +213,54 @@
   document.querySelectorAll("button[data-sound]").forEach(button =>
     button.addEventListener("click", () => play(button.dataset.sound)));
 
-  // A whole note, with roughly the pauses it has in real life.
+  // One whole note, with roughly the pauses it has in real life. The timeline shows it as it plays.
   const steps = [
-    [0,    "question",       "You press record…"],
-    [2600, null,             "…you talk…"],
-    [5200, "wood_1",         "You stop. It arrived."],
-    [6100, "wood_2",         "Written down."],
-    [7400, "ticking",        "Working out what you asked for…"],
-    [10300, "answer_tasks_3", "Three tasks added."],
-    [13500, null,            ""],
+    [0,     "question",       "You press record: the question."],
+    [1250,  null,             "You talk. Nothing to look at."],
+    [5200,  "wood_1",         "You stop. It arrived."],
+    [6100,  "wood_2",         "Written down."],
+    [7400,  "ticking",        "Working out what you asked for…"],
+    [10300, "answer_tasks_3", "The answer: three tasks added."],
   ];
-  let timers = [];
+  const LENGTH = 13500;
+  const timeline = document.getElementById("timeline"), track = timeline.querySelector(".track"), caption = document.getElementById("caption");
+  // The talking as a little cloud of sound, the working as ticks.
+  const talk = track.querySelector(".talk"), ticks = track.querySelector(".ticks");
+  let seed = 7;
+  for (let n = 0; n < 34; n++) {
+    seed = (seed * 73 + 41) % 97;
+    const bar = document.createElement("i");
+    bar.style.height = `${8 + (seed % 10) * 3.6 * Math.sin(Math.PI * (n + 0.5) / 34)}px`;
+    talk.appendChild(bar);
+  }
+  for (let n = 0; n < 6; n++) ticks.appendChild(document.createElement("i"));
+  const spread = (element, time) => {
+    const from = +element.dataset.from, to = +element.dataset.to, bars = element.children;
+    [...bars].forEach((bar, n) => bar.classList.toggle("on", time >= from + (to - from) * n / bars.length && time > 0));
+  };
+  const show = time => {
+    track.style.setProperty("--done", `${Math.min(100, 100 * time / LENGTH)}%`);
+    track.querySelectorAll("[data-at]").forEach(mark => mark.classList.toggle("on", time > 0 && time >= +mark.dataset.at));
+    spread(talk, time); spread(ticks, time);
+  };
+  let timers = [], frame = 0, playing = [];
+  const stop = () => { timers.forEach(clearTimeout); cancelAnimationFrame(frame); playing.forEach(audio => audio.pause()); playing = []; timeline.classList.remove("playing"); };
   document.getElementById("whole").addEventListener("click", () => {
-    timers.forEach(clearTimeout);
-    const caption = document.getElementById("caption");
-    timers = steps.map(([at, sound, text]) => setTimeout(() => { if (sound) play(sound); caption.textContent = text; }, at));
+    stop();
+    timeline.classList.add("playing");
+    const started = performance.now();
+    timers = steps.map(([at, sound, text]) => setTimeout(() => { if (sound) playing.push(play(sound)); caption.textContent = text; }, at));
+    const tick = () => {
+      const time = performance.now() - started;
+      show(time);
+      if (time < LENGTH) frame = requestAnimationFrame(tick);
+      else { timeline.classList.remove("playing"); caption.textContent = "One whole note, as it sounds: press play."; show(0); }
+    };
+    tick();
   });
+  // ?at=7000 shows the timeline as it stands at that moment, without sound (for checking the layout).
+  const at = new URLSearchParams(location.search).get("at");
+  if (at) { timeline.classList.add("playing"); show(+at); }
 </script>
 </body>
 </html>
