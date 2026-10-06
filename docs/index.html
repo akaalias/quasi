@@ -143,9 +143,10 @@
   .stage .rings rect { stroke: var(--brand); } .stage .rings rect.failed { stroke: var(--ink); }
   /* What is missing in an example that goes wrong: the phone that is not listening is faint and
      nothing flows to it; audio that gets lost stops half way; without internet the dots stop
-     short of Anthropic, which stays faint. */
+     short of Anthropic. Anthropic's mark itself is always at full strength, in every example:
+     never make it faint. */
   .example.deaf .stream circle, .example.lost .stream circle:nth-child(n+4), .example.offline .to-anthropic circle:nth-child(n+4) { animation: none !important; fill: var(--rule) !important; }
-  .example.deaf .stage .phone, .example.deaf .stage .service, .example.lost .stage .service, .example.offline .stage .service { opacity: .3; }
+  .example.deaf .stage .phone { opacity: .3; }
   .example.recording .stream circle, .example.asking .to-anthropic circle { animation: flow 1.26s linear infinite; }
   .stage circle:nth-child(2) { animation-delay: 0.18s !important; }
   .stage circle:nth-child(3) { animation-delay: 0.36s !important; }

@@ -44,15 +44,25 @@ const Quasi = (() => {
                mark: ["silence", "i"], notes: [0], lasts: 1500, rings: [], silent: true },
   };
 
-  // Someone talking, without words: a low murmur with the rhythm and vowels of speech, so there
-  // is no recording of anyone. A buzzing source goes through two moving resonances, in syllables
-  // and phrases. It is made anew for every play, and each time someone else is talking: a lower
-  // or a higher voice (a higher one has a shorter throat, so its resonances are higher too),
-  // faster or slower, flatter or more sing-song, more or less breath in it. Returns the sound as
-  // an address to play, and its loudness slice by slice for the bars on the line.
+  // Someone talking, without words: a murmur with the rhythm, melody and vowels of speech, so
+  // there is no recording of anyone. It is made anew for every play, and each time someone else
+  // is talking: a lower or a higher voice (a higher one has a shorter throat, so its resonances
+  // are higher too), faster or slower, flatter or more sing-song, more or less breath in it.
+  //
+  // What keeps it from sounding like a machine is what a machine would leave out. The voice is
+  // a softened buzz whose every cycle differs a little in length and strength. It goes through
+  // three resonances that slide from vowel to vowel and often move within a syllable. Syllables
+  // come in phrases: each phrase starts high and sinks, stressed syllables are longer, louder
+  // and higher, and the last one falls, or now and then rises as in a question. Many syllables
+  // begin with a consonant: a hiss, a short stop with a click, or a hum through the nose. And
+  // the voice does not switch off between syllables, it only dips.
+  //
+  // Returns the sound as an address to play, and its loudness slice by slice for the bars on the line.
   const TALK = 3600, RATE = 44100;
-  const VOWELS = [[700, 1150], [420, 1900], [310, 2200], [520, 950], [360, 820], [600, 1600]];
+  const VOWELS = [[700, 1150], [420, 1900], [310, 2200], [520, 950], [360, 820], [600, 1600], [480, 1350]];
+  const ONSETS = ["", "", "hiss", "stop", "hum"];
   const between = (low, high) => low + Math.random() * (high - low);
+  const any = list => list[Math.floor(Math.random() * list.length)];
   const resonance = width => {                   // two poles, with a centre that can move from sample to sample
     const r = Math.exp(-Math.PI * width / RATE);
     let y1 = 0, y2 = 0;
@@ -61,29 +71,47 @@ const Quasi = (() => {
   const babble = lasts => {
     const seconds = lasts / 1000, syllables = [];
     const height = Math.random(), voice = 95 * 2.3 ** height, throat = 0.92 + 0.26 * height + between(-0.04, 0.04);
-    const pace = between(0.85, 1.2), lilt = between(0.6, 1.7), breath = between(0.03, 0.09);
-    for (let t = 0.05; t < seconds - 0.2; t += pace * between(0.22, 0.32))      // a breath between phrases
-      for (let left = Math.round(between(3, 6)); left > 0; left--) {
-        const length = pace * between(0.13, 0.24);
+    const pace = between(0.85, 1.2), lilt = between(0.7, 1.5), breath = between(0.03, 0.08), wander = between(0, 6);
+    for (let t = 0.05; t < seconds - 0.2; t += pace * between(0.2, 0.38)) {      // a breath between phrases
+      const first = syllables.length, count = Math.round(between(2, 6));
+      for (let k = 0; k < count; k++) {
+        const stressed = Math.random() < 0.35, length = pace * between(0.11, 0.24) * (stressed ? 1.3 : 1);
         if (t + length > seconds - 0.05) break;
-        syllables.push([t, length, VOWELS[Math.floor(Math.random() * VOWELS.length)].map(freq => freq * throat), between(0.6, 1)]);
-        t += length + pace * between(0.02, 0.06);
+        const vowel = any(VOWELS);
+        syllables.push({ start: t, length, stressed, vowel, glide: Math.random() < 0.4 ? any(VOWELS) : vowel, onset: any(ONSETS),
+                         loud: between(0.55, 0.85) * (stressed ? 1.25 : 1), hiss: between(2800, 4200), place: 0, end: 1 });
+        t += length + pace * between(0.015, 0.05) + (Math.random() < 0.1 ? between(0.08, 0.16) : 0);      // now and then a hesitation
       }
-    const out = new Float32Array(Math.round(RATE * seconds)), low = resonance(90 * throat), high = resonance(130 * throat);
-    let f1 = 500 * throat, f2 = 1400 * throat, phase = 0, soft = 0, n = 0, peak = 0;
+      const said = syllables.slice(first);
+      said.forEach((syllable, k) => syllable.place = k / Math.max(1, said.length - 1));
+      if (said.length) said[said.length - 1].end = Math.random() < 0.25 ? 1.14 : 0.86;
+    }
+    const out = new Float32Array(Math.round(RATE * seconds));
+    const low = resonance(90 * throat), high = resonance(120 * throat), third = resonance(190 * throat), hiss = resonance(1400);
+    let f1 = 500 * throat, f2 = 1400 * throat, pitch = voice, tune = voice, level = 0, phase = 0, cycle = 1, shimmer = 1, tilt = 0, soft = 0, n = 0, peak = 0;
     for (let i = 0; i < out.length; i++) {
       const time = i / RATE;
-      while (n < syllables.length && time >= syllables[n][0] + syllables[n][1]) n++;
-      let level = 0;
-      if (n < syllables.length && time >= syllables[n][0]) {
-        const [start, length, vowel, loud] = syllables[n];
-        level = loud * Math.sin(Math.PI * (time - start) / length) ** 0.7;
-        f1 += (vowel[0] - f1) * 0.002; f2 += (vowel[1] - f2) * 0.002;        // glide towards this syllable's vowel
+      while (n < syllables.length && time >= syllables[n].start + syllables[n].length) n++;
+      const now = n < syllables.length && time >= syllables[n].start ? syllables[n] : null;
+      let target = 0, noise = 0;
+      if (now) {
+        const early = time - now.start, x = early / now.length;
+        let v1 = now.vowel[0] + (now.glide[0] - now.vowel[0]) * x, v2 = now.vowel[1] + (now.glide[1] - now.vowel[1]) * x;
+        target = now.loud * (1 - 0.2 * now.place) * Math.sin(Math.PI * x ** 0.8) ** 0.6;
+        if (now.onset === "stop") { if (early < 0.03) target = 0; else if (early < 0.042) noise = 4 * now.loud; }
+        if (now.onset === "hiss" && early < 0.06) noise = 9 * now.loud * Math.sin(Math.PI * early / 0.06);
+        if (now.onset === "hum" && early < 0.055) { target *= 0.45; v1 = 260; v2 = 1100; }
+        f1 += (v1 * throat - f1) * 0.0015; f2 += (v2 * throat - f2) * 0.0015;        // slide towards this syllable's vowel
+        tune = voice * (1.07 - 0.14 * now.place) * (1 + (now.stressed ? 0.09 * lilt * Math.sin(Math.PI * x) : 0)) * (1 + (now.end - 1) * x * x);
       }
-      const pitch = voice * (1 + lilt * (0.06 * Math.sin(2 * Math.PI * 0.7 * time) + 0.03 * Math.sin(2 * Math.PI * 2.3 * time))) * (1 - 0.04 * time / seconds);
-      phase = (phase + pitch / RATE) % 1;
-      const buzz = (2 * phase - 1) * level + breath * level * between(-1, 1);  // the voice, with a little breath
-      soft += 0.35 * (6 * low(buzz, f1) + 3.5 * high(buzz, f2) - soft);      // heard from a little away
+      level += (target - level) * (target > level ? 0.006 : 0.0015);               // the voice dips between syllables, it does not stop
+      pitch += (tune - pitch) * 0.002;
+      phase += pitch * (1 + 0.025 * lilt * Math.sin(2 * Math.PI * 0.9 * time + wander)) * cycle / RATE;
+      if (phase >= 1) { phase -= 1; cycle = 1 + between(-0.012, 0.012); shimmer = 1 + between(-0.07, 0.07); }      // no two cycles alike
+      tilt += 0.3 * (2 * phase - 1 - tilt);                                        // softer than a bare sawtooth
+      const buzz = level * (tilt * shimmer + breath * between(-1, 1));             // the voice, with a little breath
+      const sample = 6 * low(buzz, f1) + 3.5 * high(buzz, f2) + 1.4 * third(buzz, 2650 * throat) + hiss(noise * between(-1, 1), now ? now.hiss : 3500);
+      soft += 0.35 * (sample - soft);                                              // heard from a little away
       out[i] = soft; peak = Math.max(peak, Math.abs(soft));
     }
     // As a WAV file in memory, so that it plays the way the other sounds do.
