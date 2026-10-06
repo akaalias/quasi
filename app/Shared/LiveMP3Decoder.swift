@@ -8,6 +8,9 @@ final class LiveMP3Decoder {
     /// Called with newly decoded samples of the voice channel.
     var onSamples: (([Float]) -> Void)?
     private(set) var sampleRate: Double = 16_000
+    /// Chunks the parser refused and packets that did not decode, for the recordings log.
+    private(set) var parseFailures = 0
+    private(set) var decodeFailures = 0
 
     private var stream: AudioFileStreamID?
     private var inputFormat: AVAudioFormat?
@@ -31,7 +34,7 @@ final class LiveMP3Decoder {
     func feed(_ data: Data) {
         guard let stream else { return }
         data.withUnsafeBytes { bytes in
-            _ = AudioFileStreamParseBytes(stream, UInt32(bytes.count), bytes.baseAddress, [])
+            if AudioFileStreamParseBytes(stream, UInt32(bytes.count), bytes.baseAddress, []) != noErr { parseFailures += 1 }
         }
     }
 
@@ -74,7 +77,10 @@ final class LiveMP3Decoder {
             status.pointee = .haveData
             return compressed
         }
-        guard error == nil, pcm.frameLength > 0, let channels = pcm.floatChannelData else { return }
+        guard error == nil, pcm.frameLength > 0, let channels = pcm.floatChannelData else {
+            decodeFailures += 1
+            return
+        }
         let channel = AudioFiles.voiceChannel(of: Int(outputFormat.channelCount))
         onSamples?(Array(UnsafeBufferPointer(start: channels[channel], count: Int(pcm.frameLength))))
     }

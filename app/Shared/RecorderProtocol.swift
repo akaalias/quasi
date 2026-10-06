@@ -89,6 +89,9 @@ struct RecorderFile: Equatable {
         return formatter.date(from: name)
     }
 
+    /// Recordings are MP3 at a constant 64 kbit/s, so the size says how long one is.
+    var seconds: Int { size / 8_000 }
+
     /// File name used for the saved copy, in local time.
     var localBaseName: String {
         startDate.map(Self.localBaseName(for:)) ?? name
@@ -99,5 +102,20 @@ struct RecorderFile: Equatable {
         formatter.locale = Locale(identifier: "en_US_POSIX")
         formatter.dateFormat = "yyyy-MM-dd HH.mm.ss"
         return formatter.string(from: date)
+    }
+}
+
+extension RecorderFile {
+    /// The recording a saved copy was made from, by the copy's file name.
+    init?(localBaseName: String) {
+        let local = DateFormatter()
+        local.locale = Locale(identifier: "en_US_POSIX")
+        local.dateFormat = "yyyy-MM-dd HH.mm.ss"
+        guard let date = local.date(from: localBaseName) else { return nil }
+        let formatter = DateFormatter()
+        formatter.locale = Locale(identifier: "en_US_POSIX")
+        formatter.timeZone = TimeZone(identifier: "UTC")
+        formatter.dateFormat = "yyyy-MM-dd-HH-mm-ss"
+        self.init(name: formatter.string(from: date), size: 0)
     }
 }

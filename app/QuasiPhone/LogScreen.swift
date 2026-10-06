@@ -103,7 +103,11 @@ struct NoteRow: View {
                 words("This recording could not be transcribed.", spoken: false)
                 Text("It is still on the recorder.").typo(.ui).foregroundStyle(Color.quiet)
             default:
-                words("“\(quote)”", spoken: true)
+                if quote.isEmpty {
+                    words(note.isPartial ? "No words were heard in the part that arrived." : "No words were heard in this recording.", spoken: false)
+                } else {
+                    words("“\(quote)”", spoken: true)
+                }
                 outcome
             }
         }
@@ -142,6 +146,9 @@ struct NoteRow: View {
             Text("Your note is safe.").typo(.ui).foregroundStyle(Color.quiet)
         case .pending:
             Text("Reading…").typo(.ui).foregroundStyle(Color.quiet)
+        case .note where note.isPartial:
+            Text(note.shortfall ?? "").typo(.uiStrong)
+            Text("Your whole note is safe on the recorder.").typo(.ui).foregroundStyle(Color.quiet)
         default:
             if let task = note.tasks.first {
                 Text(note.tasks.count == 1 ? "Task found, not sent: \(task.draft.title)" : "\(note.tasks.count) tasks found, not sent")

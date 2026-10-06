@@ -4,9 +4,9 @@ import Foundation
 enum LiveStep: Equatable {
     /// Live audio begins.
     case started
-    /// The recording ended; `true` if its live audio was received.
+    /// The recording ended; `true` if audio of it is here or is being fetched from the recorder.
     case captured(Bool)
-    /// `true` if audio and transcript are saved.
+    /// `true` if audio and transcript of the whole recording are saved.
     case transcribed(Bool)
     /// The transcript was acted on.
     case processed(Processing)
@@ -88,6 +88,17 @@ final class AppModel: ObservableObject {
     private var pendingLevel: [Float] = []
     private var deviceIsRecording = false
     private var liveFileName: String?
+    // What the live stream brought, for the recordings log.
+    private var liveBytes = 0
+    private var livePackets = 0
+    private var lastLiveAudio: Date?
+    private var longestLiveGap: TimeInterval = 0
+    private var linkLosses = 0
+    /// Signal strength every two seconds of the recording, in dBm.
+    private var liveSignal: [Int] = []
+    /// Runs while a recording waits for a lost link to come back.
+    private var linkLostWait: Task<Void, Never>?
+    private var fetching = false
     private var syncing = false
     private var syncRequested = false
 
@@ -109,7 +120,7 @@ final class AppModel: ObservableObject {
                 }
             }
             if state != .ready, self.phase == .recording {
-                self.finishLiveSession(file: nil)
+                self.linkLostWhileRecording()
             }
         }
         client.onBattery = { [weak self] level in
@@ -120,11 +131,24 @@ final class AppModel: ObservableObject {
             self?.storage = (total, free)
             self?.noteRecorderState()
         }
-        client.onRecordingFlag = { [weak self] in self?.deviceIsRecording = $0 }
+        client.onRecordingFlag = { [weak self] recording in
+            guard let self else { return }
+            self.deviceIsRecording = recording
+            // Back after a lost link, and the recorder has stopped meanwhile: its stop notice was missed.
+            if !recording, self.phase == .recording, self.linkLostWait != nil,
+               Date().timeIntervalSince(self.lastLiveAudio ?? .distantPast) > 2 {
+                self.finishLiveSession(file: nil)
+            }
+        }
+        client.onSignal = { [weak self] strength in
+            guard let self, self.phase == .recording else { return }
+            self.liveSignal.append(strength)
+        }
         client.onRecordingStarted = { [weak self] name in self?.startLiveSession(name: name) }
         client.onLiveAudio = { [weak self] data in
             guard let self else { return }
             if self.phase != .recording { self.startLiveSession(name: nil) }
+            self.noteLiveAudio(data.count)
             self.decoder?.feed(data)
         }
         client.onRecordingStopped = { [weak self] file in self?.finishLiveSession(file: file) }
@@ -158,10 +182,33 @@ final class AppModel: ObservableObject {
 
     /// Asks the recorder what it has stored. Skipped while it is recording or being downloaded from.
     func countStoredRecordings() async {
-        guard connection == .ready, !deviceIsRecording, phase != .recording, !syncing,
+        guard connection == .ready, !deviceIsRecording, phase != .recording, !syncing, !fetching,
               let files = try? await client.listFiles() else { return }
         storedRecordings = (files.count, Double(files.reduce(0) { $0 + $1.size }) / 1_000_000)
         noteRecorderState()
+        reconcile(with: files)
+    }
+
+    /// Checks the log against what the recorder has stored. The recorder knows how long each
+    /// recording really is, which shows the notes that only partly arrived, and a recording made
+    /// since the log began that has no entry gets one: nothing recorded goes unmentioned.
+    private func reconcile(with files: [RecorderFile]) {
+        guard let earliest = notes.map(\.date).min() else { return }
+        var changed = false
+        for file in files {
+            if let index = notes.firstIndex(where: { $0.id == file.localBaseName }) {
+                guard notes[index].recorded != file.seconds else { continue }
+                notes[index].recorded = file.seconds
+                changed = true
+            } else if let date = file.startDate, date > earliest {
+                notes.append(NoteRecord(id: file.localBaseName, date: date, recorded: file.seconds, outcome: .noAudio))
+                record("\(file.localBaseName) is on the recorder (\(file.seconds) s) and was missing from the log")
+                changed = true
+            }
+        }
+        guard changed else { return }
+        notes.sort { $0.date > $1.date }
+        NoteLog.save(notes, to: folder)
     }
 
     /// Keeps the last known state of the recorder in `recorder.txt` in the log folder.
@@ -177,7 +224,7 @@ final class AppModel: ObservableObject {
     // MARK: Link
 
     private func updateLink() {
-        let busy = phase == .recording || syncing
+        let busy = phase == .recording || syncing || fetching
         if systemIsAsleep || (userIsAway && !busy) {
             client.pause()
         } else if !userIsAway {
@@ -187,10 +234,20 @@ final class AppModel: ObservableObject {
 
     /// Appends the recorder's battery level to `battery.csv` in the platform's log folder.
     private func logBattery(_ level: Int) {
+        appendLog("battery.csv", "\(ISO8601DateFormatter().string(from: Date())),\(level)")
+    }
+
+    /// Notes what happened to a recording in `recordings.log` in the platform's log folder, so a
+    /// note that went wrong can be traced afterwards: how much arrived, when it stopped arriving.
+    private func record(_ event: String) {
+        appendLog("recordings.log", "\(ISO8601DateFormatter().string(from: Date())) \(event)")
+    }
+
+    private func appendLog(_ name: String, _ text: String) {
         let directory = Platform.logsFolder
         try? FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
-        let file = directory.appendingPathComponent("battery.csv")
-        let line = Data("\(ISO8601DateFormatter().string(from: Date())),\(level)\n".utf8)
+        let file = directory.appendingPathComponent(name)
+        let line = Data((text + "\n").utf8)
         if let handle = try? FileHandle(forWritingTo: file) {
             defer { try? handle.close() }
             _ = try? handle.seekToEnd()
@@ -221,6 +278,14 @@ final class AppModel: ObservableObject {
         deviceIsRecording = true
         liveFileName = name
         liveSamples = []
+        liveBytes = 0
+        livePackets = 0
+        lastLiveAudio = nil
+        longestLiveGap = 0
+        linkLosses = 0
+        liveSignal = []
+        linkLostWait?.cancel()
+        linkLostWait = nil
         pendingLevel = []
         levels = []
         transcript = ""
@@ -241,8 +306,44 @@ final class AppModel: ObservableObject {
         liveTranscriber = listener
         Task { await listener.start(locale: locale, sampleRate: decoder.sampleRate) }
         phase = .recording
+        record("recording started (\(name ?? "name not known yet")), app \(Platform.appState)")
+        let session = recordingStart
+        Task { [weak self] in
+            while let self, self.phase == .recording, self.recordingStart == session {
+                self.client.readSignal()
+                try? await Task.sleep(for: .seconds(2))
+            }
+        }
         onLiveSessionStarted?()
         onLiveStep?(.started)
+    }
+
+    private func noteLiveAudio(_ bytes: Int) {
+        let now = Date()
+        if let lastLiveAudio { longestLiveGap = max(longestLiveGap, now.timeIntervalSince(lastLiveAudio)) }
+        lastLiveAudio = now
+        liveBytes += bytes
+        livePackets += 1
+        if linkLostWait != nil {
+            linkLostWait?.cancel()
+            linkLostWait = nil
+            record("audio arrives again")
+        }
+    }
+
+    /// The link dropped during a recording. The recorder goes on recording, so the session stays
+    /// open for a while: if the link comes back, the rest of the stream joins what is already
+    /// here and the gap is filled from the recorder's own copy at the end.
+    private func linkLostWhileRecording() {
+        guard linkLostWait == nil else { return }
+        linkLosses += 1
+        let session = recordingStart
+        record("link lost \(Int(Date().timeIntervalSince(session ?? Date()))) s into the recording")
+        linkLostWait = Task { [weak self] in
+            try? await Task.sleep(for: .seconds(30))
+            guard let self, !Task.isCancelled, self.phase == .recording, self.recordingStart == session else { return }
+            self.finishLiveSession(file: nil)
+        }
     }
 
     private func appendLive(_ samples: [Float]) {
@@ -261,53 +362,107 @@ final class AppModel: ObservableObject {
         levels = Array((levels + newLevels).suffix(Self.maxLevels))
     }
 
-    /// Saves and transcribes what arrived over the live stream. Nothing is fetched from the
-    /// recorder's storage; the live stream can have small gaps, the copy on the recorder is complete.
+    /// Ends the live session. If the live stream brought the recording (it always has small gaps),
+    /// that is saved and transcribed. If a good part is missing, the complete copy is fetched
+    /// from the recorder first. When that cannot be done, what arrived is kept, the note says how
+    /// much is missing, and its words are not acted on: half a sentence makes a wrong task.
     private func finishLiveSession(file: RecorderFile?) {
         guard phase == .recording else { return }
         deviceIsRecording = false
+        linkLostWait?.cancel()
+        linkLostWait = nil
         let samples = liveSamples
         let sampleRate = decoder?.sampleRate ?? 16_000
         let started = recordingStart ?? Date()
-        let baseName = (file ?? liveFileName.map { RecorderFile(name: $0, size: 0) })?.localBaseName
-            ?? RecorderFile.localBaseName(for: started)
+        let source = file ?? liveFileName.map { RecorderFile(name: $0, size: 0) }
+        let baseName = source?.localBaseName ?? RecorderFile.localBaseName(for: started)
+        let kept = Int(Double(samples.count) / sampleRate)
+        // The recorder names a recording after the moment it began, so how long it ran is known
+        // without the stream.
+        let recorded = max(kept, Int(Date().timeIntervalSince(source?.startDate ?? started)))
+        let partial = samples.isEmpty || NoteRecord.isPartial(kept: kept, recorded: recorded)
+        let fetchable = partial && source != nil && connection == .ready
+        record("\(baseName) \(file == nil ? "ended without a stop notice" : "stopped"): recorded \(recorded) s, "
+            + "kept \(String(format: "%.1f", Double(samples.count) / sampleRate)) s, "
+            + "stream \(liveBytes) bytes in \(livePackets) packets, "
+            + "last audio \(lastLiveAudio.map { String(format: "%.1f s after the start", $0.timeIntervalSince(started)) } ?? "never"), "
+            + "longest gap \(String(format: "%.1f", longestLiveGap)) s, link lost \(linkLosses) times, "
+            + "parser refused \(decoder?.parseFailures ?? 0) chunks, \(decoder?.decodeFailures ?? 0) packets did not decode, "
+            + "size in stop notice \(file.map { String($0.size) } ?? "none"), "
+            + "signal every 2 s \(liveSignal.map(String.init).joined(separator: " ")) dBm, app \(Platform.appState)")
         decoder = nil
         liveSamples = []
         liveFileName = nil
         liveTranscriber?.finish()
         liveTranscriber = nil
+        fetching = fetchable  // so the link is not let go before the fetch begins
         updateLink()
-        guard !samples.isEmpty else {
-            // The recording itself is safe on the recorder; only the live copy is missing.
+        let nothingArrived = "No audio arrived from the recorder for this recording. It is still on the recorder."
+        guard !samples.isEmpty || fetchable else {
             phase = .finished
-            transcriptNote = "No audio arrived from the recorder for this recording. "
-                + "It is still on the recorder: use Download Stored Recordings to fetch it."
-            log(NoteRecord(id: baseName, date: started, outcome: .noAudio))
+            transcriptNote = nothingArrived
+            log(NoteRecord(id: baseName, date: started, recorded: recorded, outcome: .noAudio))
             onLiveStep?(.captured(false))
             return
         }
         phase = .transcribing
-        transcriptNote = "Transcribing…"
+        transcriptNote = fetchable ? "Fetching the whole recording from the recorder…" : "Transcribing…"
         onLiveStep?(.captured(true))
 
         Task {
-            let text: String
+            var audio = (samples: samples, sampleRate: sampleRate)
+            var note = NoteRecord(id: baseName, date: started, seconds: kept, recorded: recorded)
+            var fetched = false
+            if fetchable, let source {
+                do {
+                    audio = try await fetchAudio(of: source)
+                    note.seconds = Int(Double(audio.samples.count) / audio.sampleRate)
+                    note.recorded = note.seconds
+                    fetched = true
+                    record("\(baseName) fetched whole from the recorder: \(note.seconds ?? 0) s")
+                } catch {
+                    record("\(baseName) could not be fetched from the recorder: \(error.localizedDescription)")
+                }
+            }
+            guard !audio.samples.isEmpty else {
+                self.log(NoteRecord(id: baseName, date: started, recorded: recorded, outcome: .noAudio))
+                guard self.phase == .transcribing else { return }
+                self.transcriptNote = nothingArrived
+                self.phase = .finished
+                self.onLiveStep?(.transcribed(false))
+                return
+            }
+            if self.phase == .transcribing { self.transcriptNote = "Transcribing…" }
             do {
-                text = try await saveAndTranscribe(samples: samples, sampleRate: sampleRate, baseName: baseName)
+                note.transcript = try await saveAndTranscribe(samples: audio.samples, sampleRate: audio.sampleRate, baseName: baseName)
             } catch {
-                self.log(NoteRecord(id: baseName, date: started, outcome: .transcriptionFailed, problem: error.localizedDescription))
+                note.outcome = .transcriptionFailed
+                note.problem = error.localizedDescription
+                self.log(note)
                 guard self.phase == .transcribing else { return }
                 self.transcriptNote = "Transcription failed: \(error.localizedDescription)"
                 self.phase = .finished
                 self.onLiveStep?(.transcribed(false))
                 return
             }
-            self.log(NoteRecord(id: baseName, date: started, seconds: Int(Double(samples.count) / sampleRate), transcript: text))
+            if fetched, let source { markComplete(source.name) }
             let current = self.phase == .transcribing
             if current {
-                self.transcript = text
-                self.transcriptNote = "Saved as \(baseName).txt"
+                self.transcript = note.transcript
                 self.phase = .finished
+            }
+            if let shortfall = note.shortfall {
+                note.outcome = .note
+                self.log(note)
+                if current {
+                    self.transcriptNote = shortfall + " The whole recording is still on the recorder."
+                    self.onLiveStep?(.transcribed(false))
+                }
+                return
+            }
+            self.log(note)
+            if current {
+                self.transcriptNote = "Saved as \(baseName).txt"
                 self.onLiveStep?(.transcribed(true))
             }
             let outcome = await self.process(baseName)
@@ -479,10 +634,62 @@ final class AppModel: ObservableObject {
         return text
     }
 
+    // MARK: The recorder's own copies
+
+    /// Downloads one recording from the recorder and returns its voice channel.
+    private func fetchAudio(of file: RecorderFile, progress: @escaping (Int, Int) -> Void = { _, _ in }) async throws -> (samples: [Float], sampleRate: Double) {
+        fetching = true
+        defer {
+            fetching = false
+            updateLink()
+        }
+        let data = try await client.download(file, progress: progress)
+        // Kept next to the recordings: that folder can be written to while the phone is locked.
+        let original = folder.appendingPathComponent(".fetch-\(UUID().uuidString).mp3")
+        defer { try? FileManager.default.removeItem(at: original) }
+        try data.write(to: original)
+        return try AudioFiles.readVoice(from: original)
+    }
+
+    /// Remembers that the saved copy of a recording is the complete one, so it is not downloaded again.
+    private func markComplete(_ name: String) {
+        var complete = Set(UserDefaults.standard.stringArray(forKey: Self.completeKey) ?? [])
+        complete.insert(name)
+        UserDefaults.standard.set(Array(complete), forKey: Self.completeKey)
+    }
+
+    /// Replaces what this device has of one note with the recorder's complete copy and transcribes
+    /// that. A note that has no tasks yet is then read for tasks; tasks already made stay.
+    func fetchWhole(_ id: String) async {
+        guard let note = notes.first(where: { $0.id == id }), let file = RecorderFile(localBaseName: id) else { return }
+        guard connection == .ready, !deviceIsRecording, phase != .recording, !syncing else {
+            update(id) { $0.problem = "The recorder is busy or out of reach, so the recording could not be fetched." }
+            return
+        }
+        do {
+            let audio = try await fetchAudio(of: file)
+            let text = try await saveAndTranscribe(samples: audio.samples, sampleRate: audio.sampleRate, baseName: id)
+            let length = Int(Double(audio.samples.count) / audio.sampleRate)
+            markComplete(file.name)
+            record("\(id) fetched whole from the recorder on request: \(length) s")
+            update(id) {
+                $0.transcript = text
+                $0.seconds = length
+                $0.recorded = length
+                $0.problem = nil
+                if $0.outcome == .noAudio || $0.outcome == .transcriptionFailed { $0.outcome = .note }
+            }
+            if note.tasks.isEmpty { await process(id) }
+        } catch {
+            record("\(id) could not be fetched from the recorder on request: \(error.localizedDescription)")
+            update(id) { $0.problem = "The recording could not be fetched from the recorder: \(error.localizedDescription)" }
+        }
+    }
+
     // MARK: Download of stored recordings (manual)
 
     func requestSync() {
-        guard connection == .ready, !deviceIsRecording, phase != .recording else { return }
+        guard connection == .ready, !deviceIsRecording, phase != .recording, !fetching else { return }
         if syncing {
             syncRequested = true
             return
@@ -509,21 +716,18 @@ final class AppModel: ObservableObject {
             for file in files {
                 let audio = folder.appendingPathComponent(file.localBaseName + ".m4a")
                 if complete.contains(file.name), FileManager.default.fileExists(atPath: audio.path) { continue }
-                let data = try await client.download(file) { [weak self] received, total in
+                let (samples, sampleRate) = try await fetchAudio(of: file) { [weak self] received, total in
                     let percent = total > 0 ? received * 100 / total : 0
                     self?.syncStatus = "Downloading \(file.localBaseName) (\(percent)%)"
                 }
                 syncStatus = "Transcribing \(file.localBaseName)…"
-                let original = FileManager.default.temporaryDirectory.appendingPathComponent("quasi-\(UUID().uuidString).mp3")
-                defer { try? FileManager.default.removeItem(at: original) }
-                try data.write(to: original)
-                let (samples, sampleRate) = try AudioFiles.readVoice(from: original)
                 let text = try await saveAndTranscribe(samples: samples, sampleRate: sampleRate, baseName: file.localBaseName)
+                let length = Int(Double(samples.count) / sampleRate)
                 // The complete copy replaces what the live stream gave; a task already made from it stays.
                 if notes.contains(where: { $0.id == file.localBaseName && $0.outcome == .taskAdded }) {
-                    update(file.localBaseName) { $0.transcript = text }
+                    update(file.localBaseName) { $0.transcript = text; $0.seconds = length; $0.recorded = length }
                 } else {
-                    log(NoteRecord(id: file.localBaseName, date: file.startDate ?? Date(), transcript: text, outcome: .note))
+                    log(NoteRecord(id: file.localBaseName, date: file.startDate ?? Date(), seconds: length, recorded: length, transcript: text, outcome: .note))
                 }
                 complete.insert(file.name)
                 UserDefaults.standard.set(Array(complete), forKey: Self.completeKey)

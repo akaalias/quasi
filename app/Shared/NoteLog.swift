@@ -18,8 +18,10 @@ struct NoteRecord: Codable, Identifiable, Equatable {
     /// The base name of the note's files, e.g. "2026-10-05 14.03.12".
     var id: String
     var date: Date
-    /// How long the recording is, if known.
+    /// How much audio this device has of the recording, in seconds, if known.
     var seconds: Int?
+    /// How long the recorder itself recorded, in seconds, if known.
+    var recorded: Int?
     var transcript = ""
     var outcome = Outcome.pending
     /// The tasks this note asked for, in the order they were asked.
@@ -46,6 +48,7 @@ extension NoteRecord {
         id = try values.decode(String.self, forKey: .id)
         date = try values.decode(Date.self, forKey: .date)
         seconds = try values.decodeIfPresent(Int.self, forKey: .seconds)
+        recorded = try values.decodeIfPresent(Int.self, forKey: .recorded)
         transcript = try values.decodeIfPresent(String.self, forKey: .transcript) ?? ""
         outcome = try values.decodeIfPresent(Outcome.self, forKey: .outcome) ?? .pending
         problem = try values.decodeIfPresent(String.self, forKey: .problem)
@@ -57,6 +60,25 @@ extension NoteRecord {
                 tasks = [AddedTask(draft: draft, todoistID: try earlier.decodeIfPresent(String.self, forKey: .todoistID))]
             }
         }
+    }
+}
+
+extension NoteRecord {
+    /// The live stream always loses a little. Missing more than this much, the words cannot be trusted.
+    static func isPartial(kept: Int, recorded: Int) -> Bool {
+        recorded - kept > max(2, recorded / 5)
+    }
+
+    /// Whether a good part of the recording never reached this device. The recorder has all of it.
+    var isPartial: Bool {
+        guard let seconds, let recorded else { return false }
+        return Self.isPartial(kept: seconds, recorded: recorded)
+    }
+
+    /// Says how much is missing, for a note that is partial.
+    var shortfall: String? {
+        guard isPartial, let seconds, let recorded else { return nil }
+        return "Only \(seconds) of \(recorded) seconds of this recording arrived."
     }
 }
 

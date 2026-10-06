@@ -35,6 +35,10 @@ struct NoteScreen: View {
                                 .padding(.bottom, Metric.gap)
                         }
                     }
+                    if let shortfall = note.shortfall {
+                        Text(shortfall).typo(.ui)
+                        Text("Your whole note is safe on the recorder.").typo(.ui).foregroundStyle(Color.quiet).padding(.bottom, Metric.gap)
+                    }
                     if let problem = note.problem {
                         Text(problem).typo(.ui)
                         Text("Your note is safe.").typo(.ui).foregroundStyle(Color.quiet).padding(.bottom, Metric.gap)
@@ -114,15 +118,16 @@ struct NoteScreen: View {
 
     @ViewBuilder private func actions(for note: NoteRecord) -> some View {
         HStack(spacing: 7.6) {
+            if note.isPartial || note.outcome == .noAudio || note.outcome == .transcriptionFailed {
+                act("Fetch from the recorder") { await model.fetchWhole(id) }
+                    .disabled(model.connection != .ready)
+            }
             switch note.outcome {
             case .taskAdded:
                 act(note.tasks.count == 1 ? "Undo" : "Undo all") { await model.undoTask(id) }
             case .processingFailed:
                 act("Try again") { await model.process(id) }
-            case .noAudio, .transcriptionFailed:
-                act("Fetch from the recorder") { model.requestSync() }
-                    .disabled(model.connection != .ready)
-            case .note where model.hasAnthropicKey && !note.transcript.isEmpty:
+            case .note where model.hasAnthropicKey && !note.transcript.isEmpty && !note.isPartial:
                 act("Make this into tasks") { await model.process(id, confirmed: true) }
             default:
                 EmptyView()

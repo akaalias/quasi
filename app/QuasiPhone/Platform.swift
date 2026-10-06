@@ -30,6 +30,12 @@ enum Platform {
         }
     }
 
+    /// Where the app is right now, for the recordings log.
+    @MainActor static var appState: String {
+        let place = UIApplication.shared.applicationState == .active ? "in front" : "in the background"
+        return UIApplication.shared.isProtectedDataAvailable ? place : place + ", phone locked"
+    }
+
     static func copy(_ text: String) {
         UIPasteboard.general.string = text
     }

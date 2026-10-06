@@ -47,6 +47,9 @@ final class LockScreenPublisher {
             case .processingFailed, .transcriptionFailed, .noAudio:
                 snapshot.lastNote = "A note needs a look"
                 snapshot.lastOutcome = "open Quasi"
+            case .note where note.isPartial:
+                snapshot.lastNote = "A note needs a look"
+                snapshot.lastOutcome = "open Quasi"
             case .pending:
                 snapshot.lastNote = String(note.transcript.prefix(60))
                 snapshot.lastOutcome = "reading"

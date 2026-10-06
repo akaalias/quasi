@@ -38,6 +38,8 @@ final class RecorderClient: NSObject {
     var onRecordingStopped: ((RecorderFile) -> Void)?
     var onRecordingFlag: ((Bool) -> Void)?
     var onLiveAudio: ((Data) -> Void)?
+    /// The strength of the recorder's signal in dBm, after `readSignal()`.
+    var onSignal: ((Int) -> Void)?
     /// Called for every frame from the recorder and on connect.
     var onActivity: (() -> Void)?
 
@@ -101,6 +103,12 @@ final class RecorderClient: NSObject {
                 }
             }
         }
+    }
+
+    /// Asks how strong the recorder's signal is. Nothing is sent to the recorder for this.
+    func readSignal() {
+        guard state == .ready else { return }
+        peripheral?.readRSSI()
     }
 
     private func send(_ command: RecorderProtocol.Command, _ payload: Data = Data()) {
@@ -333,6 +341,11 @@ extension RecorderClient: @preconcurrency CBPeripheralDelegate {
         if pendingSubscriptions == 0 {
             send(.hello)
         }
+    }
+
+    func peripheral(_ peripheral: CBPeripheral, didReadRSSI RSSI: NSNumber, error: Error?) {
+        guard error == nil else { return }
+        onSignal?(RSSI.intValue)
     }
 
     func peripheral(_ peripheral: CBPeripheral, didUpdateValueFor characteristic: CBCharacteristic, error: Error?) {

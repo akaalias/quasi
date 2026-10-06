@@ -8,6 +8,9 @@ enum Platform {
     /// The Mac app is never removed from memory by the system, so it needs no restoration.
     static let bluetoothRestoreIdentifier: String? = nil
 
+    /// Where the app is right now, for the recordings log.
+    @MainActor static var appState: String { "running" }
+
     static func copy(_ text: String) {
         NSPasteboard.general.clearContents()
         NSPasteboard.general.setString(text, forType: .string)

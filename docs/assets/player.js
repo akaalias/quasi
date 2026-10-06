@@ -310,6 +310,11 @@ const Quasi = (() => {
       running = true; label();
       // The line starts moving when the first sound is heard, not when the button is pressed,
       // so that the marks and the notes stay together.
+      // An iPhone only lets a sound start by itself if a touch has started it once, or if
+      // another sound has just ended. The answer follows a silence, so it stayed mute there.
+      // The touch that starts the note therefore starts every later sound as well and holds
+      // it at once.
+      if (next === 0) voices.forEach((audio, n) => { if (audio && n > 0) { audio.play().catch(() => {}); audio.pause(); } });
       if (next === 0) sound().then(go, go);
       else { sounding.forEach(audio => audio.play()); go(); }
     };
