@@ -21,10 +21,13 @@ const Quasi = (() => {
 
   // The vocabulary. `notes` are the moments within the sound at which each part of its mark
   // sounds, `lasts` is the length of the file. A word that says something went wrong is `failed`:
-  // it is drawn in ink, because orange only ever means that the app did something.
+  // it is drawn in ink, because orange only ever means that the app did something. One row is not
+  // the phone's but `yours`: what you say, set in the serif that the app uses for your words.
   const WORDS = {
     question: { label: `"I'm listening"`, text: "You pressed record, and the recorder is streaming live audio to your locked phone.",
                 mark: ["chime", "ii"], notes: [0, 220], lasts: 1620, rings: [[0, 800, 18, .8], [220, 900, 22, .8]] },
+    talking: { label: "You say what is on your mind", text: "You talk the way you think, with pauses and corrections. Your locked phone receives every word while you speak.",
+               mark: ["voice", "iiiiiii"], yours: true },
     wood_1: { label: `"I've heard you"`, text: "You stopped recording, and your locked phone has received the whole voice note.",
               mark: ["wood", "i"], notes: [0], lasts: 900, rings: [[0, 420, 13, .9]] },
     wood_fail_1: { label: `"I didn't get that"`, text: "You stopped recording, but the audio did not reach your phone. The wood block is lower and rings longer, and nothing follows it.",
@@ -33,17 +36,69 @@ const Quasi = (() => {
     answer_tasks_1: tasks(1, "one task", "Your phone has added the task to your to-do list. It plays one quick note for the task and then a chord."),
     answer_tasks_2: tasks(2, "two tasks", "Your phone has added both tasks to your to-do list. It plays one quick note for each task and then a chord, so you can count the tasks."),
     answer_tasks_3: tasks(3, "three tasks", "Your phone has added all three tasks to your to-do list. It plays one quick note for each task and then a chord, so you can count the tasks."),
-    answer_nothing: { label: `"There is nothing to do"`, text: "You did not ask for anything, so your phone keeps what you said as a note. It plays the home note alone, without a chord.",
+    answer_nothing: { label: `"I've kept it as a note"`, text: "You did not ask for anything, so your phone keeps what you said as a note. It plays the home note alone, without a chord.",
                       mark: ["chime answer", "b"], notes: [0], lasts: 1400, rings: [[0, 1300, 26, .85]] },
     answer_failed: { label: `"I couldn't do it"`, text: "Your phone could not work out the tasks or could not add them. The answer falls and rings out. Your note is safe.",
                      mark: ["chime fall", "ii"], notes: [0, 355], lasts: 2750, rings: [[0, 800, 18, .8], [355, 1800, 26, .8]], failed: true },
     silence: { label: "Silence", text: "No sound follows the press of the button. That is how you know that your phone is not listening.",
-               mark: ["silence", "i"], silent: true },
+               mark: ["silence", "i"], notes: [0], lasts: 1500, rings: [], silent: true },
   };
 
-  // The loudness of talking.wav, slice by slice, for the little cloud of sound on the line.
-  const TALK = 3600;
-  const LOUDNESS = [0.45, 1.0, 0.26, 0.74, 0.27, 0.97, 0.52, 0.25, 0.1, 0.98, 0.67, 0.0, 0.0, 0.0, 0.52, 0.45, 0.14, 0.14, 0.35, 0.25, 0.56, 0.02, 0.0, 0.0, 0.77, 0.72, 0.18, 0.28, 0.15, 0.73, 0.19, 0.27, 0.0, 0.0];
+  // Someone talking, without words: a low murmur with the rhythm and vowels of speech, so there
+  // is no recording of anyone. A buzzing source goes through two moving resonances, in syllables
+  // and phrases. It is made anew for every play, and each time someone else is talking: a lower
+  // or a higher voice (a higher one has a shorter throat, so its resonances are higher too),
+  // faster or slower, flatter or more sing-song, more or less breath in it. Returns the sound as
+  // an address to play, and its loudness slice by slice for the bars on the line.
+  const TALK = 3600, RATE = 44100;
+  const VOWELS = [[700, 1150], [420, 1900], [310, 2200], [520, 950], [360, 820], [600, 1600]];
+  const between = (low, high) => low + Math.random() * (high - low);
+  const resonance = width => {                   // two poles, with a centre that can move from sample to sample
+    const r = Math.exp(-Math.PI * width / RATE);
+    let y1 = 0, y2 = 0;
+    return (x, freq) => { const y = (1 - r) * x + 2 * r * Math.cos(2 * Math.PI * freq / RATE) * y1 - r * r * y2; y2 = y1; y1 = y; return y; };
+  };
+  const babble = lasts => {
+    const seconds = lasts / 1000, syllables = [];
+    const height = Math.random(), voice = 95 * 2.3 ** height, throat = 0.92 + 0.26 * height + between(-0.04, 0.04);
+    const pace = between(0.85, 1.2), lilt = between(0.6, 1.7), breath = between(0.03, 0.09);
+    for (let t = 0.05; t < seconds - 0.2; t += pace * between(0.22, 0.32))      // a breath between phrases
+      for (let left = Math.round(between(3, 6)); left > 0; left--) {
+        const length = pace * between(0.13, 0.24);
+        if (t + length > seconds - 0.05) break;
+        syllables.push([t, length, VOWELS[Math.floor(Math.random() * VOWELS.length)].map(freq => freq * throat), between(0.6, 1)]);
+        t += length + pace * between(0.02, 0.06);
+      }
+    const out = new Float32Array(Math.round(RATE * seconds)), low = resonance(90 * throat), high = resonance(130 * throat);
+    let f1 = 500 * throat, f2 = 1400 * throat, phase = 0, soft = 0, n = 0, peak = 0;
+    for (let i = 0; i < out.length; i++) {
+      const time = i / RATE;
+      while (n < syllables.length && time >= syllables[n][0] + syllables[n][1]) n++;
+      let level = 0;
+      if (n < syllables.length && time >= syllables[n][0]) {
+        const [start, length, vowel, loud] = syllables[n];
+        level = loud * Math.sin(Math.PI * (time - start) / length) ** 0.7;
+        f1 += (vowel[0] - f1) * 0.002; f2 += (vowel[1] - f2) * 0.002;        // glide towards this syllable's vowel
+      }
+      const pitch = voice * (1 + lilt * (0.06 * Math.sin(2 * Math.PI * 0.7 * time) + 0.03 * Math.sin(2 * Math.PI * 2.3 * time))) * (1 - 0.04 * time / seconds);
+      phase = (phase + pitch / RATE) % 1;
+      const buzz = (2 * phase - 1) * level + breath * level * between(-1, 1);  // the voice, with a little breath
+      soft += 0.35 * (6 * low(buzz, f1) + 3.5 * high(buzz, f2) - soft);      // heard from a little away
+      out[i] = soft; peak = Math.max(peak, Math.abs(soft));
+    }
+    // As a WAV file in memory, so that it plays the way the other sounds do.
+    const wav = new DataView(new ArrayBuffer(44 + 2 * out.length));
+    [..."RIFF"].forEach((c, k) => wav.setUint8(k, c.charCodeAt(0))); wav.setUint32(4, 36 + 2 * out.length, true);
+    [..."WAVEfmt "].forEach((c, k) => wav.setUint8(8 + k, c.charCodeAt(0))); wav.setUint32(16, 16, true);
+    wav.setUint16(20, 1, true); wav.setUint16(22, 1, true); wav.setUint32(24, RATE, true); wav.setUint32(28, 2 * RATE, true);
+    wav.setUint16(32, 2, true); wav.setUint16(34, 16, true);
+    [..."data"].forEach((c, k) => wav.setUint8(36 + k, c.charCodeAt(0))); wav.setUint32(40, 2 * out.length, true);
+    out.forEach((sample, i) => wav.setInt16(44 + 2 * i, sample / (peak || 1) * 0.42 * 32767, true));
+    const slices = Math.round(lasts / 106), size = Math.floor(out.length / slices), loudness = [];
+    for (let k = 0; k < slices; k++) loudness.push(Math.sqrt(out.subarray(k * size, (k + 1) * size).reduce((sum, sample) => sum + sample * sample, 0) / size));
+    const top = Math.max(...loudness) || 1;
+    return { url: URL.createObjectURL(new Blob([wav], { type: "audio/wav" })), loudness: loudness.map(level => level / top) };
+  };
   // The recorder's button: how far in it is, so long after a press. press.wav goes down at once
   // and comes up again after 110 ms.
   const pressed = age => age > 300 ? 0 : age < 50 ? age / 50 : age < 120 ? 1 : 1 - (age - 120) / 180;
@@ -55,32 +110,33 @@ const Quasi = (() => {
 
   const row = name => {
     const word = WORDS[name];
-    return `<div class="sound${word.failed ? " failed" : ""}" data-word="${name}">${mark(word)}<div><b>${word.label}</b><span>${word.text}</span></div>` +
-           (word.silent ? "" : `<button data-sound="${name}">Play</button>`) + "</div>";
+    return `<div class="sound${word.failed || word.silent ? " failed" : ""}${word.yours ? " yours" : ""}" data-word="${name}">${mark(word)}<div><b>${word.label}</b><span>${word.text}</span></div>` +
+           (word.silent || word.yours ? "" : `<button data-sound="${name}">Play</button>`) + "</div>";
   };
 
   // One whole note, laid out in time with roughly the pauses it has in real life.
   //   answer   the sound that ends it (one of the answer_… words)
+  //   talk     how long the speaker talks, in milliseconds
   //   work     how long the phone works on it, in milliseconds (ticks are half a second apart)
   //   heard    false: the audio did not reach the phone, so the wood block fails and nothing follows
-  //   reach    false: the phone is not listening at all, so it makes no sound
+  //   reach    false: the phone is not listening at all, so silence follows each press of the button
   //   online   false: the phone cannot reach Anthropic
-  const compose = ({ answer = null, work = 3000, heard = true, reach = true, online = true }) => {
-    const steps = [[0, "press"]];
-    if (reach) steps.push([600, "question"]);
-    steps.push([1850, "talking"], [5850, "press"]);
+  const compose = ({ answer = null, talk = TALK, work = 3000, heard = true, reach = true, online = true }) => {
+    const stop = 1850 + talk + 400, steps = [[0, "press"]];
+    steps.push([600, reach ? "question" : "silence"]);
+    steps.push([1850, "talking"], [stop, "press"]);
     let asking = null;
-    if (reach) steps.push([6300, heard ? "wood_1" : "wood_fail_1"]);
+    steps.push([stop + 450, !reach ? "silence" : heard ? "wood_1" : "wood_fail_1"]);
     if (reach && heard) {
       // The ticking stops, and the answer comes after a short silence.
-      steps.push([7200, "ticking"], [7200 + work, null], [7200 + work + 700, answer]);
-      asking = [7200, 7200 + work];
+      asking = [stop + 1350, stop + 1350 + work];
+      steps.push([asking[0], "ticking"], [asking[1], null], [asking[1] + 700, answer]);
     }
     const [last, sound] = steps[steps.length - 1];
     const length = last + Math.max(1100, (WORDS[sound]?.lasts ?? 0) - 260);
     steps.push([length - 100, null]);
-    const words = reach ? steps.map(step => step[1]).filter(name => WORDS[name]) : ["silence"];
-    return { steps, length, asking, words, recording: [100, 5950], presses: [0, 5850],
+    const words = [...new Set(steps.map(step => step[1]).filter(name => WORDS[name]))];
+    return { steps, length, talk, asking, words, recording: [100, stop + 100], presses: [0, stop],
              flag: !reach ? "deaf" : !heard ? "lost" : !online ? "offline" : "" };
   };
 
@@ -93,19 +149,35 @@ const Quasi = (() => {
     const stage = element.querySelector(".stage"), timeline = element.querySelector(".timeline");
     const track = timeline.querySelector(".track"), button = timeline.querySelector("button");
     const percent = time => `${(100 * time / length).toFixed(2)}%`;
-    // The row of the list that belongs to the sound now playing is lit.
-    const light = sound => list.querySelectorAll(".sound").forEach(row => row.classList.toggle("on", row.dataset.word === sound));
-
+    // The row of the list that belongs to the sound now playing is lit, and it moves to the top
+    // of the list, right under the player, so that it can be seen without scrolling down to it.
+    // The rows it passes move down by one; when the note is over they all go back in order.
+    const calm = matchMedia("(prefers-reduced-motion: reduce)").matches;
+    const arrange = order => {
+      const rows = [...list.children], was = new Map(rows.map(row => [row, row.getBoundingClientRect().top]));
+      if (order.every((name, n) => rows[n].dataset.word === name)) return;
+      order.forEach(name => list.appendChild(rows.find(row => row.dataset.word === name)));
+      if (!calm) rows.forEach(row => {
+        const moved = was.get(row) - row.getBoundingClientRect().top;
+        if (moved) row.animate([{ transform: `translateY(${moved}px)` }, { transform: "none" }], { duration: 420, easing: "cubic-bezier(.2, .8, .2, 1)" });
+      });
+    };
+    const light = sound => {
+      const now = [...list.children].map(row => row.dataset.word);
+      if (now.includes(sound)) arrange([sound, ...now.filter(name => name !== sound)]);
+      list.querySelectorAll(".sound").forEach(row => row.classList.toggle("on", row.dataset.word === sound));
+    };
     // The line: a mark for each word, the talking as a cloud of bars, the working as one dot per tick.
     const RINGS = [], BEATS = [], runs = [];
+    let cloud = null;
     steps.forEach(([at, sound], n) => {
       const word = WORDS[sound];
       if (sound === "talking" || sound === "ticking") {
-        const run = document.createElement("div"), lasts = sound === "talking" ? TALK : steps[n + 1][0] - at;
+        const run = document.createElement("div"), lasts = sound === "talking" ? scene.talk : steps[n + 1][0] - at;
         run.className = sound === "talking" ? "talk" : "ticks";
         run.style.left = percent(at); run.style.width = percent(lasts);
         run.dataset.from = at; run.dataset.to = at + lasts;
-        if (sound === "talking") LOUDNESS.forEach(level => { run.appendChild(document.createElement("i")).style.height = `${3 + level * 38}px`; });
+        if (sound === "talking") cloud = run;
         else for (let tick = at; tick < at + lasts; tick += 500) {
           run.appendChild(document.createElement("i"));
           RINGS.push([tick, 360, 8, .55]);
@@ -158,23 +230,32 @@ const Quasi = (() => {
       runs.forEach(run => spread(run, time));
     };
 
-    // The line's own copy of each sound, loaded at once, so that none starts late.
-    const voices = steps.map(([, sound]) => { if (!sound) return null; const audio = new Audio(`assets/sounds/${sound}.wav`); audio.preload = "auto"; audio.load(); return audio; });
+    // The line's own copy of each sound, loaded at once, so that none starts late. The talking
+    // is new for every play: its sound, and with it the bars on the line.
+    const voices = steps.map(([, sound]) => { if (!sound || sound === "talking" || WORDS[sound]?.silent) return null; const audio = new Audio(`assets/sounds/${sound}.wav`); audio.preload = "auto"; audio.load(); return audio; });
+    let spoken = null;
+    const speak = () => {
+      if (spoken) URL.revokeObjectURL(spoken.url);
+      spoken = babble(scene.talk);
+      voices[steps.findIndex(step => step[1] === "talking")] = new Audio(spoken.url);
+      cloud.replaceChildren(...spoken.loudness.map(level => { const bar = document.createElement("i"); bar.style.height = `${3 + level * 38}px`; return bar; }));
+    };
     // Where the note is: how far in, which steps have sounded, and what is audible right now.
-    let elapsed = 0, since = 0, next = 0, frame = 0, running = false, sounding = [], ticking = null, presses = 0;
+    let elapsed = 0, since = 0, next = 0, frame = 0, running = false, sounding = [], held = null, presses = 0;
     const label = () => { button.textContent = running ? "❚❚" : "▶"; button.setAttribute("aria-label", running ? "Pause" : "Play the whole note"); };
-    const reset = () => {
-      elapsed = 0; next = 0; sounding = []; ticking = null;
+    const reset = (again = true) => {
+      elapsed = 0; next = 0; sounding = []; held = null;
       voices.forEach(audio => { if (audio) { audio.pause(); audio.currentTime = 0; } });
-      show(0); light(null); timeline.classList.remove("playing");
+      if (again) speak();
+      show(0); light(null); arrange(scene.words); timeline.classList.remove("playing");
     };
     const sound = () => {
       const audio = voices[next], name = steps[next++][1];
       light(name);
       // The ticking stops as soon as the next sound comes, as it does on the phone.
-      if (ticking) { ticking.pause(); sounding = sounding.filter(other => other !== ticking); ticking = null; }
+      if (held) { held.pause(); sounding = sounding.filter(other => other !== held); held = null; }
       if (!audio) return Promise.resolve();
-      if (name === "ticking") ticking = audio;
+      if (name === "ticking") held = audio;
       sounding.push(audio);
       return audio.play();
     };
@@ -205,11 +286,12 @@ const Quasi = (() => {
       else { sounding.forEach(audio => audio.play()); go(); }
     };
     button.addEventListener("click", () => running ? pause() : start());
-    label(); show(0);
+    label(); speak(); show(0);
 
     return {
       pause,
-      stop() { pause(); reset(); },
+      // Ends the example for good: it is not played again after this.
+      close() { pause(); reset(false); URL.revokeObjectURL(spoken.url); },
       // The example as it stands at a moment, without sound (for checking the layout).
       peek(time) { timeline.classList.add("playing"); show(time); light([...steps].reverse().find(step => step[0] <= time)?.[1] ?? null); },
     };

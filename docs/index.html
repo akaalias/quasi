@@ -29,12 +29,14 @@
   :root {
     --paper: #FBF8F2; --sheet: #FFFDF9; --ink: #1E1B16; --quiet: #8A8173; --card: #F1EBDF;
     --chip: #EDE5D6; --rule: #DDD3C1; --brand: #C8551F; --mark: #F6D9B8;
+    --stroke: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 400 22' preserveAspectRatio='none'%3E%3Cpath d='M5 13C48 7 96 15 150 10s96-6 148-1c34 3 66 1 92-2' fill='none' stroke='%23C8551F' stroke-width='4.5' stroke-linecap='round' vector-effect='non-scaling-stroke'/%3E%3Cpath d='M238 18c44-3 96-4 150-2' fill='none' stroke='%23C8551F' stroke-width='2.6' stroke-linecap='round' vector-effect='non-scaling-stroke'/%3E%3C/svg%3E");
     --spoken: "New York", ui-serif, "Iowan Old Style", "Palatino Linotype", Georgia, serif;
     --app: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Helvetica Neue", Helvetica, Arial, sans-serif;
   }
   @media (prefers-color-scheme: dark) {
     :root { --paper: #161411; --sheet: #1E1B17; --ink: #EDE6DA; --quiet: #9A9080; --card: #26221D;
-            --chip: #322D26; --rule: #3A342C; --brand: #EF8249; --mark: #5D381C; }
+            --chip: #322D26; --rule: #3A342C; --brand: #EF8249; --mark: #5D381C;
+            --stroke: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 400 22' preserveAspectRatio='none'%3E%3Cpath d='M5 13C48 7 96 15 150 10s96-6 148-1c34 3 66 1 92-2' fill='none' stroke='%23EF8249' stroke-width='4.5' stroke-linecap='round' vector-effect='non-scaling-stroke'/%3E%3Cpath d='M238 18c44-3 96-4 150-2' fill='none' stroke='%23EF8249' stroke-width='2.6' stroke-linecap='round' vector-effect='non-scaling-stroke'/%3E%3C/svg%3E"); }
   }
   * { box-sizing: border-box; }
   html { -webkit-text-size-adjust: 100%; }
@@ -57,6 +59,8 @@
   .problem h2 { font: 400 calc((100vw - 48px) / 10.8)/1.06 var(--spoken); letter-spacing: -0.01em; margin: 0 0 32px; white-space: nowrap; }
   @media (min-width: 560px) { .problem h2 { font-size: min(50px, calc((100vw - 48px) / 12.6)); } .problem h2 br.phone { display: none; } }
   @media (min-width: 1000px) { .problem h2 { font-size: 64px; width: max-content; margin-left: 50%; transform: translateX(-50%); text-align: center; } }
+  /* The number in the heading is underlined by hand, the way one would on paper. */
+  .problem h2 .stressed { background: var(--stroke) no-repeat 0 100% / 100% .3em; padding-bottom: .04em; }
   .problem p { font: 400 22px/1.45 var(--spoken); margin: 0 0 20px; } .problem p:last-child { margin-bottom: 0; }
   .problem .kicker { font: 600 13px/1.5 var(--app); color: var(--brand); }
   p { margin: 0 0 16px; } .lead { font: 400 22px/1.45 var(--spoken); } .quiet { color: var(--quiet); }
@@ -73,12 +77,13 @@
   .hand text { font: 600 31px "Quasi Hand", "Bradley Hand", "Segoe Print", cursive; fill: var(--ink); }
   .hand path { fill: none; stroke: var(--ink); stroke-width: 2.3; stroke-linecap: round; stroke-linejoin: round; }
 
-  .sounds { background: var(--card); border-radius: 22px; padding: 4px 0; margin: 28px 0; overflow: hidden; }
-  .sound { display: flex; align-items: center; gap: 14px; padding: 14px 20px; border-top: 1px solid var(--rule); transition: background .2s, box-shadow .2s; }
+  .sounds { background: var(--card); border-radius: 22px; margin: 28px 0; overflow: hidden; }
+  .sound { display: flex; align-items: center; gap: 14px; padding: 18px 20px; border-top: 1px solid var(--rule); transition: background .2s; }
   .sound:first-child { border-top: 0; }
-  /* The step that is sounding while the whole note plays. */
-  .sound.on { background: var(--mark); box-shadow: inset 4px 0 0 var(--brand); }
-  .sound.failed.on { background: var(--chip); box-shadow: inset 4px 0 0 var(--ink); }
+  /* The step that is sounding while the whole note plays: its whole row is tinted, out to the
+     rounded corners of the list. Not in orange if the step says that something went wrong. */
+  .sound.on { background: var(--mark); position: relative; z-index: 1; }      /* above the rows it passes on its way to the top */
+  .sound.failed.on { background: var(--rule); }
   .sound div { flex: 1; } .sound b { display: block; font-weight: 600; } .sound span { color: var(--quiet); font-size: 15px; }
   button { font: 600 15px var(--app); color: var(--ink); background: var(--chip); border: 0; border-radius: 99px; padding: 9px 18px; cursor: pointer; }
   button:hover { filter: brightness(.96); } button.primary { background: var(--brand); color: #fff; padding: 12px 22px; font-size: 16px; }
@@ -124,7 +129,7 @@
   .example h3 { text-align: center; }
   @media (max-width: 860px) { .example { width: 100%; margin-left: 0; } }
   .example h3 { font: 400 24px/1.2 var(--spoken); margin: 0 0 4px; }
-  h3.list-title { font: 400 24px/1.2 var(--spoken); margin: 0 0 14px; } h3.list-title + .sounds { margin-top: 0; }
+  h3.list-title { font: 400 24px/1.2 var(--spoken); margin: 0 0 14px; } h3.list-title + .sounds { margin-top: 0; } .sounds + h3.list-title { margin-top: 48px; }
   /* Above the line, as wide as the line: who is doing what. The dots between two parts are lit
      only while something passes between them: the recorder records, the phone makes the sounds
      and calls Anthropic. */
@@ -171,11 +176,22 @@
   .mark.chime i { width: 18px; height: 18px; border-radius: 50%; } .mark.chime i + i { margin-top: -14px; }
   .mark.answer i { margin-top: 0 !important; width: 14px; height: 14px; } .mark.answer b { width: 28px; height: 28px; border-radius: 50%; margin-left: 2px; }
   .mark.wood i { width: 15px; height: 26px; border-radius: 5px; }
-  /* What went wrong: the answer falls where the question rose, the wood block lies on its side,
-     and silence is an empty place. */
+  /* What went wrong: the answer falls where the question rose, and silence is an empty place. */
   .mark.chime.fall i + i { margin-top: 14px; width: 24px; height: 24px; }
-  .mark.wood.fail i { width: 26px; height: 15px; }
   .mark.silence i { width: 20px; height: 20px; border-radius: 50%; border-style: dashed; border-width: 2px; }
+  .mark.silence i.on, .sound.on .mark.silence i { background: var(--paper); border-color: var(--ink); }      /* silence stays empty */
+  /* And a mark for something that went wrong is struck through: one stroke across its last
+     part, reaching past the outline, with a little room around it so that it reads as a cut. */
+  .mark.failed i:last-child { position: relative; }
+  .mark.failed i:last-child::after { content: ""; position: absolute; left: 50%; top: 50%; width: 2.5px; height: calc(100% + 17px); border-radius: 2px;
+    transform: translate(-50%, -50%) rotate(38deg); background: var(--quiet); box-shadow: 0 0 0 1.5px var(--paper); transition: background .15s; }
+  .mark.failed i.on:last-child::after, .sound.on .mark.failed i:last-child::after { background: var(--lit); }
+  /* Your own part: a few bars of voice, as on the line, and your row's name in the serif. */
+  .mark.voice { gap: 3px; } .mark.voice i { width: 3px; height: 14px; border: 0; border-radius: 2px; background: var(--quiet); }
+  .mark.voice i:nth-child(2), .mark.voice i:nth-child(6) { height: 22px; } .mark.voice i:nth-child(4) { height: 30px; } .mark.voice i:nth-child(1), .mark.voice i:nth-child(7) { height: 7px; }
+  /* Your row is on the light paper of the app's sheets, where the phone's rows are on card. */
+  .sound.yours:not(.on) { background: var(--sheet); }
+  .sound.yours b { font: 400 20px/1.3 var(--spoken); margin-bottom: 2px; }
   .mark.tock { gap: 10px; } .mark.tock i { width: 8px; height: 8px; border: 0; border-radius: 50%; background: var(--quiet); }
   .mark i.on, .mark b.on { background: var(--lit); border-color: var(--lit); }
   /* Each mark moves as its sound plays: a chime note rings outwards, wood is struck, a tick pops. */
@@ -200,7 +216,8 @@
     .track .mark.chime i { width: 11px; height: 11px; } .track .mark.chime i + i { margin-top: -9px; }
     .track .mark.answer i { width: 8px; height: 8px; } .track .mark.answer b { width: 17px; height: 17px; }
     .track .mark.wood i { width: 9px; height: 17px; border-radius: 3px; } .ticks i { width: 4px; height: 4px; }
-    .track .mark.chime.fall i + i { margin-top: 9px; width: 15px; height: 15px; } .track .mark.wood.fail i { width: 17px; height: 9px; }
+    .track .mark.chime.fall i + i { margin-top: 9px; width: 15px; height: 15px; } .track .mark.silence i { width: 13px; height: 13px; border-width: 1.5px; }
+    .track .mark.failed i:last-child::after { width: 2px; height: calc(100% + 10px); box-shadow: 0 0 0 1px var(--paper); }
     .talk i { width: 2px; } .talk, .ticks { padding: 0 3px; } .sound .mark { width: 54px; } }
   /* The further examples: a grid of cards, each showing its sentence of marks. */
   .scenes { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin: 24px 0 8px; }
@@ -242,7 +259,7 @@
 <section class="problem">
   <div>
     <p class="kicker">Okay, seriously. WTF?</p>
-    <h2>We spend ten <br class="phone">or more hours <br>staring at our screens <br>every single day.</h2>
+    <h2>We spend <span class="stressed">ten <br class="phone">or more hours</span> <br>staring at our screens <br>every single day.</h2>
     <p>Between our laptops and our phones, ten hours of screen time a day has become normal. That is <i>insane</i>.</p>
     <p>We urgently need a new way to use technology, including AI, in a life without screens.</p>
   </div>
@@ -315,9 +332,8 @@
     <h3>Example 1: A voice note turns into two tasks</h3>
     <div class="player"></div>
     </div>
-    <h3 class="list-title">Quasi's Vocabulary</h3>
+    <h3 class="list-title">Quasi's vocabulary used here</h3>
     <div class="sounds" id="vocabulary"></div>
-    <p class="quiet">A step that goes well climbs; a step that fails falls and rings longer, and nothing follows it. The sounds follow the phone's silent switch, and the taps say the same thing: one short tap for each good step, two long ones for a failure.</p>
     <h3 class="list-title">More examples</h3>
     <p>Every voice note is the same short sentence of sounds. What changes is how the sentence ends, or where it breaks off.</p>
     <div class="scenes" id="scenes"></div>
@@ -385,7 +401,7 @@
       <p class="about"></p>
       <div class="player"></div>
     </div>
-    <h3 class="list-title">The words in this example</h3>
+    <h3 class="list-title">Quasi's vocabulary used here</h3>
     <div class="sounds"></div>
     <p class="after"></p>
   </div>
@@ -431,30 +447,31 @@
   const inline = Quasi.mount(document.getElementById("example"), document.getElementById("vocabulary"), Quasi.compose({ answer: "answer_tasks_2" }));
 
   // The further examples: what happens in each (see compose in assets/player.js), and what to say about it.
+  // Each has one name, on its card and over its player.
   const SCENES = [
-    { id: "one", name: "One task", title: "A voice note turns into one task", note: { answer: "answer_tasks_1" },
-      about: "You ask for one thing. The answer is one quick note and then the chord.",
-      after: "In the logbook, the note shows the task and marks the words that asked for it." },
-    { id: "three", name: "Three tasks", title: "A voice note turns into three tasks", note: { answer: "answer_tasks_3" },
-      about: "You list three things for tomorrow. The answer is three quick notes and then the chord, so you can count the tasks without looking.",
-      after: "In the logbook, the note shows all three tasks, and each task has its own Undo." },
-    { id: "nothing", name: "Nothing to do", title: "A thought that asks for nothing", note: { answer: "answer_nothing" },
+    { id: "nothing", name: "A simple voice note", note: { answer: "answer_nothing" },
       about: "You think aloud and ask for nothing. The answer is the home note alone.",
       after: "In the logbook, what you said is kept as a note. If it was a task after all, \"Make this a task\" asks again." },
-    { id: "offline", name: "No internet", title: "The tasks could not be added", note: { answer: "answer_failed", work: 2000, online: false },
+    { id: "one", name: "Create one task", note: { answer: "answer_tasks_1", talk: 2400 },
+      about: "You ask for one thing. The answer is one quick note and then the chord.",
+      after: "In the logbook, the note shows the task and marks the words that asked for it." },
+    { id: "three", name: "Create three tasks", note: { answer: "answer_tasks_3" },
+      about: "You list three things for tomorrow. The answer is three quick notes and then the chord, so you can count the tasks without looking.",
+      after: "In the logbook, the note shows all three tasks, and each task has its own Undo." },
+    { id: "offline", name: "The internet is gone", note: { answer: "answer_failed", work: 2000, online: false },
       about: "Your phone has no internet when you stop, for instance on the underground. It has your words, but it cannot work out what you asked for. The answer falls and rings out.",
       after: "Your note is safe. The logbook says \"Not added yet\", and \"Try again\" finishes the job once your phone is online." },
-    { id: "lost", name: "The audio did not arrive", title: "The voice note did not reach the phone", note: { heard: false },
+    { id: "lost", name: "The audio did not arrive", note: { heard: false },
       about: "The recorder recorded, but its audio did not reach your phone. The wood block is lower and rings longer, and nothing follows it.",
       after: "The recording is still on the recorder, and the app can fetch it from there." },
-    { id: "deaf", name: "No answer", title: "The phone is not listening", note: { reach: false },
+    { id: "deaf", name: "Nobody is listening", note: { reach: false },
       about: "Quasi has stopped running on your phone, or Bluetooth is off. You press record and hear nothing. The silence is how you know.",
       after: "The recorder still records, and the recording stays on it. Open Quasi once, and it can fetch the recording." },
   ];
   SCENES.forEach(scene => scene.note = Quasi.compose(scene.note));
   // The grid: each example as its sentence of marks, a name and what happens.
   document.getElementById("scenes").innerHTML = SCENES.map((scene, n) =>
-    `<button class="scene" data-scene="${n}"><span class="marks">${scene.note.words.map(word => Quasi.mark(Quasi.WORDS[word])).join("")}</span>` +
+    `<button class="scene" data-scene="${n}"><span class="marks">${scene.note.words.filter(word => !Quasi.WORDS[word].yours).map(word => Quasi.mark(Quasi.WORDS[word])).join("")}</span>` +
     `<small>Example ${n + 2}</small><strong>${scene.name}</strong><span class="about">${scene.about}</span></button>`).join("");
 
   // An example opens over the page, with its own drawing, line and words.
@@ -464,7 +481,7 @@
     const scene = SCENES[n];
     inline.pause();
     dialog.querySelector(".kicker").textContent = `Example ${n + 2}`;
-    dialog.querySelector("h3").textContent = scene.title;
+    dialog.querySelector("h3").textContent = scene.name;
     dialog.querySelector(".about").textContent = scene.about;
     dialog.querySelector(".after").innerHTML = `<b>Afterwards.</b> ${scene.after}`;
     shown = Quasi.mount(dialog.querySelector(".example"), dialog.querySelector(".sounds"), scene.note);
@@ -478,7 +495,7 @@
   });
   // Closing: the button, a click beside the sheet, or Escape.
   dialog.addEventListener("click", event => { if (event.target === dialog || event.target.closest(".close")) dialog.close(); });
-  dialog.addEventListener("close", () => { if (dialog.open) return; shown?.stop(); shown = null; document.documentElement.classList.remove("held"); });
+  dialog.addEventListener("close", () => { if (dialog.open) return; shown?.close(); shown = null; document.documentElement.classList.remove("held"); });
 
   // ?at=7000 shows the example as it stands at that moment, without sound, and ?scene=offline
   // opens that example first (both for checking the layout).
