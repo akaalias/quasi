@@ -8,7 +8,9 @@ import Foundation
 /// made. A soft chime is the conversation: the start of a recording asks a question, two rising
 /// notes left hanging, and the end answers it. The answer says what happened: the plain home note
 /// for nothing to do, one quick note per task added and then the home chord, or a fall that rings
-/// out for a failure. A failure of the machinery is a dull wooden note, and nothing follows it.
+/// out for a failure, a note that leaps up and away for a message sent on, or the opening question
+/// again, higher, when the app has a question of its own and waits for the next recording to
+/// answer it. A failure of the machinery is a dull wooden note, and nothing follows it.
 ///
 /// While the transcript is being made or the note is being processed, and that takes more than a
 /// moment, quiet alternating ticks say that the machinery is still at work.
@@ -56,6 +58,8 @@ final class StepSignals {
         case .transcribed(let ok): (name, failed) = (ok ? "wood_2" : "wood_fail_2", !ok)
         case .processed(.nothingToDo): (name, failed) = ("answer_nothing", false)
         case .processed(.tasksAdded(let count)): (name, failed) = ("answer_tasks_\(min(max(count, 1), 5))", false)
+        case .processed(.messagesSent): (name, failed) = ("answer_message", false)
+        case .processed(.asking): (name, failed) = ("answer_asking", false)
         case .processed(.failed): (name, failed) = ("answer_failed", true)
         }
         if soundsOn, let sound = sound(named: name) {

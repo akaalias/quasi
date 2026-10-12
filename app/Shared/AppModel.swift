@@ -15,6 +15,10 @@ enum LiveStep: Equatable {
         /// Nothing was asked for, or nothing is set up to act on it.
         case nothingToDo
         case tasksAdded(Int)
+        /// Messages handed to the phone's own messaging, and any tasks added besides.
+        case messagesSent(Int)
+        /// The app has a question (which person is meant) and waits for the next recording.
+        case asking
         case failed
     }
 }
@@ -55,6 +59,24 @@ final class AppModel: ObservableObject {
     @Published private(set) var hasAnthropicKey = Keychain.read(.anthropicKey) != nil
     /// Whether a Todoist token is stored; without one, a task found is shown but not sent anywhere.
     @Published private(set) var hasTodoistToken = Keychain.read(.todoistToken) != nil
+    /// Whether the message relay is set up; without it, a message found is shown but not sent.
+    @Published private(set) var hasMessageRelay = MessageRelay.Settings.stored != nil
+    /// A question the app has asked out loud, waiting for the next recording to answer it.
+    @Published private(set) var question: Question?
+
+    /// Which person a message is for, when the name said could mean several people or nobody.
+    struct Question: Equatable {
+        var noteID: String
+        /// The message in that note the question is about.
+        var index: Int
+        var text: String
+        var candidates: [Candidate]
+        var asked: Date
+    }
+
+    /// How long a question waits for an answer before the message is given up on.
+    static let questionPatience: TimeInterval = 120
+    private var questionTimeout: Task<Void, Never>?
 
     @Published var availableLocales: [Locale] = []
     @Published var localeIdentifier: String {
@@ -489,7 +511,7 @@ final class AppModel: ObservableObject {
         NoteLog.save(notes, to: folder)
     }
 
-    // MARK: Tasks
+    // MARK: Tasks and messages
 
     func setAnthropicKey(_ key: String?) {
         Keychain.write(key?.trimmingCharacters(in: .whitespacesAndNewlines), for: .anthropicKey)
@@ -501,10 +523,21 @@ final class AppModel: ObservableObject {
         hasTodoistToken = Keychain.read(.todoistToken) != nil
     }
 
-    /// Asks Claude which tasks the note asks for and, with a Todoist token, adds them there.
-    /// With `confirmed`, the user has said this note should become a task, so one is written.
-    /// The result is kept in the log. Tasks that are found but cannot be sent anywhere (no
-    /// Todoist token) count as nothing to do.
+    /// One of the three settings of the message relay: its token, its line, the phone's own number.
+    func setRelaySetting(_ value: String?, for secret: Keychain.Secret) {
+        var clean = value?.trimmingCharacters(in: .whitespacesAndNewlines)
+        if secret != .linqToken { clean = clean?.filter { $0 == "+" || $0.isNumber } }   // a number as typed, "+49 176 …"
+        Keychain.write(clean, for: secret)
+        hasMessageRelay = MessageRelay.Settings.stored != nil
+    }
+
+    /// Asks Claude what the note asks for, sends the messages on and adds the tasks. With
+    /// `confirmed`, the user has said this note should become a task, so one is written. The
+    /// result is kept in the log. Tasks or messages that are found but cannot be sent anywhere
+    /// (no Todoist token, no relay) count as nothing to do.
+    ///
+    /// While a question is open, a new note is read as its answer first; a note about something
+    /// else leaves the question open and is processed as usual.
     @discardableResult
     func process(_ id: String, confirmed: Bool = false) async -> LiveStep.Processing {
         guard let note = notes.first(where: { $0.id == id }) else { return .nothingToDo }
@@ -515,6 +548,11 @@ final class AppModel: ObservableObject {
             update(id) { $0.outcome = .note }
             return .nothingToDo
         }
+        if let question, question.noteID != id, !confirmed {
+            show("Reading the answer…")
+            update(id) { $0.outcome = .pending; $0.problem = nil }
+            if let outcome = await answer(question, with: note) { return outcome }
+        }
         show("Looking for tasks…")
         update(id) { $0.outcome = .pending; $0.problem = nil }
         let token = Keychain.read(.todoistToken)
@@ -523,30 +561,39 @@ final class AppModel: ObservableObject {
         if let token, let fetched = try? await TodoistClient.directory(token: token) { directory = fetched }
 
         var tasks: [AddedTask]
-        if !confirmed, note.outcome == .processingFailed, !note.tasks.isEmpty {
-            // Trying again after Todoist refused some: the tasks are known, and those already added stay as they are.
+        if !confirmed, note.outcome == .processingFailed, !(note.tasks.isEmpty && note.messages.isEmpty) {
+            // Trying again after something was refused: what was found is known, and what went through stays.
             tasks = note.tasks
         } else {
             do {
-                let drafts = try await TaskExtractor.extract(from: note.transcript, recordedAt: note.date, catalog: directory.catalog,
-                                                             confirmed: confirmed, apiKey: key)
-                guard !drafts.isEmpty else {
-                    show("No task in this note")
+                let found = try await TaskExtractor.extraction(from: note.transcript, recordedAt: note.date, catalog: directory.catalog,
+                                                               confirmed: confirmed, apiKey: key)
+                tasks = found.drafts.map { AddedTask(draft: $0) }
+                update(id) { $0.messages = found.messages.map { SentMessage(draft: $0) } }
+                guard !tasks.isEmpty || !found.messages.isEmpty else {
+                    show("Nothing to do in this note")
                     update(id) { $0.outcome = .note; $0.tasks = [] }
                     return .nothingToDo
                 }
-                tasks = drafts.map { AddedTask(draft: $0) }
             } catch {
-                show("Task check failed: \(error.localizedDescription)")
-                update(id) { $0.outcome = .processingFailed; $0.problem = "The note could not be read for tasks: \(error.localizedDescription)" }
+                show("Reading failed: \(error.localizedDescription)")
+                update(id) { $0.outcome = .processingFailed; $0.problem = "The note could not be read: \(error.localizedDescription)" }
                 return .failed
             }
+        }
+
+        // Messages first: "I'll be five minutes late" cannot wait for Todoist.
+        let messages = await deliverMessages(id, show: show)
+        if messages == .asking { return .asking }
+
+        guard !tasks.isEmpty else {
+            return settle(id, messages: messages)
         }
         let summary = Self.summary(of: tasks.map(\.draft))
         guard let token else {
             show("\(tasks.count == 1 ? "Task" : "Tasks"): \(summary)")
-            update(id) { $0.outcome = .note; $0.tasks = tasks }
-            return .nothingToDo
+            update(id) { $0.tasks = tasks }
+            return settle(id, messages: messages)
         }
         show("Adding to Todoist: \(summary)")
         var refusal: String?
@@ -569,8 +616,164 @@ final class AppModel: ObservableObject {
             return .failed
         }
         show("Added to Todoist: \(summary)")
-        update(id) { $0.outcome = .taskAdded; $0.tasks = tasks }
-        return .tasksAdded(tasks.count)
+        update(id) { $0.tasks = tasks }
+        return settle(id, messages: messages, tasksAdded: tasks.count)
+    }
+
+    /// The note's final outcome once its messages and tasks have been seen to, and the step to play.
+    private func settle(_ id: String, messages: LiveStep.Processing, tasksAdded: Int = 0) -> LiveStep.Processing {
+        if messages == .failed { return .failed }
+        if case .messagesSent(let count) = messages {
+            update(id) { $0.outcome = .messageSent }
+            return .messagesSent(count)
+        }
+        update(id) { $0.outcome = tasksAdded > 0 ? .taskAdded : .note }
+        return tasksAdded > 0 ? .tasksAdded(tasksAdded) : .nothingToDo
+    }
+
+    /// Sends the note's messages that have not gone yet. The first whose recipient is not
+    /// settled becomes a question, and the rest wait for its answer.
+    private func deliverMessages(_ id: String, show: (String) -> Void) async -> LiveStep.Processing {
+        guard let note = notes.first(where: { $0.id == id }), !note.messages.isEmpty else { return .nothingToDo }
+        guard let settings = MessageRelay.Settings.stored else {
+            show("Message found, not sent: no relay set up")
+            return .nothingToDo
+        }
+        var sent = 0
+        for index in note.messages.indices {
+            guard var message = notes.first(where: { $0.id == id })?.messages[index], !message.isSent else { sent += 1; continue }
+            if message.recipientNumber == nil {
+                guard ContactBook.access == .authorized || ContactBook.access == .limited else {
+                    show("Not sent: Quasi has no access to Contacts")
+                    update(id) { $0.outcome = .processingFailed; $0.problem = "The message could not be sent: Quasi is not allowed to look in Contacts for \(message.draft.recipient). Allow it in Settings → Privacy & Security → Contacts." }
+                    return .failed
+                }
+                var found = ContactBook.lookup(message.draft.recipient)
+                if found.isEmpty, let key = Keychain.read(.anthropicKey) {
+                    // Nobody of that name as written: the model knows nicknames and "Alex from the gym".
+                    // Only the names the app may see are sent, and only then.
+                    found = (try? await Clarifier.match(message.draft.recipient, in: message.draft.source, among: ContactBook.everyone().map(\.candidate), apiKey: key)) ?? []
+                    record("\(id) \(message.draft.recipient) matched by the model to \(found.map(\.name))")
+                }
+                guard found.count == 1 else {
+                    message.candidates = found
+                    update(id) { $0.messages[index] = message }
+                    ask(id, index: index, recipient: message.draft.recipient, candidates: found, show: show)
+                    return .asking
+                }
+                message.recipientName = found[0].name
+                message.recipientNumber = found[0].number
+                message.candidates = []
+                update(id) { $0.messages[index] = message }
+            }
+            show("Sending to \(message.recipientName ?? message.draft.recipient): “\(message.draft.text)”")
+            do {
+                message.relayID = try await MessageRelay.send(to: message.recipientNumber!, text: message.draft.text, settings: settings)
+                update(id) { $0.messages[index] = message }
+                record("\(id) message to \(message.recipientName ?? "?") handed to the relay (\(message.relayID ?? ""))")
+                sent += 1
+            } catch {
+                record("\(id) message to \(message.recipientName ?? "?") refused by the relay: \(error.localizedDescription)")
+                show("Not sent (\(error.localizedDescription))")
+                update(id) { $0.outcome = .processingFailed; $0.problem = "The message to \(message.recipientName ?? message.draft.recipient) was not sent: \(error.localizedDescription)" }
+                return .failed
+            }
+        }
+        show(sent == 1 ? "Sent to \(note.messages.first { $0.isSent }?.recipientName ?? "")" : "\(sent) messages sent")
+        return .messagesSent(sent)
+    }
+
+    /// Asks out loud which person is meant, and gives up on the message if nobody answers in time.
+    private func ask(_ id: String, index: Int, recipient: String, candidates: [Candidate], show: (String) -> Void) {
+        let text = candidates.isEmpty ? "Who is \(recipient)? Nobody of that name is in Contacts."
+            : "Which \(recipient): " + candidates.map(\.name).joined(separator: " or ") + "?"
+        show(text)
+        let asked = Date()
+        question = Question(noteID: id, index: index, text: text, candidates: candidates, asked: asked)
+        update(id) { $0.outcome = .asking; $0.problem = nil }
+        record("\(id) asks: \(text)")
+        questionTimeout?.cancel()
+        questionTimeout = Task { [weak self] in
+            try? await Task.sleep(for: .seconds(Self.questionPatience))
+            guard let self, !Task.isCancelled, self.question?.asked == asked else { return }
+            self.question = nil
+            self.record("\(id) question not answered")
+            self.update(id) {
+                $0.outcome = .processingFailed
+                $0.problem = "\(text) The question was not answered, so the message was not sent."
+            }
+            if self.notes.first?.id == id { self.taskNote = "Not sent: the question was not answered" }
+            self.onLiveStep?(.processed(.failed))
+        }
+    }
+
+    /// Reads a new note as the answer to the open question. Returns the outcome of acting on the
+    /// answer, or nil if the note is about something else and should be processed as usual.
+    private func answer(_ question: Question, with note: NoteRecord) async -> LiveStep.Processing? {
+        guard let key = Keychain.read(.anthropicKey) else { return nil }
+        let reply: Clarifier.Reply
+        do {
+            reply = try await Clarifier.read(answer: note.transcript, question: question.text, candidates: question.candidates, apiKey: key)
+        } catch {
+            record("\(note.id) could not be read as an answer: \(error.localizedDescription)")
+            return nil
+        }
+        record("\(note.id) answers the question of \(question.noteID): \(reply)")
+        let id = question.noteID
+        let index = question.index
+        switch reply {
+        case .unrelated:
+            return nil
+        case .cancelled:
+            self.question = nil
+            questionTimeout?.cancel()
+            update(note.id) { $0.outcome = .note; $0.answer = "Dropped the message to \(question.candidates.first?.name ?? "them")" }
+            update(id) { $0.messages.remove(at: index); $0.outcome = $0.messages.contains { $0.isSent } ? .messageSent : ($0.tasks.isEmpty ? .note : .taskAdded) }
+            return .nothingToDo
+        case .chosen(let choice):
+            let person = question.candidates[choice]
+            update(id) { $0.messages[index].recipientName = person.name; $0.messages[index].recipientNumber = person.number; $0.messages[index].candidates = [] }
+            update(note.id) { $0.outcome = .note; $0.answer = "Answered: \(person.name)" }
+        case .someoneElse(let name):
+            update(id) { $0.messages[index].draft.recipient = name; $0.messages[index].candidates = [] }
+            update(note.id) { $0.outcome = .note; $0.answer = "Answered: \(name)" }
+        }
+        self.question = nil
+        questionTimeout?.cancel()
+        let show = { (text: String) in
+            if self.notes.first?.id == note.id { self.taskNote = text }
+        }
+        let outcome = await deliverMessages(id, show: show)
+        if outcome == .asking { return .asking }
+        let tasksAdded = notes.first { $0.id == id }?.tasks.filter { $0.todoistID != nil }.count ?? 0
+        return settle(id, messages: outcome, tasksAdded: tasksAdded)
+    }
+
+    /// The user has picked the person for a message that was an open question, on the note's screen.
+    func choose(_ person: Candidate, for id: String, index: Int) async {
+        if question?.noteID == id, question?.index == index {
+            question = nil
+            questionTimeout?.cancel()
+        }
+        update(id) { $0.messages[index].recipientName = person.name; $0.messages[index].recipientNumber = person.number; $0.messages[index].candidates = [] }
+        let outcome = await deliverMessages(id) { [weak self] text in if self?.notes.first?.id == id { self?.taskNote = text } }
+        guard outcome != .asking else { return }
+        let tasksAdded = notes.first { $0.id == id }?.tasks.filter { $0.todoistID != nil }.count ?? 0
+        _ = settle(id, messages: outcome, tasksAdded: tasksAdded)
+    }
+
+    /// Takes an unsent message out of a note.
+    func dropMessage(_ id: String, index: Int) {
+        if question?.noteID == id, question?.index == index {
+            question = nil
+            questionTimeout?.cancel()
+        }
+        update(id) {
+            guard $0.messages.indices.contains(index), !$0.messages[index].isSent else { return }
+            $0.messages.remove(at: index)
+            $0.problem = nil
+            $0.outcome = $0.messages.contains { $0.isSent } ? .messageSent : ($0.tasks.isEmpty ? .note : .taskAdded)
+        }
     }
 
     /// Removes what this note created in Todoist and keeps the note: one of its tasks, or all of them.

@@ -28,7 +28,8 @@ final class RecorderActivityController {
         }
         model.$connection.removeDuplicates().map { _ in () }
             .merge(with: model.$phase.removeDuplicates().map { _ in () },
-                   model.$battery.removeDuplicates().map { _ in () })
+                   model.$battery.removeDuplicates().map { _ in () },
+                   model.$question.removeDuplicates().map { _ in () })
             .receive(on: DispatchQueue.main)
             .sink { [weak self] in self?.update() }
             .store(in: &subscriptions)
@@ -54,11 +55,12 @@ final class RecorderActivityController {
         case (.bluetoothOff, _): status = .bluetoothOff
         case (.ready, .recording): status = .recording
         case (_, .transcribing): status = .transcribing
+        case (.ready, _) where model.question != nil: status = .asking
         case (.ready, _): status = .connected
         default: status = .searching
         }
         let connected = model.connection == .ready
-        let state = RecorderAttributes.ContentState(status: status, battery: model.battery,
+        let state = RecorderAttributes.ContentState(status: status, question: model.question?.text, battery: model.battery,
                                                     recordingStart: model.recordingStart,
                                                     lastContact: connected ? now : (current?.lastContact ?? now))
         current = state

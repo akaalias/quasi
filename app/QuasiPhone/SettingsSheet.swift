@@ -1,3 +1,4 @@
+import ContactsUI
 import SwiftUI
 
 /// Everything that is set once and then left alone, in one sheet behind the gear.
@@ -6,6 +7,9 @@ struct SettingsSheet: View {
     @Environment(\.dismiss) private var dismiss
     @AppStorage(StepSignals.soundsKey) private var sounds = true
     @AppStorage(StepSignals.tapsKey) private var taps = true
+    @State private var choosingContacts = false
+    /// Access to Contacts can change in the phone's Settings while this sheet is up.
+    @State private var contactsAccess = ContactBook.access
 
     var body: some View {
         NavigationStack {
@@ -44,6 +48,21 @@ struct SettingsSheet: View {
                                          explanation: "With a token, a task you asked for is added to Todoist, filed under the project and labels you named.") { model.setTodoistToken($0) }
                         } label: { row("Todoist", value: (model.hasTodoistToken ? "Connected" : "Not set") + " ›") }
                     }
+                    group("Messages") {
+                        NavigationLink { RelayScreen() } label: { row("iMessage relay", value: (model.hasMessageRelay ? "Set up" : "Not set") + " ›") }
+                        Rule()
+                        // Who Quasi may message: a "Quasi" list in the Contacts app, if there is one. Failing that,
+                        // with limited access the people are chosen here; the level itself (all, some, none) is the
+                        // phone's to set.
+                        if contactsAccess == .limited {
+                            Button { choosingContacts = true } label: { row("Contacts", value: contacts + " ›") }
+                        } else {
+                            Link(destination: URL(string: UIApplication.openSettingsURLString)!) { row("Contacts", value: contacts + " ›") }
+                        }
+                        Rule()
+                        Text("Only people in a list named “\(ContactBook.listName)” in the Contacts app can be messaged. Without such a list, everyone Quasi may see can.")
+                            .typo(.ui).foregroundStyle(Color.quiet).padding(.vertical, 12)
+                    }
                     group("Feedback") {
                         Toggle(isOn: $sounds) { Text("Sounds").typo(.ui) }.toggleStyle(SwitchStyle()).padding(.vertical, 12)
                         Rule()
@@ -57,6 +76,10 @@ struct SettingsSheet: View {
             .foregroundStyle(Color.ink)
             .background(Color.paper)
             .toolbar(.hidden, for: .navigationBar)
+            .contactAccessPicker(isPresented: $choosingContacts) { _ in }
+            .onReceive(NotificationCenter.default.publisher(for: UIApplication.didBecomeActiveNotification)) { _ in
+                contactsAccess = ContactBook.access
+            }
         }
         .tint(.brand)
     }
@@ -67,6 +90,10 @@ struct SettingsSheet: View {
         case .bluetoothOff: return "Bluetooth is off"
         default: return "Out of reach"
         }
+    }
+
+    private var contacts: String {
+        contactsAccess == .notDetermined ? "Not asked yet" : ContactBook.scope()
     }
 
     private var language: String {
@@ -119,11 +146,52 @@ struct LanguageScreen: View {
     }
 }
 
+/// The three settings of the message relay (see MessageRelay.swift), and how the phone's own
+/// automation has to be set up for it.
+struct RelayScreen: View {
+    @EnvironmentObject private var model: AppModel
+
+    var body: some View {
+        Form {
+            Section {
+                NavigationLink {
+                    SecretScreen(title: "Linq token", prompt: "Linq API token", isStored: Keychain.read(.linqToken) != nil,
+                                 explanation: "The token of your Linq account, which has a line of its own.") { model.setRelaySetting($0, for: .linqToken) }
+                } label: { LabeledContent("Linq token", value: Keychain.read(.linqToken) == nil ? "Not set" : "Stored") }
+                NavigationLink {
+                    SecretScreen(title: "Linq line", prompt: "+1 …", isStored: Keychain.read(.linqLine) != nil, isNumber: true,
+                                 explanation: "The number Linq sends from.") { model.setRelaySetting($0, for: .linqLine) }
+                } label: { LabeledContent("Linq line", value: Keychain.read(.linqLine) ?? "Not set") }
+                NavigationLink {
+                    SecretScreen(title: "Your number", prompt: "+49 …", isStored: Keychain.read(.ownNumber) != nil, isNumber: true,
+                                 explanation: "This iPhone's own number, where the relay's text goes.") { model.setRelaySetting($0, for: .ownNumber) }
+                } label: { LabeledContent("Your number", value: Keychain.read(.ownNumber) ?? "Not set") }
+            } footer: {
+                Text("""
+                A message you ask for ("send a message to Alex that I'll be five minutes late") is sent from your own number \
+                while the phone stays in your pocket. No app may send an iMessage itself, so Quasi texts this phone through Linq, \
+                and an automation in Shortcuts sends it on. Set that up once by hand:
+
+                Shortcuts → Automation → + → Message → Message Contains “\(MessageRelay.marker)|” → Run Immediately → Next → \
+                the shortcut “Quasi Relay” (Split Text by “|”, Get Item 2, Get Item 3, Send Message with Show When Run off).
+                """)
+            }
+            .listRowBackground(Color.card)
+        }
+        .scrollContentBackground(.hidden)
+        .background(Color.paper)
+        .navigationTitle("iMessage relay")
+        .navigationBarTitleDisplayMode(.inline)
+    }
+}
+
 /// Entering or removing one key.
 struct SecretScreen: View {
     let title: String
     let prompt: String
     let isStored: Bool
+    /// A phone number rather than a secret: shown as typed, with the number keyboard.
+    var isNumber = false
     let explanation: String
     let save: (String?) -> Void
     @State private var draft = ""
@@ -139,9 +207,13 @@ struct SecretScreen: View {
                         dismiss()
                     }
                 } else {
-                    SecureField(prompt, text: $draft)
-                        .textInputAutocapitalization(.never)
-                        .autocorrectionDisabled()
+                    if isNumber {
+                        TextField(prompt, text: $draft).keyboardType(.phonePad)
+                    } else {
+                        SecureField(prompt, text: $draft)
+                            .textInputAutocapitalization(.never)
+                            .autocorrectionDisabled()
+                    }
                     Button("Save") {
                         save(draft)
                         dismiss()

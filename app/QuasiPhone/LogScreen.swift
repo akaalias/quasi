@@ -122,14 +122,29 @@ struct NoteRow: View {
             .padding(.bottom, 7.6)
     }
 
-    /// The words that asked for the first task if there is one, otherwise how the note begins.
+    /// The words that asked for the first message or task if there is one, otherwise how the note begins.
     private var quote: String {
-        let source = note.tasks.first?.draft.source ?? ""
+        let source = note.messages.first?.draft.source ?? note.tasks.first?.draft.source ?? ""
         return (source.isEmpty ? note.transcript : source).trimmingCharacters(in: .whitespacesAndNewlines)
     }
 
     @ViewBuilder private var outcome: some View {
         switch note.outcome {
+        case .messageSent:
+            ForEach(Array(note.messages.enumerated()), id: \.offset) { _, message in
+                if message.isSent {
+                    Text("✓ Sent to \(message.recipientName ?? message.draft.recipient)").typo(.uiStrong).foregroundStyle(Color.brand)
+                    Text("“\(message.draft.text)”").typo(.ui).foregroundStyle(Color.quiet)
+                }
+            }
+            ForEach(Array(note.tasks.prefix(2).enumerated()), id: \.offset) { _, task in
+                Text("✓ Added · \(task.draft.title)").typo(.uiStrong).foregroundStyle(Color.brand)
+            }
+        case .asking:
+            if let message = note.messages.first(where: { !$0.isSent && $0.recipientNumber == nil }) {
+                Text(message.candidates.isEmpty ? "Who is \(message.draft.recipient)?" : "Which \(message.draft.recipient)?").typo(.uiStrong)
+                Text("Say the name into the recorder.").typo(.ui).foregroundStyle(Color.quiet)
+            }
         case .taskAdded:
             // One line per task, three at most, so a long list does not push the next note off the screen.
             ForEach(Array(note.tasks.prefix(3).enumerated()), id: \.offset) { _, task in
@@ -146,11 +161,15 @@ struct NoteRow: View {
             Text("Your note is safe.").typo(.ui).foregroundStyle(Color.quiet)
         case .pending:
             Text("Reading…").typo(.ui).foregroundStyle(Color.quiet)
+        case .note where note.answer != nil:
+            Text(note.answer ?? "").typo(.ui).foregroundStyle(Color.quiet)
         case .note where note.isPartial:
             Text(note.shortfall ?? "").typo(.uiStrong)
             Text("Your whole note is safe on the recorder.").typo(.ui).foregroundStyle(Color.quiet)
         default:
-            if let task = note.tasks.first {
+            if let message = note.messages.first {
+                Text("Message found, not sent: to \(message.recipientName ?? message.draft.recipient)").typo(.ui).foregroundStyle(Color.quiet)
+            } else if let task = note.tasks.first {
                 Text(note.tasks.count == 1 ? "Task found, not sent: \(task.draft.title)" : "\(note.tasks.count) tasks found, not sent")
                     .typo(.ui).foregroundStyle(Color.quiet)
             } else {

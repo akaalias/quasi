@@ -27,6 +27,9 @@ struct NoteScreen: View {
                         Text(marked(note)).typo(.transcript).textSelection(.enabled)
                             .padding(.top, 11.4).padding(.bottom, 22.8)
                     }
+                    ForEach(Array(note.messages.enumerated()), id: \.offset) { index, message in
+                        messageCard(message, note: note, index: index).padding(.bottom, Metric.gap)
+                    }
                     ForEach(Array(note.tasks.enumerated()), id: \.offset) { index, task in
                         card(for: task.draft, added: task.todoistID != nil).padding(.bottom, Metric.gap)
                         // With several tasks, each has its own way back; a single one uses the note's.
@@ -67,10 +70,10 @@ struct NoteScreen: View {
         return moment + " · " + (seconds < 90 ? "\(seconds) seconds" : "\(seconds / 60) minutes")
     }
 
-    /// The transcript with the words that asked for each task marked, so the reasons are visible.
+    /// The transcript with the words that asked for each task or message marked, so the reasons are visible.
     private func marked(_ note: NoteRecord) -> AttributedString {
         var text = AttributedString(note.transcript)
-        for source in note.tasks.map(\.draft.source) where !source.isEmpty {
+        for source in note.tasks.map(\.draft.source) + note.messages.map(\.draft.source) where !source.isEmpty {
             if let range = text.range(of: source) {
                 text[range].backgroundColor = .mark
             }
@@ -90,6 +93,36 @@ struct NoteScreen: View {
             field("Priority", task.priority > 0 ? "p\(task.priority)" : "None said")
             if task.durationMinutes > 0 { field("Takes", "\(task.durationMinutes) min") }
             if !task.labels.isEmpty { field("Labels", task.labels.joined(separator: ", ")) }
+        }
+        .padding(.horizontal, 19.8)
+        .padding(.vertical, 18.3)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(Color.card, in: RoundedRectangle(cornerRadius: Metric.radius))
+    }
+
+    /// A message: where it went, or who it could be for, with the ways to settle or drop it.
+    private func messageCard(_ message: SentMessage, note: NoteRecord, index: Int) -> some View {
+        VStack(alignment: .leading, spacing: 0) {
+            Text(message.isSent ? "✓ Sent to \(message.recipientName ?? message.draft.recipient)"
+                 : message.recipientNumber != nil ? "Message for \(message.recipientName ?? message.draft.recipient)"
+                 : message.candidates.isEmpty ? "Who is \(message.draft.recipient)?" : "Which \(message.draft.recipient)?")
+                .typo(.uiStrong).foregroundStyle(Color.brand).padding(.bottom, 7.6)
+            Text("“\(message.draft.text)”").typo(.cardTitle)
+            if message.isSent, let number = message.recipientNumber {
+                Rule().padding(.vertical, Metric.gap)
+                field("Sent to", number)
+                field("From", "your own number, by the relay")
+            } else if !message.isSent {
+                Rule().padding(.vertical, Metric.gap)
+                if message.recipientNumber == nil, message.candidates.isEmpty {
+                    Text("Nobody of that name is in Contacts. Say the name again into the recorder.").typo(.ui).foregroundStyle(Color.quiet)
+                }
+                ForEach(message.candidates) { person in
+                    act("Send to \(person.name)" + (person.detail.isEmpty ? "" : " · \(person.detail)")) { await model.choose(person, for: id, index: index) }
+                        .padding(.bottom, 7.6)
+                }
+                act("Drop this message") { model.dropMessage(id, index: index) }
+            }
         }
         .padding(.horizontal, 19.8)
         .padding(.vertical, 18.3)
@@ -123,7 +156,7 @@ struct NoteScreen: View {
                     .disabled(model.connection != .ready)
             }
             switch note.outcome {
-            case .taskAdded:
+            case .taskAdded, .messageSent where !note.tasks.isEmpty:
                 act(note.tasks.count == 1 ? "Undo" : "Undo all") { await model.undoTask(id) }
             case .processingFailed:
                 act("Try again") { await model.process(id) }

@@ -6,6 +6,12 @@ enum Keychain {
     enum Secret: String {
         case anthropicKey = "anthropic-api-key"
         case todoistToken = "todoist-api-token"
+        /// The relay that hands messages to the phone's own Messages app (see MessageRelay.swift).
+        case linqToken = "linq-api-token"
+        /// The relay's own line, which the text to the phone comes from.
+        case linqLine = "linq-line"
+        /// The phone's own number, where the relay's text goes.
+        case ownNumber = "own-number"
     }
 
     private static let service = "com.alexisrondeau.Quasi"

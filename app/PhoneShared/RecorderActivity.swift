@@ -8,10 +8,12 @@ import WidgetKit
 struct RecorderAttributes: ActivityAttributes {
     struct ContentState: Codable, Hashable {
         enum Status: String, Codable {
-            case connected, recording, transcribing, searching, bluetoothOff
+            case connected, recording, transcribing, asking, searching, bluetoothOff
         }
 
         var status: Status
+        /// What the app is asking, while `status` is `asking`.
+        var question: String?
         var battery: Int?
         /// When the recording in progress started.
         var recordingStart: Date?
@@ -24,6 +26,7 @@ extension RecorderAttributes.ContentState {
     var glyph: String {
         switch status {
         case .recording: return "record.circle.fill"
+        case .asking: return "questionmark.bubble"
         case .connected, .transcribing: return "waveform"
         case .searching, .bluetoothOff: return "antenna.radiowaves.left.and.right.slash"
         }
@@ -34,6 +37,7 @@ extension RecorderAttributes.ContentState {
         case .connected: return "Recorder connected"
         case .recording: return "Recording"
         case .transcribing: return "Transcribing"
+        case .asking: return question ?? "Quasi has a question"
         case .searching: return "Recorder out of reach"
         case .bluetoothOff: return "Bluetooth is off"
         }
@@ -42,6 +46,7 @@ extension RecorderAttributes.ContentState {
     var tint: Color {
         switch status {
         case .recording: return .red
+        case .asking: return .yellow
         case .connected, .transcribing: return .orange
         case .searching, .bluetoothOff: return .gray
         }
@@ -97,6 +102,8 @@ struct RecorderLockScreen: View {
                 Group {
                     if isStale {
                         Text("Open Quasi to reconnect")
+                    } else if state.status == .asking {
+                        Text("Say the answer into the recorder")
                     } else {
                         Text("Last heard at \(state.lastContact, style: .time)")
                     }

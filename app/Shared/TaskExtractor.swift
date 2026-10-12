@@ -28,6 +28,16 @@ struct TaskDraft: Codable, Equatable {
     var labels: [String] = []
 }
 
+/// One message the speaker asked to have sent to someone, as it should be typed to them.
+struct MessageDraft: Codable, Equatable {
+    /// Who it goes to, as the speaker named them ("Alex", "Alex Müller", "my mother").
+    var recipient: String
+    /// The message as the speaker would type it to that person.
+    var text: String
+    /// The speaker's words that ask for it, as they stand in the transcript.
+    var source = ""
+}
+
 /// The projects, sections and labels a task can be filed under, by name.
 struct TaskCatalog: Codable, Equatable {
     struct Project: Codable, Equatable {
@@ -138,12 +148,28 @@ enum TaskExtractor {
     choose a project from the topic alone.
     - labels: only labels the speaker asks for ("label it errands", "tag that as waiting"), as \
     exact names from the list. Leave out any that match nothing in the list.
+
+    Separately, find every message the speaker asks to have sent to someone: "send a message to \
+    Alex that I'll be five minutes late", "text Maria, I'm on my way", "tell my mother I'll call \
+    tonight", "schreib Jonas, dass ich später komme", "let Sam know the meeting moved to three". \
+    A message is asked for when the speaker addresses it to a person and asks for it to be sent, \
+    texted or told; a task about someone ("remind me to text Alex") is a task, not a message, and \
+    something the speaker merely plans to tell someone is neither. Each message has:
+    - recipient: the person as the speaker named them, exactly ("Alex", "Alex Müller", "Mum"). \
+    Keep every word that tells who is meant ("Alex from the gym").
+    - text: the message as the speaker would type it to that person, in the speaker's language. \
+    Turn reported speech into direct words ("that I'll be late" becomes "I'll be late"; "to call \
+    me" becomes "Call me when you can"), keep the speaker's wording otherwise, and leave out \
+    the asking ("send a message", "tell him"). Use "I" for the speaker and "you" for the \
+    recipient. Never add anything the speaker did not say.
+    - source: the sentence that asks for it, copied character for character.
+    Answer with an empty list of messages if the note asks for none, which is most notes.
     """
 
     private static let schema: [String: Any] = [
         "type": "object",
-        "properties": ["tasks": ["type": "array", "items": taskSchema]],
-        "required": ["tasks"],
+        "properties": ["tasks": ["type": "array", "items": taskSchema], "messages": ["type": "array", "items": messageSchema]],
+        "required": ["tasks", "messages"],
         "additionalProperties": false,
     ]
 
@@ -169,9 +195,17 @@ enum TaskExtractor {
         "additionalProperties": false,
     ]
 
+    private static let messageSchema: [String: Any] = [
+        "type": "object",
+        "properties": ["recipient": ["type": "string"], "text": ["type": "string"], "source": ["type": "string"]],
+        "required": ["recipient", "text", "source"],
+        "additionalProperties": false,
+    ]
+
     /// One answer from the model, with what it cost.
     struct Extraction {
         var drafts: [TaskDraft]
+        var messages: [MessageDraft] = []
         var model: String
         var inputTokens: Int
         var outputTokens: Int
@@ -246,12 +280,27 @@ enum TaskExtractor {
             throw TaskExtractorError.unreadable
         }
         let usage = json["usage"] as? [String: Any] ?? [:]
-        return Extraction(drafts: answer.tasks.compactMap { $0.draft(in: catalog) }, model: json["model"] as? String ?? "",
+        return Extraction(drafts: answer.tasks.compactMap { $0.draft(in: catalog) }, messages: answer.messages.compactMap(\.draft),
+                          model: json["model"] as? String ?? "",
                           inputTokens: usage["input_tokens"] as? Int ?? 0, outputTokens: usage["output_tokens"] as? Int ?? 0)
     }
 
     private struct Answer: Decodable {
         let tasks: [Item]
+        let messages: [MessageItem]
+    }
+
+    private struct MessageItem: Decodable {
+        let recipient: String
+        let text: String
+        let source: String
+
+        var draft: MessageDraft? {
+            let recipient = recipient.trimmingCharacters(in: .whitespacesAndNewlines)
+            let text = text.trimmingCharacters(in: .whitespacesAndNewlines)
+            guard !recipient.isEmpty, !text.isEmpty else { return nil }
+            return MessageDraft(recipient: recipient, text: text, source: source.trimmingCharacters(in: .whitespacesAndNewlines))
+        }
     }
 
     private struct Item: Decodable {

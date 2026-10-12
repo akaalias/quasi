@@ -8,6 +8,10 @@ struct NoteRecord: Codable, Identifiable, Equatable {
         /// Nothing was asked for, or nothing is set up to act on it.
         case note
         case taskAdded
+        /// A message the note asked for was sent on its way (and any tasks were added).
+        case messageSent
+        /// The app has a question about this note and waits for the next recording to answer it.
+        case asking
         /// The recording was made, but its audio did not reach this device. It is still on the recorder.
         case noAudio
         case transcriptionFailed
@@ -26,8 +30,36 @@ struct NoteRecord: Codable, Identifiable, Equatable {
     var outcome = Outcome.pending
     /// The tasks this note asked for, in the order they were asked.
     var tasks: [AddedTask] = []
+    /// The messages this note asked to have sent, in the order they were asked.
+    var messages: [SentMessage] = []
     /// What went wrong, for the two failed outcomes.
     var problem: String?
+    /// For a note that answered a question the app asked: what the answer was taken to be.
+    var answer: String?
+}
+
+/// A message found in a note, and whether it went.
+struct SentMessage: Codable, Equatable {
+    var draft: MessageDraft
+    /// The person it was sent to, once known: a name from Contacts and the number used.
+    var recipientName: String?
+    var recipientNumber: String?
+    /// The people the spoken name could mean, while that is still an open question.
+    var candidates: [Candidate] = []
+    /// The id of the relay message once it has been handed to the phone's own messaging.
+    var relayID: String?
+
+    var isSent: Bool { relayID != nil }
+}
+
+/// One person a spoken name could mean.
+struct Candidate: Codable, Equatable, Identifiable {
+    var name: String
+    var number: String
+    /// What tells this person apart from a namesake: a company, a nickname, the number's label.
+    var detail = ""
+
+    var id: String { number }
 }
 
 /// A task found in a note, and where it went.
@@ -52,6 +84,8 @@ extension NoteRecord {
         transcript = try values.decodeIfPresent(String.self, forKey: .transcript) ?? ""
         outcome = try values.decodeIfPresent(Outcome.self, forKey: .outcome) ?? .pending
         problem = try values.decodeIfPresent(String.self, forKey: .problem)
+        answer = try values.decodeIfPresent(String.self, forKey: .answer)
+        messages = try values.decodeIfPresent([SentMessage].self, forKey: .messages) ?? []
         if let tasks = try values.decodeIfPresent([AddedTask].self, forKey: .tasks) {
             self.tasks = tasks
         } else {

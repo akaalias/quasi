@@ -404,6 +404,7 @@
 				INFOPLIST_FILE = "QuasiPhone-Info.plist";
 				INFOPLIST_KEY_CFBundleDisplayName = Quasi;
 				INFOPLIST_KEY_NSBluetoothAlwaysUsageDescription = "Quasi connects to your Comulytic Note Pro to download and stream recordings.";
+				INFOPLIST_KEY_NSContactsUsageDescription = "Quasi looks up the person you name when you ask for a message to be sent. Names stay on the phone.";
 				INFOPLIST_KEY_NSSpeechRecognitionUsageDescription = "Quasi transcribes your recordings on this iPhone.";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
@@ -438,6 +439,7 @@
 				INFOPLIST_FILE = "QuasiPhone-Info.plist";
 				INFOPLIST_KEY_CFBundleDisplayName = Quasi;
 				INFOPLIST_KEY_NSBluetoothAlwaysUsageDescription = "Quasi connects to your Comulytic Note Pro to download and stream recordings.";
+				INFOPLIST_KEY_NSContactsUsageDescription = "Quasi looks up the person you name when you ask for a message to be sent. Names stay on the phone.";
 				INFOPLIST_KEY_NSSpeechRecognitionUsageDescription = "Quasi transcribes your recordings on this iPhone.";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;

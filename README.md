@@ -29,8 +29,16 @@ Press record on the recorder, and within a second or two:
   tasks: …"): none, one or several per note. For each it works out what you said about it: title,
   due day and time, repeats, deadline, priority, how long it takes, and the project, section and
   labels to file it under. With a Todoist token stored as well, the tasks are added to Todoist
-  with the transcript in their description. These two
-  services are the only places where text leaves your device, and only if you store their keys.
+  with the transcript in their description.
+- **Messages.** "Send a message to Alex that I'll be five minutes late" sends an iMessage to
+  Alex from your own number, with the phone still in your pocket. No app may send an iMessage
+  itself, so Quasi texts your phone through [Linq](https://linqapp.com) (a service with a line
+  of its own) and an automation in Shortcuts, set up once by hand, sends it on. The person is
+  looked up in Contacts, among the people you have chosen; if the name could mean several of
+  them, or nobody, a chime asks, and your next recording is the answer. The transcript and, when
+  a name does not match as written, the names of those chosen contacts go to Claude; the
+  relay sees only the number and the text. Claude, Todoist and Linq are the only places where
+  text leaves your device, and only if you store their keys.
 
 On the Mac this is a menu bar item with a small floating window that appears when a recording
 starts. Files go to `~/Recordings/Comulytic`.

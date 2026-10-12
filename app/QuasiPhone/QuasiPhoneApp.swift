@@ -15,6 +15,9 @@ struct QuasiPhoneApp: App {
         let environment = ProcessInfo.processInfo.environment
         if let key = environment["ANTHROPIC_API_KEY"], !key.isEmpty { model.setAnthropicKey(key) }
         if let token = environment["TODOIST_API_TOKEN"], !token.isEmpty { model.setTodoistToken(token) }
+        for (name, secret) in [("LINQ_API_TOKEN", Keychain.Secret.linqToken), ("LINQ_FROM", .linqLine), ("LINQ_TO", .ownNumber)] {
+            if let value = environment[name], !value.isEmpty { model.setRelaySetting(value, for: secret) }
+        }
         // `-demo home|live|note|settings` at launch shows a staged state (see tools/screens.sh).
         if let demo = UserDefaults.standard.string(forKey: "demo") {
             model.stage(connection: .ready, battery: 82, recording: demo == "live")
@@ -39,6 +42,10 @@ struct QuasiPhoneApp: App {
                 // Again whenever the phone is unlocked with the app in front, in case the first try came too early.
                 .onReceive(NotificationCenter.default.publisher(for: UIApplication.didBecomeActiveNotification)) { _ in
                     Platform.openForBackgroundUse()
+                    // Contacts can only be asked for with the app in front; messages are looked up in the background.
+                    if model.hasMessageRelay, ContactBook.access == .notDetermined {
+                        Task { _ = await ContactBook.requestAccess() }
+                    }
                 }
         }
     }

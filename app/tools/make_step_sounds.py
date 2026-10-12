@@ -12,6 +12,9 @@ rising notes left hanging, and the end answers it.
                           file so that the rhythm cannot drift
     answer_nothing        processed, nothing to do: the home note, plainly
     answer_tasks_N        N tasks added (1 to 5): N quick notes, then the home chord
+    answer_message        a message sent on: a note that leaps up and away, then the home chord
+    answer_asking         the app has a question of its own: the question motif, higher and
+                          slower, left hanging for the speaker to answer
     answer_failed         processing failed: the question falls away unanswered
 
 Usage: tools/make_step_sounds.py      (writes QuasiPhone/Sounds/*.wav)
@@ -108,4 +111,9 @@ for count in range(1, 6):
     pickups = [(i * 0.2, chime(G5, seconds=0.4, decay=7)) for i in range(count)]
     landing = (count - 1) * 0.2 + 0.26
     render(f"answer_tasks_{count}", pickups + [(landing, note) for note in home_chord])
+# A message sent: one note that leaps a sixth up and away, then home.
+render("answer_message", [(0.0, chime(G5, seconds=0.4, decay=7)), (0.18, chime(E6, 0.8, seconds=0.8, decay=4))]
+       + [(0.62, note) for note in home_chord])
+# The app asks back: the opening question again, a fourth higher and slower, and nothing resolves it.
+render("answer_asking", [(0.0, chime(C6, seconds=0.6, decay=4)), (0.32, chime(E6, 0.9, seconds=1.6, decay=2.2))])
 render("answer_failed", [(0.0, chime(AB5, seconds=0.6, decay=4)), (0.35, chime(FS5 / 1.5, seconds=2.0, decay=1.5, glow=0.3))])

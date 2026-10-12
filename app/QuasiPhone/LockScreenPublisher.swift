@@ -44,6 +44,13 @@ final class LockScreenPublisher {
             case .taskAdded:
                 snapshot.lastNote = note.tasks.count == 1 ? "✓ " + note.tasks[0].draft.title : "✓ \(note.tasks.count) tasks added"
                 snapshot.lastOutcome = note.tasks.count == 1 ? "task added" : note.tasks.map(\.draft.title).joined(separator: ", ")
+            case .messageSent:
+                let sent = note.messages.filter(\.isSent)
+                snapshot.lastNote = "✓ Sent to " + sent.map { $0.recipientName ?? $0.draft.recipient }.joined(separator: ", ")
+                snapshot.lastOutcome = sent.first.map { "“\($0.draft.text)”" } ?? "message sent"
+            case .asking:
+                snapshot.lastNote = self.model.question?.text ?? "Quasi has a question"
+                snapshot.lastOutcome = "say the answer into the recorder"
             case .processingFailed, .transcriptionFailed, .noAudio:
                 snapshot.lastNote = "A note needs a look"
                 snapshot.lastOutcome = "open Quasi"
@@ -55,7 +62,7 @@ final class LockScreenPublisher {
                 snapshot.lastOutcome = "reading"
             case .note:
                 snapshot.lastNote = String(note.transcript.prefix(60))
-                snapshot.lastOutcome = "kept as a note"
+                snapshot.lastOutcome = note.answer ?? "kept as a note"
             }
         }
         var unchanged = snapshot

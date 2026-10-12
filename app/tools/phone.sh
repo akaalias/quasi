@@ -1,8 +1,9 @@
 #!/bin/sh
 # Builds the iPhone app and installs and launches it on the connected iPhone (unlocked, developer mode on).
 # The Mac app must not be running: only one client can hold the recorder.
-# ANTHROPIC_API_KEY and TODOIST_API_TOKEN from the repository's .env, if present, are handed to
-# the app at launch, which stores them in the phone's keychain.
+# ANTHROPIC_API_KEY, TODOIST_API_TOKEN and the relay's LINQ_API_TOKEN, LINQ_FROM and LINQ_TO from
+# the repository's .env, if present, are handed to the app at launch, which stores them in the
+# phone's keychain.
 set -e
 cd "$(dirname "$0")/.."
 DEVICE=$(xcrun xctrace list devices 2>/dev/null | sed -n '/== Devices ==/,/== Simulators ==/p' | grep iPhone | head -1 | sed -E 's/.*\(([0-9A-F-]+)\)$/\1/')
@@ -17,7 +18,7 @@ path = os.path.join("..", ".env")
 if os.path.exists(path):
     for line in open(path):
         name, _, value = line.strip().partition("=")
-        if name in ("ANTHROPIC_API_KEY", "TODOIST_API_TOKEN") and value:
+        if name in ("ANTHROPIC_API_KEY", "TODOIST_API_TOKEN", "LINQ_API_TOKEN", "LINQ_FROM", "LINQ_TO") and value:
             values[name] = value.strip("\"'")
 print(json.dumps(values))
 PY
