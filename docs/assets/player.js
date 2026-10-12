@@ -36,6 +36,12 @@ const Quasi = (() => {
     answer_tasks_1: tasks(1, "one task", "Your phone has added the task to your to-do list. It plays one quick note for the task and then a chord."),
     answer_tasks_2: tasks(2, "two tasks", "Your phone has added both tasks to your to-do list. It plays one quick note for each task and then a chord, so you can count the tasks."),
     answer_tasks_3: tasks(3, "three tasks", "Your phone has added all three tasks to your to-do list. It plays one quick note for each task and then a chord, so you can count the tasks."),
+    answer_message: { label: `"I've sent it"`, text: "Your phone has found the person in your contacts and handed the message to Messages, and it has gone out from your own number. A note leaps up and away, then the chord.",
+                      mark: ["chime answer leap", "iib"], notes: [0, 180, 620], lasts: 2400, rings: [[0, 700, 16, .8], [180, 900, 22, .85], [620, 1500, 28, .9]] },
+    answer_asking: { label: `"Which one?"`, text: "The name could mean more than one person in your contacts, or nobody. Your phone asks: the opening question again, higher and slower, left hanging. The Lock Screen shows the question, and your next recording is the answer.",
+                     mark: ["chime ask", "ii"], notes: [0, 320], lasts: 2300, rings: [[0, 900, 20, .8], [320, 1600, 28, .85]] },
+    answering: { label: "You say which one", text: "You press record again and say who you meant: a surname, a nickname, \"the one from the gym\". Nothing else is needed.",
+                 mark: ["voice", "iiii"], yours: true },
     answer_nothing: { label: `"I've kept it as a note"`, text: "You did not ask for anything, so your phone keeps what you said as a note. It plays the home note alone, without a chord.",
                       mark: ["chime answer", "b"], notes: [0], lasts: 1400, rings: [[0, 1300, 26, .85]] },
     answer_failed: { label: `"I couldn't do it"`, text: "Your phone could not work out the tasks or could not add them. The answer falls and rings out. Your note is safe.",
@@ -149,22 +155,33 @@ const Quasi = (() => {
   //   heard    false: the audio did not reach the phone, so the wood block fails and nothing follows
   //   reach    false: the phone is not listening at all, so silence follows each press of the button
   //   online   false: the phone cannot reach Anthropic
-  const compose = ({ answer = null, talk = TALK, work = 3000, heard = true, reach = true, online = true }) => {
+  //   reply    after an answer that asks a question: a second, short recording that answers it,
+  //            as { talk, work, answer }
+  const compose = ({ answer = null, talk = TALK, work = 3000, heard = true, reach = true, online = true, reply = null }) => {
     const stop = 1850 + talk + 400, steps = [[0, "press"]];
     steps.push([600, reach ? "question" : "silence"]);
-    steps.push([1850, "talking"], [stop, "press"]);
-    let asking = null;
+    steps.push([1850, "talking", talk], [stop, "press"]);
+    const asking = [], recording = [[100, stop + 100]], presses = [0, stop];
     steps.push([stop + 450, !reach ? "silence" : heard ? "wood_1" : "wood_fail_1"]);
     if (reach && heard) {
       // The ticking stops, and the answer comes after a short silence.
-      asking = [stop + 1350, stop + 1350 + work];
-      steps.push([asking[0], "ticking"], [asking[1], null], [asking[1] + 700, answer]);
+      asking.push([stop + 1350, stop + 1350 + work]);
+      steps.push([asking[0][0], "ticking"], [asking[0][1], null], [asking[0][1] + 700, answer]);
+    }
+    if (reply) {
+      // The question hangs for a moment, then the answer is recorded and acted on in its turn.
+      const { talk: said = 1300, work: worked = 2200, answer: then } = reply;
+      const again = asking[0][1] + 700 + WORDS[answer].lasts + 900, done = again + 1850 + said + 400;
+      steps.push([again, "press"], [again + 600, "question"], [again + 1850, "answering", said], [done, "press"], [done + 450, "wood_1"]);
+      asking.push([done + 1350, done + 1350 + worked]);
+      steps.push([asking[1][0], "ticking"], [asking[1][1], null], [asking[1][1] + 700, then]);
+      recording.push([again + 100, done + 100]); presses.push(again, done);
     }
     const [last, sound] = steps[steps.length - 1];
     const length = last + Math.max(1100, (WORDS[sound]?.lasts ?? 0) - 260);
     steps.push([length - 100, null]);
     const words = [...new Set(steps.map(step => step[1]).filter(name => WORDS[name]))];
-    return { steps, length, talk, asking, words, recording: [100, stop + 100], presses: [0, stop],
+    return { steps, length, asking, words, recording, presses,
              flag: !reach ? "deaf" : !heard ? "lost" : !online ? "offline" : "" };
   };
 
@@ -196,16 +213,16 @@ const Quasi = (() => {
       list.querySelectorAll(".sound").forEach(row => row.classList.toggle("on", row.dataset.word === sound));
     };
     // The line: a mark for each word, the talking as a cloud of bars, the working as one dot per tick.
-    const RINGS = [], BEATS = [], runs = [];
-    let cloud = null;
-    steps.forEach(([at, sound], n) => {
+    const RINGS = [], BEATS = [], runs = [], clouds = [];
+    const spoken = name => WORDS[name]?.yours;
+    steps.forEach(([at, sound, said], n) => {
       const word = WORDS[sound];
-      if (sound === "talking" || sound === "ticking") {
-        const run = document.createElement("div"), lasts = sound === "talking" ? scene.talk : steps[n + 1][0] - at;
-        run.className = sound === "talking" ? "talk" : "ticks";
+      if (spoken(sound) || sound === "ticking") {
+        const run = document.createElement("div"), lasts = spoken(sound) ? said : steps[n + 1][0] - at;
+        run.className = spoken(sound) ? "talk" : "ticks";
         run.style.left = percent(at); run.style.width = percent(lasts);
         run.dataset.from = at; run.dataset.to = at + lasts;
-        if (sound === "talking") cloud = run;
+        if (spoken(sound)) clouds.push([n, said, run]);
         else for (let tick = at; tick < at + lasts; tick += 500) {
           run.appendChild(document.createElement("i"));
           RINGS.push([tick, 360, 8, .55]);
@@ -247,7 +264,7 @@ const Quasi = (() => {
       casing.setAttribute("transform", `scale(${1 - .045 * depth})`);
       knob.setAttribute("transform", `translate(33 -67) scale(${1 - .3 * depth}) translate(-33 67)`);
     };
-    const within = (span, time) => span !== null && time !== null && time >= span[0] && time < span[1];
+    const within = (spans, time) => time !== null && spans.some(span => time >= span[0] && time < span[1]);
     const show = time => {
       const now = running || time > 0 ? time : null;
       element.classList.toggle("recording", within(scene.recording, now));
@@ -260,13 +277,16 @@ const Quasi = (() => {
 
     // The line's own copy of each sound, loaded at once, so that none starts late. The talking
     // is new for every play: its sound, and with it the bars on the line.
-    const voices = steps.map(([, sound]) => { if (!sound || sound === "talking" || WORDS[sound]?.silent) return null; const audio = new Audio(`assets/sounds/${sound}.wav`); audio.preload = "auto"; audio.load(); return audio; });
-    let spoken = null;
+    const voices = steps.map(([, sound]) => { if (!sound || spoken(sound) || WORDS[sound]?.silent) return null; const audio = new Audio(`assets/sounds/${sound}.wav`); audio.preload = "auto"; audio.load(); return audio; });
+    let said = [];
     const speak = () => {
-      if (spoken) URL.revokeObjectURL(spoken.url);
-      spoken = babble(scene.talk);
-      voices[steps.findIndex(step => step[1] === "talking")] = new Audio(spoken.url);
-      cloud.replaceChildren(...spoken.loudness.map(level => { const bar = document.createElement("i"); bar.style.height = `${3 + level * 38}px`; return bar; }));
+      said.forEach(talk => URL.revokeObjectURL(talk.url));
+      said = clouds.map(([n, lasts, cloud]) => {
+        const talk = babble(lasts);
+        voices[n] = new Audio(talk.url);
+        cloud.replaceChildren(...talk.loudness.map(level => { const bar = document.createElement("i"); bar.style.height = `${3 + level * 38}px`; return bar; }));
+        return talk;
+      });
     };
     // Where the note is: how far in, which steps have sounded, and what is audible right now.
     let elapsed = 0, since = 0, next = 0, frame = 0, running = false, sounding = [], held = null, presses = 0;
@@ -324,7 +344,7 @@ const Quasi = (() => {
     return {
       pause,
       // Ends the example for good: it is not played again after this.
-      close() { pause(); reset(false); URL.revokeObjectURL(spoken.url); },
+      close() { pause(); reset(false); said.forEach(talk => URL.revokeObjectURL(talk.url)); },
       // The example as it stands at a moment, without sound (for checking the layout).
       peek(time) { timeline.classList.add("playing"); show(time); light([...steps].reverse().find(step => step[0] <= time)?.[1] ?? null); },
     };

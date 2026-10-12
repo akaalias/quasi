@@ -122,6 +122,12 @@
 
   ul.plain { list-style: none; padding: 0; margin: 0 0 16px; } ul.plain li { padding: 12px 0; border-top: 1px solid var(--rule); }
   ul.plain li:first-child { border-top: 0; } ul.plain b { font-weight: 600; }
+  /* The three things it can do: each with its icon, drawn in the same line as the Lock Screen glyphs. */
+  .can { list-style: none; padding: 0; margin: 28px 0 20px; display: grid; gap: 14px; }
+  .can li { display: flex; gap: 18px; align-items: flex-start; background: var(--card); border-radius: 22px; padding: 20px 22px; }
+  .can svg { flex: none; width: 44px; height: 44px; fill: none; stroke: var(--brand); stroke-width: 2.2; stroke-linecap: round; stroke-linejoin: round; margin-top: 2px; }
+  .can b { display: block; font-weight: 600; margin-bottom: 3px; } .can p { margin: 0; color: var(--quiet); }
+  @media (max-width: 600px) { .can li { gap: 14px; padding: 16px 18px; } .can svg { width: 36px; height: 36px; } }
   /* One whole note laid out in time, wider than the column of text. */
   /* The player: its title and who is doing what stand on the page itself, each centred; only the
      line below them has a background. */
@@ -179,6 +185,8 @@
   .mark.wood i { width: 15px; height: 26px; border-radius: 5px; }
   /* What went wrong: the answer falls where the question rose, and silence is an empty place. */
   .mark.chime.fall i + i { margin-top: 14px; width: 24px; height: 24px; }
+  .mark.answer.leap i + i { margin-top: -10px !important; }                                 /* the note that leaps up */
+  .mark.chime.ask i { width: 20px; height: 20px; } .mark.chime.ask i + i { margin-top: -17px; }    /* the question, higher */
   .mark.silence i { width: 20px; height: 20px; border-radius: 50%; border-style: dashed; border-width: 2px; }
   .mark.silence i.on, .sound.on .mark.silence i { background: var(--paper); border-color: var(--ink); }      /* silence stays empty */
   /* And a mark for something that went wrong is struck through: one stroke across its last
@@ -218,6 +226,7 @@
     .track .mark.answer i { width: 8px; height: 8px; } .track .mark.answer b { width: 17px; height: 17px; }
     .track .mark.wood i { width: 9px; height: 17px; border-radius: 3px; } .ticks i { width: 4px; height: 4px; }
     .track .mark.chime.fall i + i { margin-top: 9px; width: 15px; height: 15px; } .track .mark.silence i { width: 13px; height: 13px; border-width: 1.5px; }
+    .track .mark.answer.leap i + i { margin-top: -6px !important; } .track .mark.chime.ask i { width: 12px; height: 12px; } .track .mark.chime.ask i + i { margin-top: -11px; }
     .track .mark.failed i:last-child::after { width: 2px; height: calc(100% + 10px); box-shadow: 0 0 0 1px var(--paper); }
     .talk i { width: 2px; } .talk, .ticks { padding: 0 3px; } .sound .mark { width: 54px; } }
   /* The further examples: a grid of cards, each showing its sentence of marks. */
@@ -326,6 +335,19 @@
   </section>
 
   <section>
+    <p class="kicker">What it can do</p>
+    <h2>Quasi only does three things. For now.</h2>
+    <ul class="can">
+      <li><svg viewBox="0 0 44 44" aria-hidden="true"><rect x="12" y="4" width="20" height="28" rx="10"/><path d="M7 22a15 15 0 0 0 30 0M22 37v4M16 41h12"/></svg>
+        <div><b>Take a voice note.</b><p>Press the button, talk the way you think, press again. The note is transcribed on your phone and kept, with the recording, in a logbook you can read later.</p></div></li>
+      <li><svg viewBox="0 0 44 44" aria-hidden="true"><path d="M9 7h26a4 4 0 0 1 4 4v15a4 4 0 0 1-4 4H19l-9 7v-7H9a4 4 0 0 1-4-4V11a4 4 0 0 1 4-4Z"/><path d="M13 16h18M13 22h11"/></svg>
+        <div><b>Send an iMessage to a friend.</b><p>"Send a message to Alex that I'll be five minutes late." The message goes out from your own number, to Alex in your contacts, while the phone stays locked in your pocket. If there are two people called Alex, Quasi asks which, and your next recording is the answer.</p></div></li>
+      <li><svg viewBox="0 0 44 44" aria-hidden="true"><path d="M6 12l3.5 3.5L16 9M6 24l3.5 3.5L16 21M6 36l3.5 3.5L16 33M22 12h17M22 24h17M22 36h17"/></svg>
+        <div><b>Add tasks to Todoist.</b><p>"Add a task, call the plumber tomorrow morning." One task or several, with the day, time, repeat, project and priority you said, and the words you said them in.</p></div></li>
+    </ul>
+  </section>
+
+  <section>
     <p class="kicker">The sound language</p>
     <h2>An aural language for screen-free life</h2>
     <p>Without a screen, you still need feedback. That's why Quasi speaks to you with a small vocabulary, so you know what it's doing and when it's done. Each word has its own sound, and the sounds are easy to learn.</p>
@@ -343,19 +365,18 @@
   <section>
     <p class="kicker">What it does</p>
     <h2>The screen is for afterwards.</h2>
-    <p>Press the button on the recorder and talk the way you think: rambling, correcting yourself, changing your mind. Somewhere in there you say "add that as a task", or list three things for tomorrow. When you stop, your phone has already transcribed the note, worked out what you asked for, and put it in your to-do list.</p>
+    <p>The app is where you check what happened, not where things happen: your words in a serif, the app's in plain type, and one orange that only ever means "I did something".</p>
     <aside class="alert">
       <p class="kicker">A prototype, limited on purpose</p>
-      <p><b>For now, Quasi does one thing: it turns what you say into tasks in Todoist.</b> That is a first exploration, and its scope is small on purpose. Staying with one situation makes it possible to study that situation and the sound vocabulary around it in depth, and to learn as much as possible before anything else is added.</p>
+      <p><b>For now, Quasi does three things: it keeps what you say as a note, sends a message to someone in your contacts, and turns what you ask for into tasks in Todoist.</b> That is a first exploration, and its scope is small on purpose. Staying with a few situations makes it possible to study them and the sound vocabulary around them in depth, and to learn as much as possible before anything else is added.</p>
     </aside>
-    <p>The app is where you check what happened, not where things happen: your words in a serif, the app's in plain type, and one orange that only ever means "I did something".</p>
     <div class="phones">
       <figure><img src="assets/home.png" alt="The log: each note with what became of it"><figcaption>The logbook lists every note, newest first, with one line for each thing that was done about it.</figcaption></figure>
-      <figure><img src="assets/note.png" alt="A note with its task and the sentence that asked for it marked"><figcaption>A note marks the sentence that asked for the task. Undo is one tap.</figcaption></figure>
+      <figure><img src="assets/note.png" alt="A note with its task and the sentence that asked for it marked"><figcaption>A note marks the sentence that asked for the task or the message. Undo is one tap.</figcaption></figure>
       <figure><img src="assets/live.png" alt="The recording sheet with waveform and live transcript"><figcaption>If you do look while recording, you see the waveform and your words as you speak.</figcaption></figure>
     </div>
     <h3 class="list-title">On the Lock Screen</h3>
-    <p>If you do want a glance without unlocking, a banner on the Lock Screen shows what Quasi is doing. It has six states.</p>
+    <p>If you do want a glance without unlocking, a banner on the Lock Screen shows what Quasi is doing. It has seven states.</p>
     <div class="locks">
       <figure><div class="lock"><div class="banner"><svg viewBox="0 0 40 30" style="color:#FF9F0A"><path d="M6.5 12.5v5M11 9v12M15.5 4v22M20 10.5v9M24.5 6.5v17M29 10v10M33.5 12.5v5"/></svg><div><b>Recorder connected</b><span>Last heard at 13:47</span></div><em>85%</em></div><div class="keys"><i></i><i></i></div><i class="bar"></i></div>
         <figcaption>Between recordings, the banner shows that Quasi is running and in touch with the recorder. The number is the recorder's battery.</figcaption></figure>
@@ -363,6 +384,8 @@
         <figcaption>While you record, the banner counts the time.</figcaption></figure>
       <figure><div class="lock"><div class="banner"><svg viewBox="0 0 40 30" style="color:#FF9F0A"><path d="M6.5 12.5v5M11 9v12M15.5 4v22M20 10.5v9M24.5 6.5v17M29 10v10M33.5 12.5v5"/></svg><div><b>Transcribing</b><span>Last heard at 14:03</span></div><em>85%</em></div><div class="keys"><i></i><i></i></div><i class="bar"></i></div>
         <figcaption>After you stop, the banner says that your phone is turning the note into text.</figcaption></figure>
+      <figure><div class="lock"><div class="banner"><svg viewBox="0 0 40 30" style="color:#FFD60A"><path d="M8 5h24a3 3 0 0 1 3 3v11a3 3 0 0 1-3 3H18l-7 5.5V22H8a3 3 0 0 1-3-3V8a3 3 0 0 1 3-3Z"/><path d="M17 11.2a3 3 0 1 1 4.3 2.7c-.9.5-1.3 1-1.3 1.9M20 18.4v.1"/></svg><div><b>Which Alex: Alex Müller or Alex Schmidt?</b><span>Say the answer into the recorder</span></div></div><div class="keys"><i></i><i></i></div><i class="bar"></i></div>
+        <figcaption>When a message could go to more than one person, the banner shows the question until your next recording answers it.</figcaption></figure>
       <figure><div class="lock"><div class="banner"><svg viewBox="0 0 40 30" style="color:#8E8E93"><circle cx="20" cy="15" r="2" fill="currentColor"/><path d="M14.6 9.6a7.6 7.6 0 0 0 0 10.8M25.4 9.6a7.6 7.6 0 0 1 0 10.8M10.4 5.6a13.3 13.3 0 0 0 0 18.8M29.6 5.6a13.3 13.3 0 0 1 0 18.8M8.5 3.5l23 23"/></svg><div><b>Recorder out of reach</b><span>Last heard at 15:40</span></div></div><div class="keys"><i></i><i></i></div><i class="bar"></i></div>
         <figcaption>When the recorder is out of reach, the banner shows when the phone last heard from it.</figcaption></figure>
       <figure><div class="lock"><div class="banner"><svg viewBox="0 0 40 30" style="color:#8E8E93"><circle cx="20" cy="15" r="2" fill="currentColor"/><path d="M14.6 9.6a7.6 7.6 0 0 0 0 10.8M25.4 9.6a7.6 7.6 0 0 1 0 10.8M10.4 5.6a13.3 13.3 0 0 0 0 18.8M29.6 5.6a13.3 13.3 0 0 1 0 18.8M8.5 3.5l23 23"/></svg><div><b>Bluetooth is off</b><span>Last heard at 16:10</span></div></div><div class="keys"><i></i><i></i></div><i class="bar"></i></div>
@@ -385,7 +408,8 @@
     <ul class="plain">
       <li><b>It needs a specific recorder.</b> It was built for one Comulytic Note Pro, by its owner, and has been tested with exactly that one.</li>
       <li><b>The phone has to be on and nearby.</b> A phone that is locked, dark and in another room is fine. A phone that is switched off or out of Bluetooth range is not.</li>
-      <li><b>It needs your own keys.</b> Transcription happens on the phone. Finding the tasks uses Claude, and adding them uses Todoist, each with a key you supply. Those are the only places your words leave the device.</li>
+      <li><b>It needs your own keys.</b> Transcription happens on the phone. Finding the tasks and messages uses Claude, adding tasks uses Todoist, and sending a message uses Linq, a relay with a line of its own, each with a key you supply. Those are the only places your words leave the device, and the relay sees only a number and the text.</li>
+      <li><b>Sending a message takes a detour.</b> No app may send an iMessage. So Quasi texts your own phone through the relay, and a Shortcuts automation on the phone, set up once by hand, sends the text on from your number. It works with the phone locked, in about three seconds.</li>
       <li><b>It is not in the App Store.</b> There is an iPhone app and a Mac menu bar app; you build them yourself with Xcode.</li>
     </ul>
     <p><a href="https://github.com/akaalias/quasi">The source is on GitHub</a>, under the GNU General Public License, version 3.</p>
@@ -459,6 +483,12 @@
     { id: "three", name: "Create three tasks", note: { answer: "answer_tasks_3" },
       about: "You list three things for tomorrow. The answer is three quick notes and then the chord, so you can count the tasks without looking.",
       after: "In the logbook, the note shows all three tasks, and each task has its own Undo." },
+    { id: "message", name: "Send a message to a friend", note: { answer: "answer_message", talk: 3000 },
+      about: "You say \"send a message to Alex that I'll be five minutes late\". Your phone finds Alex in your contacts, and the message goes out from your own number, with the phone still in your pocket. The answer is a note that leaps up and away, then the chord.",
+      after: "In the logbook, the note shows the message and who it went to, and marks the words that asked for it. Alex sees it from you, in your usual thread." },
+    { id: "which", name: "Quasi asks which Alex", note: { answer: "answer_asking", talk: 3000, reply: { talk: 1300, answer: "answer_message" } },
+      about: "You know two people called Alex. Your phone will not guess, so it asks: the opening question again, higher, left hanging. You press record, say \"Müller\", and the message goes out.",
+      after: "While the question is open, the Lock Screen banner shows it. If you say nothing for two minutes, the answer falls, and the note in the logbook keeps a button for each Alex." },
     { id: "offline", name: "The internet is gone", note: { answer: "answer_failed", work: 2000, online: false },
       about: "Your phone has no internet when you stop, for instance on the underground. It has your words, but it cannot work out what you asked for. The answer falls and rings out.",
       after: "Your note is safe. The logbook says \"Not added yet\", and \"Try again\" finishes the job once your phone is online." },
