@@ -122,6 +122,10 @@
 
   ul.plain { list-style: none; padding: 0; margin: 0 0 16px; } ul.plain li { padding: 12px 0; border-top: 1px solid var(--rule); }
   ul.plain li:first-child { border-top: 0; } ul.plain b { font-weight: 600; }
+  /* The last word: how to get in touch, as one orange button. */
+  .try { text-align: center; } .try p { margin-left: auto; margin-right: auto; }
+  a.cta { display: inline-block; margin-top: 8px; background: var(--brand); color: #fff; text-decoration: none; font: 600 17px/1 var(--app); padding: 16px 26px; border-radius: 999px; }
+  a.cta:hover { filter: brightness(.96); }
   /* The three things it can do: each with its icon, drawn in the same line as the Lock Screen glyphs. */
   .can { list-style: none; padding: 0; margin: 28px 0 20px; display: grid; gap: 14px; }
   .can li { display: flex; gap: 18px; align-items: flex-start; background: var(--card); border-radius: 22px; padding: 20px 22px; }
@@ -413,6 +417,13 @@
       <li><b>It is not in the App Store.</b> There is an iPhone app and a Mac menu bar app; you build them yourself with Xcode.</li>
     </ul>
     <p><a href="https://github.com/akaalias/quasi">The source is on GitHub</a>, under the GNU General Public License, version 3.</p>
+  </section>
+
+  <section class="try">
+    <p class="kicker">Want to try it?</p>
+    <h2>Write to me.</h2>
+    <p>If you'd like to try Quasi with your own recorder, or talk about computing without a screen, send me an email. I'm Alexis, and I read every one.</p>
+    <p><a class="cta" href="mailto:alexis.rondeau@gmail.com?subject=Quasi">alexis.rondeau@gmail.com</a></p>
   </section>
 </main>
 
