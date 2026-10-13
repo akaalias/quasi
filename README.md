@@ -65,7 +65,10 @@ it; run one.
 ## Try it with your own phone and Xcode
 
 This puts the iPhone app on your own phone, talking to your own recorder. It takes about ten
-minutes. It has only ever been run against one recorder, so expect rough edges.
+minutes. It has only ever been run against one recorder, so expect rough edges. Without Xcode,
+[TestFlight](https://testflight.apple.com/join/vgKzkyHd) installs the same app in a minute. The
+keys and the message relay are set up afterwards, in the app;
+[the setup page](https://alexisrondeau.me/quasi/setup.html) walks through all of it, step by step.
 
 **You need**
 
@@ -254,7 +257,8 @@ app/tools/phone.sh     # iPhone: build, install and launch on the connected phon
 ```
 
 The first connection is made with whichever app you open first; the recorder needs to have been
-set up once with the vendor's app, which gives it the bind code these apps read back.
+set up once with the vendor's app, which is where the token the recorder hands out on
+connecting most likely comes from; a recorder straight from the box has not been tried.
 
 ## Repository layout
 

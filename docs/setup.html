@@ -1,0 +1,312 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Setting up Quasi</title>
+<meta name="description" content="How to set up Quasi, step by step: connect the app to the recorder, give it a Claude key so it understands your notes, a Todoist token so it can add tasks, and the relay that lets it send a message to a friend from your own number.">
+<link rel="canonical" href="https://alexisrondeau.me/quasi/setup.html">
+<meta name="theme-color" content="#FBF8F2">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Quasi">
+<meta property="og:title" content="Setting up Quasi">
+<meta property="og:description" content="Connect the app to the recorder, give it a Claude key, a Todoist token, and the relay that sends a message from your own number. Step by step.">
+<meta property="og:url" content="https://alexisrondeau.me/quasi/setup.html">
+<meta property="og:image" content="https://alexisrondeau.me/quasi/assets/social.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="Quasi. Say it, hear it done. A grey pocket recorder sends sound to an iPhone whose screen is off.">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Setting up Quasi">
+<meta name="twitter:description" content="Connect the app to the recorder, give it a Claude key, a Todoist token, and the relay that sends a message from your own number. Step by step.">
+<meta name="twitter:image" content="https://alexisrondeau.me/quasi/assets/social.png">
+<link rel="icon" href="assets/icon.png">
+<style>
+  /* The same page as index.html, without the player: paper, ink, one orange that means "the
+     app did something". What you say is set in a serif; what the app says is not. */
+  :root {
+    --paper: #FBF8F2; --sheet: #FFFDF9; --ink: #1E1B16; --quiet: #8A8173; --card: #F1EBDF;
+    --chip: #EDE5D6; --rule: #DDD3C1; --brand: #C8551F; --mark: #F6D9B8;
+    --spoken: "New York", ui-serif, "Iowan Old Style", "Palatino Linotype", Georgia, serif;
+    --app: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Helvetica Neue", Helvetica, Arial, sans-serif;
+    --mono: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root { --paper: #161411; --sheet: #1E1B17; --ink: #EDE6DA; --quiet: #9A9080; --card: #26221D;
+            --chip: #322D26; --rule: #3A342C; --brand: #EF8249; --mark: #5D381C; }
+  }
+  * { box-sizing: border-box; }
+  html { -webkit-text-size-adjust: 100%; scroll-padding-top: 24px; }
+  body { margin: 0; background: var(--paper); color: var(--ink); font: 17px/1.5 var(--app); }
+  main, header, footer { max-width: 680px; margin: 0 auto; padding: 0 24px; }
+  header { display: flex; align-items: center; justify-content: space-between; padding-top: 28px; color: var(--quiet); }
+  header .name { display: flex; align-items: center; gap: 10px; color: var(--ink); font-weight: 600; }
+  header .name a { display: flex; align-items: center; gap: 10px; color: var(--ink); text-decoration: none; } header .name a:hover { color: var(--brand); }
+  header .name span { font-weight: 400; }
+  header img { width: 30px; height: 30px; border-radius: 7px; }
+  a { color: var(--brand); text-decoration: underline; text-decoration-thickness: 1px; text-underline-offset: 3px; }
+  a:hover { text-decoration-thickness: 2px; }
+  h1 { font: 400 clamp(44px, 9vw, 68px)/1.05 var(--spoken); letter-spacing: -0.01em; margin: 72px 0 24px; }
+  h2 { font: 400 34px/1.15 var(--spoken); margin: 0 0 16px; }
+  h3 { font: 400 24px/1.2 var(--spoken); margin: 40px 0 12px; }
+  section { padding: 56px 0; border-top: 1px solid var(--rule); }
+  section.first { border-top: 0; padding-top: 0; }
+  p { margin: 0 0 16px; } .lead { font: 400 22px/1.45 var(--spoken); } .quiet { color: var(--quiet); }
+  .kicker { font-size: 13px; font-weight: 600; letter-spacing: .12em; text-transform: uppercase; color: var(--quiet); margin: 0 0 12px; }
+  b { font-weight: 600; }
+
+  /* The way through the page: the four steps, each with what you have at the end of it. */
+  ol.steps { list-style: none; counter-reset: step; padding: 0; margin: 28px 0 8px; display: grid; gap: 14px; }
+  ol.steps li { counter-increment: step; display: flex; gap: 18px; align-items: flex-start; background: var(--card); border-radius: 22px; padding: 20px 22px; }
+  ol.steps li::before { content: counter(step); flex: none; width: 40px; height: 40px; border-radius: 50%; background: var(--chip); display: grid; place-items: center; font: 400 22px var(--spoken); }
+  ol.steps a { color: var(--ink); text-decoration: none; } ol.steps a:hover { color: var(--brand); }
+  ol.steps b { display: block; margin-bottom: 3px; } ol.steps p { margin: 0; color: var(--quiet); }
+
+  /* Instructions, numbered. A path through an app's settings is set like a label. */
+  ol.how { padding-left: 0; margin: 0 0 16px; counter-reset: how; list-style: none; }
+  ol.how li { counter-increment: how; position: relative; padding: 12px 0 12px 44px; border-top: 1px solid var(--rule); }
+  ol.how li:first-child { border-top: 0; }
+  ol.how li::before { content: counter(how); position: absolute; left: 0; top: 11px; width: 30px; height: 30px; border-radius: 50%; background: var(--chip); display: grid; place-items: center; font: 400 17px var(--spoken); }
+  ol.how p { margin: 6px 0 0; } ol.how p.quiet { font-size: 15px; }
+  ul.plain { list-style: none; padding: 0; margin: 0 0 16px; } ul.plain li { padding: 12px 0; border-top: 1px solid var(--rule); }
+  ul.plain li:first-child { border-top: 0; }
+  .path { font-size: 15px; background: var(--chip); border-radius: 7px; padding: 2px 8px; white-space: nowrap; }
+  .path i { font-style: normal; color: var(--quiet); padding: 0 2px; }
+  code { font: 15px var(--mono); background: var(--chip); border-radius: 6px; padding: 2px 6px; }
+  /* What you say, set the way the app sets it: in the serif. */
+  q { font-family: var(--spoken); font-size: 19px; quotes: "“" "”"; }
+  /* The sound you hear afterwards, named, and the thing you have when a step is done. */
+  .hear { display: flex; gap: 16px; align-items: flex-start; background: var(--card); border-radius: 22px; padding: 18px 22px; margin: 20px 0; }
+  .hear svg { flex: none; width: 40px; height: 40px; fill: none; stroke: var(--brand); stroke-width: 2.2; stroke-linecap: round; stroke-linejoin: round; margin-top: 1px; }
+  .hear p { margin: 0; } .hear p > b:first-child { display: block; margin-bottom: 2px; }
+  /* Something to know before going on. Not orange: orange only ever means that the app did something. */
+  .alert { background: var(--card); border-radius: 22px; padding: 20px 24px; margin: 28px 0; }
+  .alert .kicker { margin-bottom: 6px; } .alert p:last-child { margin: 0; }
+  /* The shortcut's four actions, drawn as Shortcuts draws them: one card each. */
+  .actions { display: grid; gap: 8px; margin: 16px 0 20px; }
+  .action { background: var(--sheet); border: 1px solid var(--rule); border-radius: 14px; padding: 12px 16px; font-size: 15px; }
+  .action b { display: block; margin-bottom: 2px; } .action span { color: var(--quiet); }
+  .action em { font-style: normal; background: var(--chip); border-radius: 6px; padding: 1px 7px; }
+  @media (prefers-color-scheme: dark) { .action { background: var(--card); } }
+  /* The relay, drawn: the phone texts itself through Linq, and the message goes on. */
+  .relay { display: block; width: 100%; height: auto; margin: 20px 0 8px; }
+  .relay text { font: 600 12px var(--app); fill: var(--quiet); text-anchor: middle; }
+  .relay text.name { font-size: 13px; fill: var(--ink); }
+  .relay .node { fill: var(--card); stroke: var(--rule); }
+  .relay .flow { fill: none; stroke: var(--brand); stroke-width: 2; stroke-dasharray: 3 5; stroke-linecap: round; }
+  .relay .own { fill: none; stroke: var(--ink); stroke-width: 2; }
+  .try { text-align: center; } .try p { margin-left: auto; margin-right: auto; }
+  a.cta { display: inline-block; margin-top: 8px; background: var(--brand); color: #fff; text-decoration: none; font: 600 17px/1 var(--app); padding: 16px 26px; border-radius: 999px; }
+  a.cta:hover { filter: brightness(.96); }
+  .ribbon { position: absolute; top: 0; right: 0; width: 150px; height: 150px; overflow: hidden; z-index: 10; }
+  .ribbon a { position: absolute; top: 34px; right: -52px; width: 220px; padding: 7px 0; transform: rotate(45deg);
+              background: var(--brand); color: #fff; font: 600 13px var(--app); letter-spacing: .04em; text-align: center;
+              box-shadow: 0 1px 6px rgba(0, 0, 0, .18); }
+  .ribbon a, .ribbon a:hover { text-decoration: none; } .ribbon a:hover { filter: brightness(1.06); }
+  @media (max-width: 560px) { .ribbon { width: 120px; height: 120px; } .ribbon a { top: 26px; right: -62px; font-size: 12px; padding: 5px 0; } }
+  footer { color: var(--quiet); font-size: 14px; padding-top: 32px; padding-bottom: 56px; border-top: 1px solid var(--rule); }
+</style>
+</head>
+<body>
+
+<div class="ribbon"><a href="https://github.com/akaalias/quasi">View on GitHub</a></div>
+
+<header>
+  <div class="name"><a href="./"><img src="assets/icon.png" alt=""> Quasi</a><span class="quiet">/ Setting it up</span></div>
+</header>
+
+<main>
+  <section class="first">
+    <h1>Setting it up.</h1>
+    <p class="lead">Quasi runs with your own keys, on your own phone. This page walks through it in four steps, in the order that makes sense: first the app and the recorder talk to each other, then the app understands what you say, then it can add tasks, and last, the long one, it can send a message to a friend.</p>
+    <p>Each step ends with something you can try with the recorder in your hand. You can stop after any of them; the ones before still work. The first three take about half an hour together. The last one takes another half hour, most of it in the Shortcuts app.</p>
+    <ol class="steps">
+      <li><a href="#connect"><b>Connect the app and the recorder.</b><p>Install the app through TestFlight, or build it with Xcode, and let it find the recorder. A note you record arrives on the phone and is written down there.</p></a></li>
+      <li><a href="#notes"><b>Let it understand your notes.</b><p>Get a Claude key from Anthropic and store it in the app. Every note is now read, and the phone answers it with a sound.</p></a></li>
+      <li><a href="#tasks"><b>Let it add tasks to Todoist.</b><p>Store your Todoist token. A task you ask for is added, filed under the project and labels you said.</p></a></li>
+      <li><a href="#messages"><b>Let it send a message to a friend.</b><p>A Linq account, three settings in the app, a shortcut and an automation on the phone, and a list of people in Contacts.</p></a></li>
+    </ol>
+  </section>
+
+  <section id="connect">
+    <p class="kicker">Step 1</p>
+    <h2>Connect the app and the recorder.</h2>
+    <p>Quasi is not in the App Store. There are two ways onto your phone: TestFlight, which takes a minute, or building it yourself with Xcode, which takes about ten. Either way it has only ever run against one recorder, so expect rough edges.</p>
+    <h3>What you need</h3>
+    <ul class="plain">
+      <li><b>A Comulytic Note Pro.</b> The one Quasi was built with had been set up with <a href="https://www.comulytic.com" target="_blank" rel="noopener">Comulytic's own app</a> first; a recorder straight from the box has not been tried.</li>
+      <li><b>An iPhone on iOS 26 or later.</b> The transcription is Apple's and runs on the phone; it needs this version.</li>
+    </ul>
+    <h3>Install it through TestFlight</h3>
+    <p>Get Apple's <a href="https://apps.apple.com/app/testflight/id899247664" target="_blank" rel="noopener">TestFlight</a> app from the App Store, then open <a href="https://testflight.apple.com/join/vgKzkyHd">the invitation</a> on the phone and tap Install. Builds expire after 90 days; TestFlight tells you when a new one is there. If the link says the beta is not accepting testers, a new build is with Apple for review, and it should open again within a day or two.</p>
+    <p>With TestFlight you can skip to <a href="#first">the first connection</a>. To build it yourself instead, you also need:</p>
+    <ul class="plain">
+      <li><b>A Mac with Xcode 26</b> and an Apple account signed in to it, under <span class="path">Xcode <i>›</i> Settings <i>›</i> Accounts</span>. A free account works. The app then stops opening after seven days until you run it from Xcode again; a paid developer account removes that limit.</li>
+      <li><b>A cable</b> between the phone and the Mac, for the first install.</li>
+    </ul>
+    <h3>Or build it and put it on the phone yourself</h3>
+    <ol class="how">
+      <li>Clone <a href="https://github.com/akaalias/quasi">the repository</a> and open <code>app/Quasi.xcodeproj</code> in Xcode.</li>
+      <li>Make the signing yours. In the project editor, for both the <b>QuasiPhone</b> and the <b>QuasiWidgets</b> target, under Signing &amp; Capabilities: choose your own Team, and change the bundle identifier to something of your own, for example <code>com.yourname.Quasi</code> for QuasiPhone and <code>com.yourname.Quasi.Widgets</code> for QuasiWidgets. The second must start with the first.</li>
+      <li>On the iPhone, turn on Developer Mode under <span class="path">Settings <i>›</i> Privacy &amp; Security <i>›</i> Developer Mode</span>, and connect it to the Mac with the cable.</li>
+      <li>Free the recorder. Close Comulytic's app completely on every phone it is set up on: swipe it away in the app switcher. A recorder that is connected to another app is invisible to this one.</li>
+      <li>In Xcode's toolbar choose the <b>QuasiPhone</b> scheme and your iPhone, and press Run.</li>
+      <li>On the phone, allow Bluetooth when asked. With a free Apple account you also have to trust yourself as a developer once, under <span class="path">Settings <i>›</i> General <i>›</i> VPN &amp; Device Management</span>.</li>
+    </ol>
+    <h3 id="first">The first connection</h3>
+    <p>With the app open in front of you, the recorder should show as connected within a few seconds. The first connection has to be made with the app in front; after that, the phone finds the recorder again by itself, locked or not. Open the settings behind the gear, and the first group, <b>Recorder</b>, shows the recorder as nearby with its battery, the free space on it, and the recordings it holds.</p>
+    <p>While you are there, check the language under <span class="path">Understanding <i>›</i> Language</span>. The recording is transcribed in this language, and the language model for it is downloaded by the system the first time it is used.</p>
+    <p>Now press record on the recorder, say a few words, and press again.</p>
+    <aside class="hear">
+      <svg viewBox="0 0 44 44" aria-hidden="true"><rect x="12" y="4" width="20" height="28" rx="10"/><path d="M7 22a15 15 0 0 0 30 0M22 37v4M16 41h12"/></svg>
+      <p><b>What you hear.</b> Two rising chime notes when the recording starts, and a wooden note when the recording has arrived on the phone. Without a Claude key, that is the whole sentence for now: the note is written down and kept, and the logbook shows it, newest first.</p>
+    </aside>
+    <h3>Keeping it running</h3>
+    <p>The point is that a note recorded with the phone locked in a pocket arrives anyway, and it does, as long as Quasi is running. Two things stop it: swiping the app away in the app switcher, and restarting the phone. After either, open the app once. The banner on the Lock Screen is the check that the app is alive. It says <b>Recorder connected</b> while all is well, and turns to <b>Lost contact</b> by itself within five minutes if the app has stopped. A Lock Screen banner also ends after eight hours; opening the app starts a new one.</p>
+    <aside class="alert">
+      <p class="kicker">If it does not connect</p>
+      <p><b>"Looking for the recorder…" that never ends</b> usually means another app still holds the recorder, or the recorder is off or out of range. <b>With more than one Note Pro nearby</b>, the app connects to the first one it sees and may pick the wrong one. <b>A different model or firmware</b> may speak a different protocol: this was built against hardware TN12 on firmware 2.3.5. The app never deletes, formats or changes settings on the recorder, and Comulytic's app keeps working afterwards; just do not run both at the same time.</p>
+    </aside>
+  </section>
+
+  <section id="notes">
+    <p class="kicker">Step 2</p>
+    <h2>Let it understand your notes.</h2>
+    <p>So far the phone writes down what you said. For it to understand what you said, each transcript is sent to Claude, which finds the tasks and messages you asked for, or finds that there were none. That needs a key from Anthropic, which you store in the app. The transcript is the only thing that leaves the phone, and only when you have stored a key.</p>
+    <h3>Get the key</h3>
+    <ol class="how">
+      <li>Sign in at <a href="https://console.anthropic.com" target="_blank" rel="noopener">console.anthropic.com</a>, or create an account there.</li>
+      <li>Put a little credit on the account, under Billing. Quasi uses Claude Sonnet 5.5, and reading one note costs less than a cent; a few dollars last a long time.</li>
+      <li>Under <b>API Keys</b>, create a key, name it something like "Quasi", and copy it. The key is shown once; if you lose it, make another.</li>
+    </ol>
+    <h3>Store it in the app</h3>
+    <ol class="how">
+      <li>In Quasi, open the settings behind the gear, then <span class="path">Understanding <i>›</i> Claude</span>.</li>
+      <li>Paste the key and press Save. The row now reads <b>Connected</b>.</li>
+    </ol>
+    <p>The key goes into the phone's keychain and is never shown again. The same screen has a Remove button, which takes the key out and turns the understanding off.</p>
+    <p>Now record a note that asks for nothing, just a thought.</p>
+    <aside class="hear">
+      <svg viewBox="0 0 44 44" aria-hidden="true"><circle cx="22" cy="22" r="6"/><circle cx="22" cy="22" r="13"/><path d="M5 22a17 17 0 0 1 3-9.5M39 22a17 17 0 0 1-3 9.5"/></svg>
+      <p><b>What you hear.</b> The chimes, the wooden note for the recording's arrival, a second wooden note once it is transcribed, and then the answer: the home note, which says there was nothing to do. In the logbook the note is kept with your words, and if it was a task after all, <b>Make this a task</b> asks again.</p>
+    </aside>
+    <p class="quiet">A note that asks for a task is understood from here on, too: the logbook shows the task and marks the words that asked for it. It is just not added anywhere yet. That is the next step.</p>
+  </section>
+
+  <section id="tasks">
+    <p class="kicker">Step 3</p>
+    <h2>Let it add tasks to Todoist.</h2>
+    <p>With a Todoist token stored as well, each task Claude finds is added to Todoist, with the transcript in its description. Quasi reads the names of your projects, sections and labels so that a task can be filed where you said. It never reads or changes your tasks, and the only task it can delete is one it added itself, when you undo it.</p>
+    <h3>Get the token</h3>
+    <ol class="how">
+      <li>In Todoist, open <span class="path">Settings <i>›</i> Integrations <i>›</i> Developer</span>. On the web, that is <a href="https://app.todoist.com/app/settings/integrations/developer" target="_blank" rel="noopener">app.todoist.com/app/settings/integrations/developer</a>.</li>
+      <li>Copy the <b>API token</b>. It is the same token for every app, so you can see it again later.</li>
+    </ol>
+    <h3>Store it in the app</h3>
+    <ol class="how">
+      <li>In Quasi's settings, open <span class="path">Tasks <i>›</i> Todoist</span>.</li>
+      <li>Paste the token and press Save. The row reads <b>Connected</b>.</li>
+    </ol>
+    <p>Now record <q>Add a task, call the plumber tomorrow morning.</q></p>
+    <aside class="hear">
+      <svg viewBox="0 0 44 44" aria-hidden="true"><path d="M6 12l3.5 3.5L16 9M6 24l3.5 3.5L16 21M6 36l3.5 3.5L16 33M22 12h17M22 24h17M22 36h17"/></svg>
+      <p><b>What you hear.</b> The chimes, two wooden notes, then one quick note and the chord: one task added. Three tasks in one note give three quick notes, so you can count them without looking. The task is in Todoist for tomorrow, and the logbook shows it with one tap for Undo.</p>
+    </aside>
+    <h3>What you can say about a task</h3>
+    <p>Talk the way you think; nothing has to be in order. Claude works out, from what you said, the title, the due day and time, whether it repeats, a deadline, the priority, how long it takes, and the project, section and labels to file it under, as long as those exist in your Todoist by the names you use. <q>Three tasks for tomorrow: …</q> gives three tasks. <q>Oh, add that as a task</q> after a thought turns the thought into one.</p>
+    <aside class="alert">
+      <p class="kicker">When the phone has no internet</p>
+      <p>Underground, say. The phone has your words but cannot ask Claude, so the answer falls and rings out. Your note is safe. The logbook says <b>Not added yet</b>, and <b>Try again</b> finishes the job once the phone is online.</p>
+    </aside>
+  </section>
+
+  <section id="messages">
+    <p class="kicker">Step 4</p>
+    <h2>Let it send a message to a friend.</h2>
+    <p><q>Send a message to Alex that I'll be five minutes late.</q> Alex gets an iMessage from you, from your own number, in your usual thread, while the phone stays locked in your pocket. This step is the long one, because no app on an iPhone may send an iMessage itself. Quasi gets around that with a detour that you set up once, by hand, in about half an hour.</p>
+    <h3>How the detour works</h3>
+    <p>What an app may do is send your phone a text. And a Shortcuts automation on the phone may, when a text arrives, send a message on, without asking and with the phone locked. So Quasi texts your own phone through <a href="https://linqapp.com" target="_blank" rel="noopener">Linq</a>, a messaging service with a phone line of its own. The text says, in one line, the number to send to and the words. The automation splits the line and sends the words to the number, from you. The round trip takes about three seconds.</p>
+    <svg class="relay" viewBox="0 0 680 164" role="img" aria-label="Quasi on your phone sends the message to Linq, which texts it back to the same phone. A Shortcuts automation on the phone sends the words on to your friend as an iMessage from your own number.">
+      <rect class="node" x="10" y="40" width="150" height="70" rx="18"/>
+      <text class="name" x="85" y="70">Quasi, on your phone</text><text x="85" y="90">quasi | +1 555… | words</text>
+      <path class="flow" d="M165 60 C 205 60, 225 54, 260 54"/>
+      <path class="flow" d="M260 96 C 225 96, 205 90, 165 90"/>
+      <text x="212" y="44">to Linq</text><text x="212" y="114">a text, back</text>
+      <rect class="node" x="265" y="40" width="150" height="70" rx="18"/>
+      <text class="name" x="340" y="70">Linq</text><text x="340" y="90">texts your own number</text>
+      <path class="own" d="M85 110 V124 Q85 130 91 130 H514 Q520 130 520 124 V110"/>
+      <path class="own" d="M514 116 L520 110 L526 116"/>
+      <text class="name" x="302" y="152">the Shortcuts automation sends the words on, from your number</text>
+      <rect class="node" x="520" y="40" width="150" height="70" rx="18"/>
+      <text class="name" x="595" y="70">Your friend</text><text x="595" y="90">an iMessage from you</text>
+    </svg>
+    <p>Linq sees a number and the words, nothing else. Who the person is gets worked out on the phone, in your contacts, among the people you have chosen. Claude sees the transcript and, when a name does not match as written, the names of those chosen people.</p>
+    <p>Five parts, in order: a Linq account, three settings in the app, a shortcut, an automation that runs it, and the people it may message.</p>
+
+    <h3>A. A Linq account</h3>
+    <p>Linq is a business texting service with an API. An account comes with a line, a phone number of its own, and that line is what texts your phone. Quasi only ever uses it to text you.</p>
+    <ol class="how">
+      <li>Sign up at <a href="https://dashboard.linqapp.com" target="_blank" rel="noopener">dashboard.linqapp.com</a> and note the number of your line.</li>
+      <li>Under <b>API</b>, generate a token and copy it. Quasi talks to the version-3 API with that token.</li>
+      <li>Verify your own iPhone's number with Linq if it asks. At the time of writing, a new account may only text numbers it has verified until it is upgraded, which is enough here, since your own phone is the only number Quasi texts.</li>
+    </ol>
+    <p>You now have three things, and the numbers should be in international form, with the country code: the token, the line's number, such as <code>+1 415 …</code>, and your own iPhone's number, such as <code>+49 170 …</code>.</p>
+
+    <h3>B. Three settings in the app</h3>
+    <ol class="how">
+      <li>In Quasi's settings, open <span class="path">Messages <i>›</i> iMessage relay</span>.</li>
+      <li>Enter the <b>Linq token</b>, the <b>Linq line</b>, and <b>Your number</b>, each on its own screen, each with Save.</li>
+    </ol>
+    <p>Back in the settings, the relay row reads <b>Set up</b>. The three go into the keychain like the keys before them. Also save the Linq line in your Contacts under a name like "Quasi Relay", so that its texts are not filtered as coming from an unknown sender, and so that you can mute that thread with Hide Alerts: you will get one text from it for every message Quasi sends, and there is nothing to read in them.</p>
+
+    <h3>C. The shortcut</h3>
+    <p>The shortcut does the sending. It receives the text from Linq, splits it at the bars, and sends the third part to the second. Build it in the Shortcuts app on the phone, or get it ready-made: the repository has it as <code>app/tools/Quasi Relay.shortcut</code>, and opening that file on a Mac adds it to Shortcuts, from where it syncs to the phone through iCloud.</p>
+    <p>By hand: in Shortcuts, add a new shortcut, name it <b>Quasi Relay</b>, and add four actions.</p>
+    <div class="actions">
+      <div class="action"><b>Split Text</b><span>Split <em>Shortcut Input</em> by <em>Custom</em>, separator <em>|</em></span></div>
+      <div class="action"><b>Get Item from List</b><span>Get <em>Item at Index</em> <em>2</em> from <em>Split Text</em></span></div>
+      <div class="action"><b>Get Item from List</b><span>Get <em>Item at Index</em> <em>3</em> from <em>Split Text</em></span></div>
+      <div class="action"><b>Send Message</b><span>Send <em>Item from List</em> (the third) to <em>Item from List</em> (the second), with <em>Show When Run</em> turned off</span></div>
+    </div>
+    <p>The last action is the one to get right. Tap the arrow on it to see <b>Show When Run</b>, and turn it off; otherwise every message would stop and wait for you to tap Send on the phone. The first time the shortcut sends a message, iOS may ask once whether to allow it; choose to always allow.</p>
+
+    <h3>D. The automation that runs it</h3>
+    <p>Automations cannot be imported, so this part is always by hand. It says: when a text containing <code>quasi|</code> arrives, run the shortcut at once.</p>
+    <ol class="how">
+      <li>In Shortcuts, open the <b>Automation</b> tab and tap <b>+</b>.</li>
+      <li>Choose <b>Message</b> as the trigger.</li>
+      <li>Set <b>Message Contains</b> to <code>quasi|</code>, with the bar.</li>
+      <li>Set <b>Sender</b> to the contact you saved for the Linq line. This matters: without it, anyone who texts your phone a line that begins with the marker could make your phone send a message. With it, only the relay can.</li>
+      <li>Choose <b>Run Immediately</b>, and turn <b>Notify When Run</b> off.</li>
+      <li>Tap Next and choose the shortcut <b>Quasi Relay</b>. The message is handed to it as its input.</li>
+    </ol>
+
+    <h3>E. The people it may message</h3>
+    <p>Quasi looks a name up in your contacts, and you choose how far it may look. The simplest and safest way is a list: in the Contacts app, add a list named <b>Quasi</b> and put the people in it that you want to be able to message by voice. Only they can be messaged then; everyone else is unknown to the app. Without such a list, everyone the app is allowed to see can.</p>
+    <p>The app asks for access to Contacts the next time you open it after the relay is set up. Choose full access and make the Quasi list, or choose limited access and pick the people there; both work. In the settings, <span class="path">Messages <i>›</i> Contacts</span> shows which it is and how many people that is.</p>
+    <p>Now record <q>Send a message to Alex that this is a test from Quasi.</q></p>
+    <aside class="hear">
+      <svg viewBox="0 0 44 44" aria-hidden="true"><path d="M9 7h26a4 4 0 0 1 4 4v15a4 4 0 0 1-4 4H19l-9 7v-7H9a4 4 0 0 1-4-4V11a4 4 0 0 1 4-4Z"/><path d="M13 16h18M13 22h11"/></svg>
+      <p><b>What you hear.</b> The chimes, two wooden notes, then a note that leaps up and away, and the chord: the message is on its way. Three seconds later it is in your thread with Alex, from you. In the logbook, the note shows the message and who it went to, and marks the words that asked for it.</p>
+    </aside>
+    <p>If you know two people called Alex, the phone will not guess. Instead of the leaping note you hear the opening question again, higher, left hanging, and the Lock Screen shows the question. Press record, say <q>Müller</q>, and the message goes out. Say nothing for two minutes and the answer falls; the note in the logbook then keeps a button for each Alex.</p>
+    <aside class="alert">
+      <p class="kicker">If the message does not arrive</p>
+      <p><b>The answer falls, and the logbook says the relay did not take the message:</b> check the token and the two numbers, in international form. <b>A text from the Linq line arrives on your phone, but nothing is sent on:</b> the automation. Check that it runs immediately, that the sender is the relay's contact, that the shortcut's last action has Show When Run off, and that iOS has not asked to allow the shortcut to send messages. <b>The phone asks which person, or says it found nobody:</b> the name is not in the Quasi list, or the person has no phone number in Contacts.</p>
+    </aside>
+  </section>
+
+  <section class="try">
+    <p class="kicker">Stuck?</p>
+    <h2>Write to me.</h2>
+    <p>If a step does not work the way it says here, or you got it working with another recorder, I would like to hear it. I'm Alexis, and I read every email.</p>
+    <p><a class="cta" href="mailto:alexis.rondeau@gmail.com?subject=Quasi%20setup">alexis.rondeau@gmail.com</a></p>
+  </section>
+</main>
+
+<footer>
+  Quasi is an independent project by Alexis Rondeau. It is not affiliated with or endorsed by Comulytic, Anthropic, Todoist or Linq.
+</footer>
+
+</body>
+</html>

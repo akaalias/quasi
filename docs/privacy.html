@@ -1,0 +1,82 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Quasi and your words</title>
+<meta name="description" content="What Quasi does with what you say: where your recordings and transcripts go, which of that is your choice, and what its author sees, which is nothing.">
+<link rel="canonical" href="https://alexisrondeau.me/quasi/privacy.html">
+<meta name="theme-color" content="#FBF8F2">
+<link rel="icon" href="assets/icon.png">
+<style>
+  :root {
+    --paper: #FBF8F2; --ink: #1E1B16; --quiet: #8A8173; --card: #F1EBDF; --chip: #EDE5D6; --rule: #DDD3C1; --brand: #C8551F;
+    --spoken: "New York", ui-serif, "Iowan Old Style", "Palatino Linotype", Georgia, serif;
+    --app: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Helvetica Neue", Helvetica, Arial, sans-serif;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root { --paper: #161411; --ink: #EDE6DA; --quiet: #9A9080; --card: #26221D; --chip: #322D26; --rule: #3A342C; --brand: #EF8249; }
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--paper); color: var(--ink); font: 17px/1.5 var(--app); }
+  main, header, footer { max-width: 680px; margin: 0 auto; padding: 0 24px; }
+  header { display: flex; align-items: center; padding-top: 28px; color: var(--quiet); }
+  header .name { display: flex; align-items: center; gap: 10px; color: var(--ink); font-weight: 600; }
+  header .name a { display: flex; align-items: center; gap: 10px; color: var(--ink); text-decoration: none; } header .name a:hover { color: var(--brand); }
+  header .name span { font-weight: 400; color: var(--quiet); }
+  header img { width: 30px; height: 30px; border-radius: 7px; }
+  a { color: var(--brand); text-decoration: underline; text-decoration-thickness: 1px; text-underline-offset: 3px; }
+  h1 { font: 400 clamp(44px, 9vw, 68px)/1.05 var(--spoken); letter-spacing: -0.01em; margin: 72px 0 24px; }
+  h2 { font: 400 34px/1.15 var(--spoken); margin: 0 0 16px; }
+  section { padding: 48px 0; border-top: 1px solid var(--rule); } section.first { border-top: 0; padding-top: 0; }
+  p { margin: 0 0 16px; } .lead { font: 400 22px/1.45 var(--spoken); } .quiet { color: var(--quiet); }
+  ul.plain { list-style: none; padding: 0; margin: 0 0 16px; } ul.plain li { padding: 12px 0; border-top: 1px solid var(--rule); }
+  ul.plain li:first-child { border-top: 0; } b { font-weight: 600; }
+  footer { color: var(--quiet); font-size: 14px; padding-top: 32px; padding-bottom: 56px; border-top: 1px solid var(--rule); }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="name"><a href="./"><img src="assets/icon.png" alt=""> Quasi</a><span>/ Your words</span></div>
+</header>
+
+<main>
+  <section class="first">
+    <h1>Your words stay yours.</h1>
+    <p class="lead">Quasi is a personal project, not a service. There is no account, no server of its own, and its author sees nothing of what you record. This page says where your words can go, and that every one of those places is a key you chose to store.</p>
+  </section>
+
+  <section>
+    <h2>What stays on the phone</h2>
+    <ul class="plain">
+      <li><b>Your recordings.</b> Audio comes from the recorder to your iPhone over Bluetooth and is kept there, in the Files app under On My iPhone › Quasi. Nothing is ever deleted from the recorder.</li>
+      <li><b>Your transcripts.</b> Recordings are transcribed on the phone by Apple's speech framework. No audio leaves the device.</li>
+      <li><b>Your contacts.</b> When you ask for a message to be sent, the person you named is looked up in your Contacts on the phone, among the people you have allowed the app to see. Their names and numbers stay there.</li>
+      <li><b>Your keys.</b> Each key you store goes into the phone's keychain and is used only to talk to the service it belongs to.</li>
+    </ul>
+  </section>
+
+  <section>
+    <h2>What leaves it, and only if you store a key</h2>
+    <ul class="plain">
+      <li><b>To Anthropic, with a Claude key.</b> The transcript of each note, so that Claude can find the tasks and messages you asked for. When a name does not match a contact as written, the names of the people the app may see go along, so that Claude can tell which was meant. Anthropic's handling of what it receives is described in <a href="https://www.anthropic.com/legal/privacy" target="_blank" rel="noopener">its privacy policy</a>.</li>
+      <li><b>To Todoist, with a Todoist token.</b> Each task Claude found, with the transcript in its description. The app reads the names of your projects, sections and labels; it never reads your tasks.</li>
+      <li><b>To Linq, with the message relay set up.</b> The number of the person you are messaging and the words of the message, in one text sent to your own phone. The relay sees nothing else; your phone sends the message on.</li>
+    </ul>
+    <p>Remove a key in the settings and that service is out of the loop from the next note on.</p>
+  </section>
+
+  <section>
+    <h2>What the author sees</h2>
+    <p>Nothing. The app has no analytics and talks to no server of its own. If you install it through TestFlight, Apple may share crash reports and the feedback you choose to send with the author, as <a href="https://www.apple.com/legal/privacy/" target="_blank" rel="noopener">Apple's privacy policy</a> describes. That is the whole of it.</p>
+    <p class="quiet">Questions go to <a href="mailto:alexis.rondeau@gmail.com?subject=Quasi%20privacy">alexis.rondeau@gmail.com</a>. This page was last changed on 13 October 2026.</p>
+  </section>
+</main>
+
+<footer>
+  Quasi is an independent project by Alexis Rondeau. It is not affiliated with or endorsed by Comulytic, Anthropic, Todoist, Linq or Apple.
+</footer>
+
+</body>
+</html>
