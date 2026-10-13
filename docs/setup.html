@@ -121,7 +121,7 @@
     <p class="lead">Quasi runs with your own keys, on your own phone. This page walks through it in four steps, in the order that makes sense: first the app and the recorder talk to each other, then the app understands what you say, then it can add tasks, and last, the long one, it can send a message to a friend.</p>
     <p>Each step ends with something you can try with the recorder in your hand. You can stop after any of them; the ones before still work. The first three take about half an hour together. The last one takes another half hour, most of it in the Shortcuts app.</p>
     <ol class="steps">
-      <li><a href="#connect"><b>Connect the app and the recorder.</b><p>Install the app through TestFlight, or build it with Xcode, and let it find the recorder. A note you record arrives on the phone and is written down there.</p></a></li>
+      <li><a href="#connect"><b>Connect the app and the recorder.</b><p>Install the app through TestFlight and let it find the recorder. A note you record arrives on the phone and is written down there.</p></a></li>
       <li><a href="#notes"><b>Let it understand your notes.</b><p>Get a Claude key from Anthropic and store it in the app. Every note is now read, and the phone answers it with a sound.</p></a></li>
       <li><a href="#tasks"><b>Let it add tasks to Todoist.</b><p>Store your Todoist token. A task you ask for is added, filed under the project and labels you said.</p></a></li>
       <li><a href="#messages"><b>Let it send a message to a friend.</b><p>A Linq account, three settings in the app, a shortcut and an automation on the phone, and a list of people in Contacts.</p></a></li>
@@ -131,7 +131,7 @@
   <section id="connect">
     <p class="kicker">Step 1</p>
     <h2>Connect the app and the recorder.</h2>
-    <p>Quasi is not in the App Store. There are two ways onto your phone: TestFlight, which takes a minute, or building it yourself with Xcode, which takes about ten. Either way it has only ever run against one recorder, so expect rough edges.</p>
+    <p>Quasi is not in the App Store. It comes to your phone through TestFlight, Apple's app for trying apps before they are finished, which takes a minute. It has only ever run against one recorder, so expect rough edges.</p>
     <h3>What you need</h3>
     <ul class="plain">
       <li><b>A Comulytic Note Pro.</b> The one Quasi was built with had been set up with <a href="https://www.comulytic.com" target="_blank" rel="noopener">Comulytic's own app</a> first; a recorder straight from the box has not been tried.</li>
@@ -139,22 +139,8 @@
     </ul>
     <h3>Install it through TestFlight</h3>
     <p>Get Apple's <a href="https://apps.apple.com/app/testflight/id899247664" target="_blank" rel="noopener">TestFlight</a> app from the App Store, then open <a href="https://testflight.apple.com/join/vgKzkyHd">the invitation</a> on the phone and tap Install. Builds expire after 90 days; TestFlight tells you when a new one is there. If the link says the beta is not accepting testers, a new build is with Apple for review, and it should open again within a day or two.</p>
-    <p>With TestFlight you can skip to <a href="#first">the first connection</a>. To build it yourself instead, you also need:</p>
-    <ul class="plain">
-      <li><b>A Mac with Xcode 26</b> and an Apple account signed in to it, under <span class="path">Xcode <i>›</i> Settings <i>›</i> Accounts</span>. A free account works. The app then stops opening after seven days until you run it from Xcode again; a paid developer account removes that limit.</li>
-      <li><b>A cable</b> between the phone and the Mac, for the first install.</li>
-    </ul>
-    <h3>Or build it and put it on the phone yourself</h3>
-    <ol class="how">
-      <li>Clone <a href="https://github.com/akaalias/quasi">the repository</a> and open <code>app/Quasi.xcodeproj</code> in Xcode.</li>
-      <li>Make the signing yours. In the project editor, for both the <b>QuasiPhone</b> and the <b>QuasiWidgets</b> target, under Signing &amp; Capabilities: choose your own Team, and change the bundle identifier to something of your own, for example <code>com.yourname.Quasi</code> for QuasiPhone and <code>com.yourname.Quasi.Widgets</code> for QuasiWidgets. The second must start with the first.</li>
-      <li>On the iPhone, turn on Developer Mode under <span class="path">Settings <i>›</i> Privacy &amp; Security <i>›</i> Developer Mode</span>, and connect it to the Mac with the cable.</li>
-      <li>Free the recorder. Close Comulytic's app completely on every phone it is set up on: swipe it away in the app switcher. A recorder that is connected to another app is invisible to this one.</li>
-      <li>In Xcode's toolbar choose the <b>QuasiPhone</b> scheme and your iPhone, and press Run.</li>
-      <li>On the phone, allow Bluetooth when asked. With a free Apple account you also have to trust yourself as a developer once, under <span class="path">Settings <i>›</i> General <i>›</i> VPN &amp; Device Management</span>.</li>
-    </ol>
     <h3 id="first">The first connection</h3>
-    <p>With the app open in front of you, the recorder should show as connected within a few seconds. The first connection has to be made with the app in front; after that, the phone finds the recorder again by itself, locked or not. Open the settings behind the gear, and the first group, <b>Recorder</b>, shows the recorder as nearby with its battery, the free space on it, and the recordings it holds.</p>
+    <p>First free the recorder: close Comulytic's app completely on every phone it is set up on, by swiping it away in the app switcher. A recorder that is connected to another app is invisible to this one. Then open Quasi and allow Bluetooth when asked. With the app open in front of you, the recorder should show as connected within a few seconds. The first connection has to be made with the app in front; after that, the phone finds the recorder again by itself, locked or not. Open the settings behind the gear, and the first group, <b>Recorder</b>, shows the recorder as nearby with its battery, the free space on it, and the recordings it holds.</p>
     <p>While you are there, check the language under <span class="path">Understanding <i>›</i> Language</span>. The recording is transcribed in this language, and the language model for it is downloaded by the system the first time it is used.</p>
     <p>Now press record on the recorder, say a few words, and press again.</p>
     <aside class="hear">
@@ -260,7 +246,7 @@
     <p>Back in the settings, the relay row reads <b>Set up</b>. The three go into the keychain like the keys before them. Also save the Linq line in your Contacts under a name like "Quasi Relay", so that its texts are not filtered as coming from an unknown sender, and so that you can mute that thread with Hide Alerts: you will get one text from it for every message Quasi sends, and there is nothing to read in them.</p>
 
     <h3>C. The shortcut</h3>
-    <p>The shortcut does the sending. It receives the text from Linq, splits it at the bars, and sends the third part to the second. Build it in the Shortcuts app on the phone, or get it ready-made: the repository has it as <code>app/tools/Quasi Relay.shortcut</code>, and opening that file on a Mac adds it to Shortcuts, from where it syncs to the phone through iCloud.</p>
+    <p>The shortcut does the sending. It receives the text from Linq, splits it at the bars, and sends the third part to the second. Build it in the Shortcuts app on the phone, or get it ready-made: <a href="https://github.com/akaalias/quasi/raw/main/app/tools/Quasi%20Relay.shortcut">this file</a> opened on the phone adds it to Shortcuts.</p>
     <p>By hand: in Shortcuts, add a new shortcut, name it <b>Quasi Relay</b>, and add four actions.</p>
     <div class="actions">
       <div class="action"><b>Split Text</b><span>Split <em>Shortcut Input</em> by <em>Custom</em>, separator <em>|</em></span></div>
