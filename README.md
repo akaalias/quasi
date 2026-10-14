@@ -8,8 +8,8 @@ ever want to check, there is a logbook. Most days you won't open it.
 
 In practice: an iPhone app and a Mac menu bar app that talk directly to a
 [Comulytic Note Pro](https://www.comulytic.com) voice recorder over Bluetooth. No vendor app, no
-account: audio goes from the recorder to your own device and is transcribed there, or by OpenAI
-if you store a key for that, and tasks you ask for are added to Todoist. The phone has to be switched on and within Bluetooth range; it does
+account: audio goes from the recorder to your own device, is written down by OpenAI and read by
+Claude with keys of your own, and tasks you ask for are added to Todoist. The phone has to be switched on and within Bluetooth range; it does
 not have to be looked at.
 
 This is a personal project for one recorder and one owner, not a product. It is not affiliated
@@ -20,11 +20,11 @@ with Comulytic.
 Press record on the recorder, and within a second or two:
 
 - **Live view.** A waveform of what the recorder hears, with a running timer.
-- **Transcript.** When you stop, the audio is transcribed and shown. On the device by default,
-  in the one language chosen in the settings; with an OpenAI key stored, by OpenAI's
+- **Transcript.** When you stop, the audio is transcribed and shown. By OpenAI's
   `gpt-transcribe`, which follows a note from one language into another and is told which
-  languages to expect. Audio is saved as `.m4a`, the transcript as `.txt`, named by the
-  recording's start time.
+  languages to expect; the app asks for the OpenAI key on its first launch. Without network,
+  or without a key, the device transcribes in the one language chosen in the settings. Audio is
+  saved as `.m4a`, the transcript as `.txt`, named by the recording's start time.
 - **Stored recordings.** "Download Stored Recordings" fetches the complete copies from the
   recorder's own storage. Nothing is ever deleted from the recorder.
 - **Tasks.** If you store an Anthropic API key in the app, each transcript is sent to Claude,

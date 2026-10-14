@@ -130,21 +130,44 @@
       <li><b>Step 4</b>, the message to a friend, takes another half hour, most of it in the Shortcuts app.</li>
     </ul>
     <ol class="steps">
-      <li><a href="#connect"><b>Connect the app and the recorder.</b><p>Install the app through TestFlight and let it find the recorder. A note you record arrives on the phone and is written down there.</p></a></li>
-      <li><a href="#notes"><b>Let it understand your notes.</b><p>Get a Claude key from Anthropic and store it in the app. Every note is now read, and the phone answers it with a sound.</p></a></li>
-      <li><a href="#tasks"><b>Let it add tasks to Todoist.</b><p>Store your Todoist token. A task you ask for is added, filed under the project and labels you said.</p></a></li>
+      <li><a href="#keys"><b>Get your two keys.</b><p>One from OpenAI, which writes your notes down, and one from Anthropic, whose Claude reads them. The app asks for both the first time it opens.</p></a></li>
+      <li><a href="#connect"><b>Install the app and connect the recorder.</b><p>Through TestFlight. Answer the app's few questions, let it find the recorder, and record your first note.</p></a></li>
+      <li><a href="#tasks"><b>Let it add tasks to Todoist.</b><p>Give it your Todoist token. A task you ask for is added, filed under the project and labels you said.</p></a></li>
       <li><a href="#messages"><b>Let it send a message to a friend.</b><p>A Linq account, three settings in the app, a shortcut and an automation on the phone, and a list of people in Contacts.</p></a></li>
     </ol>
   </section>
 
-  <section id="connect">
+  <section id="keys">
     <p class="kicker">Step 1</p>
-    <h2>Connect the app and the recorder.</h2>
+    <h2>Get your two keys.</h2>
+    <p>Two services do the work behind a note, and each needs a key of yours. OpenAI turns the recording into text, and follows you from one language into another mid-sentence. Claude, from Anthropic, reads that text and finds the tasks and messages you asked for, or finds there were none. Get both keys now, on a computer or on the phone, and have them ready to paste when the app opens.</p>
+    <ul class="plain">
+      <li><b>What leaves the phone:</b> the recording goes to OpenAI, the transcript goes to Anthropic. Nothing else, and nothing to anyone else. <a href="privacy.html">The whole of it, on one page.</a></li>
+      <li><b>What it costs:</b> about half a cent per minute of recording at OpenAI, and less than a cent per note at Anthropic. A few dollars on each account last months.</li>
+    </ul>
+    <h3>A key from OpenAI</h3>
+    <ol class="how">
+      <li>Sign in at <a href="https://platform.openai.com" target="_blank" rel="noopener">platform.openai.com</a>, or create an account there. This is OpenAI's developer site, separate from ChatGPT.</li>
+      <li>Put a little credit on the account, under <b>Billing</b>.</li>
+      <li>Under <b>API keys</b>, create a key, name it something like "Quasi", and copy it. The key is shown once; if you lose it, make another.</li>
+    </ol>
+    <h3>A key from Anthropic</h3>
+    <ol class="how">
+      <li>Sign in at <a href="https://console.anthropic.com" target="_blank" rel="noopener">console.anthropic.com</a>, or create an account there.</li>
+      <li>Put a little credit on the account, under <b>Billing</b>. Quasi uses Claude Sonnet 5.5.</li>
+      <li>Under <b>API Keys</b>, create a key, name it something like "Quasi", and copy it. This one too is shown once.</li>
+    </ol>
+  </section>
+
+  <section id="connect">
+    <p class="kicker">Step 2</p>
+    <h2>Install the app and connect the recorder.</h2>
     <p>Quasi is not in the App Store. It comes to your phone through TestFlight, Apple's app for trying apps before they are finished. It has only ever run against one recorder, so expect rough edges.</p>
     <h3>What you need</h3>
     <ul class="plain">
       <li><b>A Comulytic Note Pro.</b> The one Quasi was built with had been set up with <a href="https://www.comulytic.com" target="_blank" rel="noopener">Comulytic's own app</a> first; a recorder straight from the box has not been tried.</li>
-      <li><b>An iPhone on iOS 26 or later.</b> The transcription on the phone is Apple's and needs this version.</li>
+      <li><b>An iPhone on iOS 26 or later.</b></li>
+      <li><b>The two keys from step 1.</b></li>
     </ul>
     <h3>Install it through TestFlight</h3>
     <ol class="how">
@@ -153,22 +176,37 @@
         <p class="quiet">If the link says the beta is not accepting testers, a new build is with Apple for review; it opens again within a day or two.</p></li>
       <li>That is all. Builds expire after 90 days, and TestFlight tells you when a new one is there.</li>
     </ol>
-    <h3 id="first">The first connection</h3>
+    <h3 id="first">The first time it opens</h3>
+    <p>Quasi asks you a few things before it shows anything else. Whatever you give it is kept on the phone, in its keychain, and can be changed later behind the gear.</p>
+    <ol class="how">
+      <li>Your name.</li>
+      <li>The OpenAI key. Paste it and tap Next; the app checks it with OpenAI before keeping it, so a key copied wrong is caught here.</li>
+      <li>The Claude key, the same way.</li>
+      <li>A Todoist token, if you use Todoist. Skip it for now if you like; that is <a href="#tasks">step 3</a>.</li>
+      <li>The message relay. Skip it; that is <a href="#messages">step 4</a>.</li>
+      <li>A summary of what is connected, and <b>Let's go</b>.</li>
+    </ol>
+    <h3>The first connection</h3>
     <ol class="how">
       <li>Free the recorder: close Comulytic's app completely on every phone it is set up on, by swiping it away in the app switcher.
         <p class="quiet">A recorder that is connected to another app is invisible to this one.</p></li>
-      <li>Open Quasi and allow Bluetooth when asked.</li>
+      <li>Allow Bluetooth when Quasi asks.</li>
       <li>Wait a few seconds with the app in front of you. It should say <b>Connected</b>.
         <p class="quiet">Only the first connection needs the app in front. After that the phone finds the recorder by itself, locked or not.</p></li>
-      <li>Open the settings behind the gear. The first group, <b>Recorder</b>, shows the recorder as nearby, its battery, its free space, and the recordings on it.</li>
-      <li>Check the language under <span class="path">Understanding <i>›</i> Language</span>. Notes are transcribed on the phone in this language; the system downloads its model the first time.
-        <p class="quiet">If your notes wander between languages, store an OpenAI API key under <span class="path">Understanding <i>›</i> OpenAI</span>. Notes are then transcribed by OpenAI in whichever languages you spoke them, with the recording sent there. Without network the phone takes over.</p></li>
-      <li>Press record on the recorder, say a few words, and press again.</li>
+      <li>Open the settings behind the gear. The <b>Recorder</b> group shows the recorder as nearby, its battery, its free space, and the recordings on it.</li>
+      <li>Press record on the recorder, say what is on your mind, in whatever language or two, and press again.</li>
     </ol>
     <aside class="hear">
-      <svg viewBox="0 0 44 44" aria-hidden="true"><rect x="12" y="4" width="20" height="28" rx="10"/><path d="M7 22a15 15 0 0 0 30 0M22 37v4M16 41h12"/></svg>
-      <p><b>What you hear.</b> Two rising chime notes when the recording starts, and a wooden note when the recording has arrived on the phone. Without a Claude key, that is the whole sentence for now: the note is written down and kept, and the logbook shows it, newest first.</p>
+      <svg viewBox="0 0 44 44" aria-hidden="true"><circle cx="22" cy="22" r="6"/><circle cx="22" cy="22" r="13"/><path d="M5 22a17 17 0 0 1 3-9.5M39 22a17 17 0 0 1-3 9.5"/></svg>
+      <p><b>What you hear.</b> Two rising chime notes when the recording starts, a wooden note when the recording has arrived on the phone, a second wooden note once it is written down, and then the answer: the home note, which says there was nothing to do. In the logbook the note is kept with your words, newest first, and if it was a task after all, <b>Make this a task</b> asks again.</p>
     </aside>
+    <p class="quiet">A note that asks for a task is understood from here on too. The logbook shows the task and marks the words that asked for it. It is just not added anywhere yet; that is the next step.</p>
+    <h3>Changing a key later</h3>
+    <ul class="plain">
+      <li><b>Behind the gear,</b> <span class="path">Understanding <i>›</i> OpenAI</span> and <span class="path">Understanding <i>›</i> Claude</span> each show <b>Connected</b>. <b>Remove</b> on either screen takes the key out, and a new one can be pasted in its place.</li>
+      <li><b>Setup <i>›</i> Go through the setup again</b> brings back the questions from the first launch. What is stored stays stored; each step just shows it as connected.</li>
+      <li><b>Without internet,</b> the phone writes the note down itself, in the one language chosen under <span class="path">Understanding <i>›</i> Language</span>, and the answer waits until the phone is online.</li>
+    </ul>
     <h3>Keeping it running</h3>
     <p>A note recorded with the phone locked in a pocket arrives anyway, as long as Quasi is running.</p>
     <ul class="plain">
@@ -187,33 +225,6 @@
     </aside>
   </section>
 
-  <section id="notes">
-    <p class="kicker">Step 2</p>
-    <h2>Let it understand your notes.</h2>
-    <p>So far the phone writes down what you said. To understand it, each transcript is sent to Claude, which finds the tasks and messages you asked for, or finds that there were none. That needs a key from Anthropic. The transcript is the only thing that leaves the phone for this, and only once a key is stored.</p>
-    <h3>Get the key</h3>
-    <ol class="how">
-      <li>Sign in at <a href="https://console.anthropic.com" target="_blank" rel="noopener">console.anthropic.com</a>, or create an account there.</li>
-      <li>Put a little credit on the account, under Billing. Quasi uses Claude Sonnet 5.5, and reading one note costs less than a cent; a few dollars last a long time.</li>
-      <li>Under <b>API Keys</b>, create a key, name it something like "Quasi", and copy it. The key is shown once; if you lose it, make another.</li>
-    </ol>
-    <h3>Store it in the app</h3>
-    <ol class="how">
-      <li>In Quasi, open the settings behind the gear, then <span class="path">Understanding <i>›</i> Claude</span>.</li>
-      <li>Paste the key and press Save. The row now reads <b>Connected</b>.</li>
-    </ol>
-    <ul class="plain">
-      <li><b>The key goes into the phone's keychain</b> and is never shown again.</li>
-      <li><b>Remove</b>, on the same screen, takes it out and turns the understanding off.</li>
-    </ul>
-    <p>Now record a note that asks for nothing, just a thought.</p>
-    <aside class="hear">
-      <svg viewBox="0 0 44 44" aria-hidden="true"><circle cx="22" cy="22" r="6"/><circle cx="22" cy="22" r="13"/><path d="M5 22a17 17 0 0 1 3-9.5M39 22a17 17 0 0 1-3 9.5"/></svg>
-      <p><b>What you hear.</b> The chimes, the wooden note for the recording's arrival, a second wooden note once it is transcribed, and then the answer: the home note, which says there was nothing to do. In the logbook the note is kept with your words, and if it was a task after all, <b>Make this a task</b> asks again.</p>
-    </aside>
-    <p class="quiet">A note that asks for a task is understood from here on too. The logbook shows the task and marks the words that asked for it. It is just not added anywhere yet; that is the next step.</p>
-  </section>
-
   <section id="tasks">
     <p class="kicker">Step 3</p>
     <h2>Let it add tasks to Todoist.</h2>
@@ -227,11 +238,11 @@
       <li>In Todoist, open <span class="path">Settings <i>›</i> Integrations <i>›</i> Developer</span>. On the web, that is <a href="https://app.todoist.com/app/settings/integrations/developer" target="_blank" rel="noopener">app.todoist.com/app/settings/integrations/developer</a>.</li>
       <li>Copy the <b>API token</b>. It is the same token for every app, so you can see it again later.</li>
     </ol>
-    <h3>Store it in the app</h3>
-    <ol class="how">
-      <li>In Quasi's settings, open <span class="path">Tasks <i>›</i> Todoist</span>.</li>
-      <li>Paste the token and press Save. The row reads <b>Connected</b>.</li>
-    </ol>
+    <h3>Give it to the app</h3>
+    <ul class="plain">
+      <li><b>If the app is asking for it</b> on its first launch, paste it there and tap Next.</li>
+      <li><b>Otherwise,</b> behind the gear, open <span class="path">Tasks <i>›</i> Todoist</span>, paste the token and press Save. The row reads <b>Connected</b>.</li>
+    </ul>
     <p>Now record <q>Add a task, call the plumber tomorrow morning.</q></p>
     <aside class="hear">
       <svg viewBox="0 0 44 44" aria-hidden="true"><path d="M6 12l3.5 3.5L16 9M6 24l3.5 3.5L16 21M6 36l3.5 3.5L16 33M22 12h17M22 24h17M22 36h17"/></svg>
@@ -290,7 +301,7 @@
     <ul class="plain">
       <li><b>Linq sees</b> a number and the words, nothing else.</li>
       <li><b>Your phone works out who the person is,</b> in your contacts, among the people you have chosen.</li>
-      <li><b>Claude sees</b> the transcript and, when a name does not match as written, the names of those chosen people.</li>
+      <li><b>Claude sees</b> the transcript and, when a name does not match as written, the names of those chosen people. OpenAI, as always, hears the recording.</li>
     </ul>
     <p>Five parts, in order: <a href="#linq">a Linq account</a>, <a href="#relay-settings">three settings in the app</a>, <a href="#shortcut">a shortcut</a>, <a href="#automation">an automation that runs it</a>, and <a href="#people">the people it may message</a>.</p>
 
@@ -309,10 +320,10 @@
     </ul>
 
     <h3 id="relay-settings">B. Three settings in the app</h3>
-    <ol class="how">
-      <li>In Quasi's settings, open <span class="path">Messages <i>›</i> iMessage relay</span>.</li>
-      <li>Enter the <b>Linq token</b>, the <b>Linq line</b>, and <b>Your number</b>, each on its own screen, each with Save.</li>
-    </ol>
+    <ul class="plain">
+      <li><b>If the app is asking for them</b> on its first launch, enter all three on that step and tap Next.</li>
+      <li><b>Otherwise,</b> behind the gear, open <span class="path">Messages <i>›</i> iMessage relay</span> and enter the <b>Linq token</b>, the <b>Linq line</b>, and <b>Your number</b>, each on its own screen, each with Save.</li>
+    </ul>
     <p>Back in the settings, the relay row reads <b>Set up</b>. The three go into the keychain like the keys before them.</p>
     <ol class="how">
       <li>Save the Linq line in your Contacts under a name like <b>Quasi Relay</b>.
@@ -387,7 +398,7 @@
 </main>
 
 <footer>
-  Quasi is an independent project by Alexis Rondeau. It is not affiliated with or endorsed by Comulytic, Anthropic, Todoist or Linq.
+  Quasi is an independent project by Alexis Rondeau. It is not affiliated with or endorsed by Comulytic, OpenAI, Anthropic, Todoist or Linq.
 </footer>
 
 </body>
