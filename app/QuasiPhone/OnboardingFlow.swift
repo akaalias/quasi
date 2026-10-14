@@ -34,18 +34,18 @@ struct OnboardingFlow: View {
                 case .name:
                     NameStep(name: $name) { finish(name: name) }
                 case .openAI:
-                    KeyStep(title: "Add your OpenAI key",
-                            text: "OpenAI turns your recordings into text, and it handles you switching languages mid-sentence. Paste a key from your OpenAI account here. The recording is sent, nothing else.",
+                    KeyStep(title: "Paste your OpenAI API key",
+                            text: "OpenAI turns your recordings into text, and it handles you switching languages mid-sentence. Quasi uses your own OpenAI account for that, and the API key is what lets it. You create one on OpenAI's website and paste it here; it is kept on the phone.",
                             prompt: "OpenAI API key", isStored: model.hasOpenAIKey, help: ("platform.openai.com", "https://platform.openai.com/api-keys"),
                             check: KeyCheck.openAI, save: model.setOpenAIKey, advance: advance)
                 case .claude:
-                    KeyStep(title: "Now your Claude key",
-                            text: "Claude reads each transcript and picks out the tasks and messages you asked for. Paste a key from your Anthropic account here.",
-                            prompt: "Claude API key", isStored: model.hasAnthropicKey, help: ("console.anthropic.com", "https://console.anthropic.com/settings/keys"),
+                    KeyStep(title: "Now your Anthropic API key",
+                            text: "Claude, made by Anthropic, reads each transcript and picks out the tasks and messages you asked for. Same idea: an API key from your Anthropic account, created on their website and pasted here.",
+                            prompt: "Anthropic API key", isStored: model.hasAnthropicKey, help: ("console.anthropic.com", "https://console.anthropic.com/settings/keys"),
                             check: KeyCheck.anthropic, save: model.setAnthropicKey, advance: advance)
                 case .todoist:
                     KeyStep(title: "Do you use Todoist?",
-                            text: "If you do, paste your Todoist API token and every task Claude finds lands there, in the project and with the labels you mentioned. If not, skip this; tasks are still shown in the app.",
+                            text: "If you do, paste your Todoist API token, which you find in Todoist's settings, and every task Claude finds lands there, in the project and with the labels you mentioned. If not, skip this; tasks are still shown in the app.",
                             prompt: "Todoist API token", isStored: model.hasTodoistToken, help: ("Todoist › Settings › Integrations", "https://app.todoist.com/app/settings/integrations/developer"),
                             check: KeyCheck.todoist, save: model.setTodoistToken, skippable: true, advance: advance)
                 case .relay:
@@ -171,7 +171,7 @@ private struct KeyStep: View {
                 Text(problem).typo(.ui).foregroundStyle(Color.brand).padding(.top, Metric.gap)
             } else if !isStored || replacing {
                 HStack(spacing: 4) {
-                    Text("You can make one at").typo(.ui).foregroundStyle(Color.quiet)
+                    Text("Create one at").typo(.ui).foregroundStyle(Color.quiet)
                     Link(help.0, destination: URL(string: help.1)!).typo(.ui).foregroundStyle(Color.brand)
                 }
                 .padding(.top, Metric.gap)
@@ -323,20 +323,20 @@ enum KeyCheck {
     static func openAI(_ key: String) async -> Result {
         var request = URLRequest(url: URL(string: "https://api.openai.com/v1/models")!)
         request.setValue("Bearer \(key)", forHTTPHeaderField: "Authorization")
-        return await probe(request, rejected: "OpenAI does not accept this key.")
+        return await probe(request, rejected: "OpenAI does not recognise this API key. Check that it was copied whole.")
     }
 
     static func anthropic(_ key: String) async -> Result {
         var request = URLRequest(url: URL(string: "https://api.anthropic.com/v1/models")!)
         request.setValue(key, forHTTPHeaderField: "x-api-key")
         request.setValue("2023-06-01", forHTTPHeaderField: "anthropic-version")
-        return await probe(request, rejected: "Anthropic does not accept this key.")
+        return await probe(request, rejected: "Anthropic does not recognise this API key. Check that it was copied whole.")
     }
 
     static func todoist(_ token: String) async -> Result {
         var request = URLRequest(url: URL(string: "https://api.todoist.com/api/v1/projects?limit=1")!)
         request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
-        return await probe(request, rejected: "Todoist does not accept this token.")
+        return await probe(request, rejected: "Todoist does not recognise this token. Check that it was copied whole.")
     }
 
     private static func probe(_ request: URLRequest, rejected: String) async -> Result {

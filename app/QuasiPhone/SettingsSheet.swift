@@ -43,13 +43,13 @@ struct SettingsSheet: View {
                         Rule()
                         NavigationLink {
                             SecretScreen(title: "OpenAI", prompt: "OpenAI API key", isStored: model.hasOpenAIKey,
-                                         explanation: "With a key, each note is transcribed by OpenAI instead of on the phone, in whichever languages you spoke it. The recording is sent; the language above and the phone's languages are given as hints. Without network, the phone transcribes.") { model.setOpenAIKey($0) }
+                                         explanation: "With an API key from your OpenAI account, each note is transcribed by OpenAI instead of on the phone, in whichever languages you spoke it. The recording is sent; the language above and the phone's languages are given as hints. Without network, the phone transcribes.") { model.setOpenAIKey($0) }
                         } label: { row("OpenAI", value: (model.hasOpenAIKey ? "Connected" : "Not set") + " ›") }
                         Rule()
                         NavigationLink {
-                            SecretScreen(title: "Claude", prompt: "Claude API key", isStored: model.hasAnthropicKey,
-                                         explanation: "With a key, each transcript is sent to Claude to find a task you asked for.") { model.setAnthropicKey($0) }
-                        } label: { row("Claude", value: (model.hasAnthropicKey ? "Connected" : "Not set") + " ›") }
+                            SecretScreen(title: "Anthropic", prompt: "Anthropic API key", isStored: model.hasAnthropicKey,
+                                         explanation: "With an API key from your Anthropic account, each transcript is sent to Claude, Anthropic's model, to find the tasks and messages you asked for.") { model.setAnthropicKey($0) }
+                        } label: { row("Anthropic", value: (model.hasAnthropicKey ? "Connected" : "Not set") + " ›") }
                     }
                     group("Tasks") {
                         NavigationLink {

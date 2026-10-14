@@ -4,13 +4,13 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Setting up Quasi</title>
-<meta name="description" content="How to set up Quasi, step by step: connect the app to the recorder, give it a Claude key so it understands your notes, a Todoist token so it can add tasks, and the relay that lets it send a message to a friend from your own number.">
+<meta name="description" content="How to set up Quasi, step by step: sign up with OpenAI and Anthropic and create an API key with each, connect the app to the recorder, add a Todoist token so it can add tasks, and the relay that lets it send a message to a friend from your own number.">
 <link rel="canonical" href="https://alexisrondeau.me/quasi/setup.html">
 <meta name="theme-color" content="#FBF8F2">
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="Quasi">
 <meta property="og:title" content="Setting up Quasi">
-<meta property="og:description" content="Connect the app to the recorder, give it a Claude key, a Todoist token, and the relay that sends a message from your own number. Step by step.">
+<meta property="og:description" content="Sign up with OpenAI and Anthropic for an API key each, connect the app to the recorder, add a Todoist token, and set up the relay that sends a message from your own number. Step by step.">
 <meta property="og:url" content="https://alexisrondeau.me/quasi/setup.html">
 <meta property="og:image" content="https://alexisrondeau.me/quasi/assets/social.png">
 <meta property="og:image:width" content="1200">
@@ -18,7 +18,7 @@
 <meta property="og:image:alt" content="Quasi. Say it, hear it done. A grey pocket recorder sends sound to an iPhone whose screen is off.">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:title" content="Setting up Quasi">
-<meta name="twitter:description" content="Connect the app to the recorder, give it a Claude key, a Todoist token, and the relay that sends a message from your own number. Step by step.">
+<meta name="twitter:description" content="Sign up with OpenAI and Anthropic for an API key each, connect the app to the recorder, add a Todoist token, and set up the relay that sends a message from your own number. Step by step.">
 <meta name="twitter:image" content="https://alexisrondeau.me/quasi/assets/social.png">
 <link rel="icon" href="assets/icon.png">
 <style>
@@ -124,13 +124,13 @@
 <main>
   <section class="first">
     <h1>Setting it up.</h1>
-    <p class="lead">Quasi runs with your own keys, on your own phone. Four steps, each ending with something to try with the recorder in your hand. Stop after any of them; the ones before still work.</p>
+    <p class="lead">Quasi runs on your own phone, using two AI services that you sign up for yourself. Four steps, each ending with something to try with the recorder in your hand. Stop after any of them; the ones before still work.</p>
     <ul class="plain">
       <li><b>Steps 1 to 3</b> take about half an hour together.</li>
       <li><b>Step 4</b>, the message to a friend, takes another half hour, most of it in the Shortcuts app.</li>
     </ul>
     <ol class="steps">
-      <li><a href="#keys"><b>Get your two keys.</b><p>One from OpenAI, which writes your notes down, and one from Anthropic, whose Claude reads them. The app asks for both the first time it opens.</p></a></li>
+      <li><a href="#keys"><b>Sign up with OpenAI and Anthropic, and get an API key from each.</b><p>OpenAI writes your notes down, Anthropic's Claude reads them. An API key is what lets Quasi use your account with each. The app asks for both the first time it opens.</p></a></li>
       <li><a href="#connect"><b>Install the app and connect the recorder.</b><p>Through TestFlight. Answer the app's few questions, let it find the recorder, and record your first note.</p></a></li>
       <li><a href="#tasks"><b>Let it add tasks to Todoist.</b><p>Give it your Todoist token. A task you ask for is added, filed under the project and labels you said.</p></a></li>
       <li><a href="#messages"><b>Let it send a message to a friend.</b><p>A Linq account, three settings in the app, a shortcut and an automation on the phone, and a list of people in Contacts.</p></a></li>
@@ -139,23 +139,24 @@
 
   <section id="keys">
     <p class="kicker">Step 1</p>
-    <h2>Get your two keys.</h2>
-    <p>Two services do the work behind a note, and each needs a key of yours. OpenAI turns the recording into text, and follows you from one language into another mid-sentence. Claude, from Anthropic, reads that text and finds the tasks and messages you asked for, or finds there were none. Get both keys now, on a computer or on the phone, and have them ready to paste when the app opens.</p>
+    <h2>Sign up with OpenAI and Anthropic, and get an API key from each.</h2>
+    <p>Two AI services do the work behind a note. OpenAI turns the recording into text, and follows you from one language into another mid-sentence. Claude, made by Anthropic, reads that text and finds the tasks and messages you asked for, or finds there were none. Quasi has no account of its own with either; it uses yours.</p>
+    <p>That is what an API key is for. It is a long string of letters and numbers that you create on the service's website, and that an app can show to the service to say "I am acting for this account, bill it". You paste it into Quasi once, Quasi keeps it in the phone's keychain, and the service charges your account for what Quasi uses, which is very little. Anyone who has the key can spend from your account, so treat it like a password: do not share it, and if it leaks, delete it on the website and make a new one.</p>
     <ul class="plain">
       <li><b>What leaves the phone:</b> the recording goes to OpenAI, the transcript goes to Anthropic. Nothing else, and nothing to anyone else. <a href="privacy.html">The whole of it, on one page.</a></li>
-      <li><b>What it costs:</b> about half a cent per minute of recording at OpenAI, and less than a cent per note at Anthropic. A few dollars on each account last months.</li>
+      <li><b>What it costs:</b> about half a cent per minute of recording at OpenAI, and less than a cent per note at Anthropic. A few dollars on each account last months. Both let you set a monthly spending limit on the website.</li>
     </ul>
-    <h3>A key from OpenAI</h3>
+    <h3>The OpenAI API key</h3>
     <ol class="how">
-      <li>Sign in at <a href="https://platform.openai.com" target="_blank" rel="noopener">platform.openai.com</a>, or create an account there. This is OpenAI's developer site, separate from ChatGPT.</li>
+      <li>Go to <a href="https://platform.openai.com" target="_blank" rel="noopener">platform.openai.com</a> and create an account, or sign in. This is OpenAI's developer site; a ChatGPT subscription is a different thing and does not cover this.</li>
       <li>Put a little credit on the account, under <b>Billing</b>.</li>
-      <li>Under <b>API keys</b>, create a key, name it something like "Quasi", and copy it. The key is shown once; if you lose it, make another.</li>
+      <li>Open <b>API keys</b> in the menu and press <b>Create new secret key</b>. Name it something like "Quasi" and copy the key it shows you. It is shown only this once; if you lose it, make another.</li>
     </ol>
-    <h3>A key from Anthropic</h3>
+    <h3>The Anthropic API key</h3>
     <ol class="how">
-      <li>Sign in at <a href="https://console.anthropic.com" target="_blank" rel="noopener">console.anthropic.com</a>, or create an account there.</li>
+      <li>Go to <a href="https://console.anthropic.com" target="_blank" rel="noopener">console.anthropic.com</a> and create an account, or sign in. This is Anthropic's developer site; a Claude subscription is a different thing and does not cover this.</li>
       <li>Put a little credit on the account, under <b>Billing</b>. Quasi uses Claude Sonnet 5.5.</li>
-      <li>Under <b>API Keys</b>, create a key, name it something like "Quasi", and copy it. This one too is shown once.</li>
+      <li>Open <b>API Keys</b> and press <b>Create Key</b>. Name it something like "Quasi" and copy the key. This one too is shown only once.</li>
     </ol>
   </section>
 
@@ -167,7 +168,7 @@
     <ul class="plain">
       <li><b>A Comulytic Note Pro.</b> The one Quasi was built with had been set up with <a href="https://www.comulytic.com" target="_blank" rel="noopener">Comulytic's own app</a> first; a recorder straight from the box has not been tried.</li>
       <li><b>An iPhone on iOS 26 or later.</b></li>
-      <li><b>The two keys from step 1.</b></li>
+      <li><b>The two API keys from step 1.</b></li>
     </ul>
     <h3>Install it through TestFlight</h3>
     <ol class="how">
@@ -180,8 +181,8 @@
     <p>Quasi asks you a few things before it shows anything else. Whatever you give it is kept on the phone, in its keychain, and can be changed later behind the gear.</p>
     <ol class="how">
       <li>Your name.</li>
-      <li>The OpenAI key. Paste it and tap Next; the app checks it with OpenAI before keeping it, so a key copied wrong is caught here.</li>
-      <li>The Claude key, the same way.</li>
+      <li>The OpenAI API key. Paste it and tap Next; the app checks it with OpenAI before keeping it, so a key copied wrong is caught here.</li>
+      <li>The Anthropic API key, the same way.</li>
       <li>A Todoist token, if you use Todoist. Skip it for now if you like; that is <a href="#tasks">step 3</a>.</li>
       <li>The message relay. Skip it; that is <a href="#messages">step 4</a>.</li>
       <li>A summary of what is connected, and <b>Let's go</b>.</li>
@@ -201,9 +202,9 @@
       <p><b>What you hear.</b> Two rising chime notes when the recording starts, a wooden note when the recording has arrived on the phone, a second wooden note once it is written down, and then the answer: the home note, which says there was nothing to do. In the logbook the note is kept with your words, newest first, and if it was a task after all, <b>Make this a task</b> asks again.</p>
     </aside>
     <p class="quiet">A note that asks for a task is understood from here on too. The logbook shows the task and marks the words that asked for it. It is just not added anywhere yet; that is the next step.</p>
-    <h3>Changing a key later</h3>
+    <h3>Changing an API key later</h3>
     <ul class="plain">
-      <li><b>Behind the gear,</b> <span class="path">Understanding <i>›</i> OpenAI</span> and <span class="path">Understanding <i>›</i> Claude</span> each show <b>Connected</b>. <b>Remove</b> on either screen takes the key out, and a new one can be pasted in its place.</li>
+      <li><b>Behind the gear,</b> <span class="path">Understanding <i>›</i> OpenAI</span> and <span class="path">Understanding <i>›</i> Anthropic</span> each show <b>Connected</b>. <b>Remove</b> on either screen takes the API key out, and a new one can be pasted in its place.</li>
       <li><b>Setup <i>›</i> Go through the setup again</b> brings back the questions from the first launch. What is stored stays stored; each step just shows it as connected.</li>
       <li><b>Without internet,</b> the phone writes the note down itself, in the one language chosen under <span class="path">Understanding <i>›</i> Language</span>, and the answer waits until the phone is online.</li>
     </ul>
@@ -324,7 +325,7 @@
       <li><b>If the app is asking for them</b> on its first launch, enter all three on that step and tap Next.</li>
       <li><b>Otherwise,</b> behind the gear, open <span class="path">Messages <i>›</i> iMessage relay</span> and enter the <b>Linq token</b>, the <b>Linq line</b>, and <b>Your number</b>, each on its own screen, each with Save.</li>
     </ul>
-    <p>Back in the settings, the relay row reads <b>Set up</b>. The three go into the keychain like the keys before them.</p>
+    <p>Back in the settings, the relay row reads <b>Set up</b>. The three go into the keychain like the API keys before them.</p>
     <ol class="how">
       <li>Save the Linq line in your Contacts under a name like <b>Quasi Relay</b>.
         <p class="quiet">So that its texts are not filtered as an unknown sender, and so that the automation can be limited to it, in part D.</p></li>
