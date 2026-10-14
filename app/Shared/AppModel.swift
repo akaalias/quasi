@@ -57,6 +57,9 @@ final class AppModel: ObservableObject {
     @Published private(set) var notes: [NoteRecord] = []
     /// Whether an Anthropic API key is stored; without one, transcripts are not checked for tasks.
     @Published private(set) var hasAnthropicKey = Keychain.read(.anthropicKey) != nil
+    /// Whether an OpenAI key is stored; with one, notes are transcribed by OpenAI, in whatever
+    /// mix of languages they were spoken, instead of on the phone in the one language chosen.
+    @Published private(set) var hasOpenAIKey = Keychain.read(.openAIKey) != nil
     /// Whether a Todoist token is stored; without one, a task found is shown but not sent anywhere.
     @Published private(set) var hasTodoistToken = Keychain.read(.todoistToken) != nil
     /// Whether the message relay is set up; without it, a message found is shown but not sent.
@@ -280,6 +283,14 @@ final class AppModel: ObservableObject {
     }
 
     var locale: Locale { Locale(identifier: localeIdentifier) }
+
+    /// The languages OpenAI is told to expect: the one chosen for transcription, then the
+    /// phone's own languages, as two-letter codes without repeats.
+    var transcriptionLanguages: [String] {
+        let candidates = [locale] + Locale.preferredLanguages.map(Locale.init(identifier:))
+        var seen: Set<String> = []
+        return candidates.compactMap { $0.language.languageCode?.identifier(.alpha2) }.filter { seen.insert($0).inserted }
+    }
 
     /// Supported languages, plus the current choice so a picker always has a matching entry.
     var languageChoices: [String] {
@@ -516,6 +527,11 @@ final class AppModel: ObservableObject {
     func setAnthropicKey(_ key: String?) {
         Keychain.write(key?.trimmingCharacters(in: .whitespacesAndNewlines), for: .anthropicKey)
         hasAnthropicKey = Keychain.read(.anthropicKey) != nil
+    }
+
+    func setOpenAIKey(_ key: String?) {
+        Keychain.write(key?.trimmingCharacters(in: .whitespacesAndNewlines), for: .openAIKey)
+        hasOpenAIKey = Keychain.read(.openAIKey) != nil
     }
 
     func setTodoistToken(_ token: String?) {
@@ -832,9 +848,26 @@ final class AppModel: ObservableObject {
     private func saveAndTranscribe(samples: [Float], sampleRate: Double, baseName: String) async throws -> String {
         let audio = folder.appendingPathComponent(baseName + ".m4a")
         try AudioFiles.writeVoice(samples: samples, sampleRate: sampleRate, to: audio)
-        let text = try await Transcriber.transcribe(audio, locale: locale)
+        let text = try await transcribe(audio, name: baseName)
         try text.write(to: folder.appendingPathComponent(baseName + ".txt"), atomically: true, encoding: .utf8)
         return text
+    }
+
+    /// By OpenAI when a key is stored, since it follows a note from one language into another;
+    /// on the phone otherwise, and also when OpenAI cannot be reached, so that a note taken
+    /// without network is still written down. The log says which it was.
+    private func transcribe(_ audio: URL, name: String) async throws -> String {
+        if let key = Keychain.read(.openAIKey) {
+            let languages = transcriptionLanguages
+            do {
+                let text = try await OpenAITranscriber.transcribe(audio, languages: languages, apiKey: key)
+                record("\(name) transcribed by OpenAI (\(OpenAITranscriber.model), hints \(languages.joined(separator: ",")))")
+                return text
+            } catch {
+                record("\(name) could not be transcribed by OpenAI (\(error.localizedDescription)); transcribing on the phone instead")
+            }
+        }
+        return try await Transcriber.transcribe(audio, locale: locale)
     }
 
     // MARK: The recorder's own copies

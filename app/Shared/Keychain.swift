@@ -5,6 +5,8 @@ import Security
 enum Keychain {
     enum Secret: String {
         case anthropicKey = "anthropic-api-key"
+        /// With one, notes are transcribed by OpenAI rather than on the phone (see OpenAITranscriber.swift).
+        case openAIKey = "openai-api-key"
         case todoistToken = "todoist-api-token"
         /// The relay that hands messages to the phone's own Messages app (see MessageRelay.swift).
         case linqToken = "linq-api-token"

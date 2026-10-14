@@ -38,6 +38,11 @@ struct SettingsSheet: View {
                         NavigationLink { LanguageScreen() } label: { row("Language", value: language + " ›") }
                         Rule()
                         NavigationLink {
+                            SecretScreen(title: "OpenAI", prompt: "OpenAI API key", isStored: model.hasOpenAIKey,
+                                         explanation: "With a key, each note is transcribed by OpenAI instead of on the phone, in whichever languages you spoke it. The recording is sent; the language above and the phone's languages are given as hints. Without network, the phone transcribes.") { model.setOpenAIKey($0) }
+                        } label: { row("OpenAI", value: (model.hasOpenAIKey ? "Connected" : "Not set") + " ›") }
+                        Rule()
+                        NavigationLink {
                             SecretScreen(title: "Claude", prompt: "Claude API key", isStored: model.hasAnthropicKey,
                                          explanation: "With a key, each transcript is sent to Claude to find a task you asked for.") { model.setAnthropicKey($0) }
                         } label: { row("Claude", value: (model.hasAnthropicKey ? "Connected" : "Not set") + " ›") }
