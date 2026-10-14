@@ -7,6 +7,10 @@ xcuserdata/
 /apk/
 /tools/
 
+# Research notes and reports on the recorder itself: kept out, as the README says
+/research_notes/
+/reports/
+
 # Bluetooth captures and personal audio
 /captures/
 /recordings/
