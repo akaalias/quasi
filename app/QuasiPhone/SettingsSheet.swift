@@ -7,6 +7,7 @@ struct SettingsSheet: View {
     @Environment(\.dismiss) private var dismiss
     @AppStorage(StepSignals.soundsKey) private var sounds = true
     @AppStorage(StepSignals.tapsKey) private var taps = true
+    @AppStorage(OnboardingFlow.doneKey) private var onboardingDone = true
     @State private var choosingContacts = false
     /// Access to Contacts can change in the phone's Settings while this sheet is up.
     @State private var contactsAccess = ContactBook.access
@@ -19,6 +20,9 @@ struct SettingsSheet: View {
                         Text("Settings").typo(.screenTitle)
                         Spacer()
                         Button { dismiss() } label: { Text("Done").typo(Typo(size: 17.7, weight: .bold, tracking: 0.6)).foregroundStyle(Color.brand) }
+                    }
+                    group("You") {
+                        NavigationLink { NameScreen() } label: { row("Name", value: (model.userName.isEmpty ? "Not set" : model.userName) + " ›") }
                     }
                     group("Recorder") {
                         row("Comulytic Note Pro", value: recorder)
@@ -73,6 +77,13 @@ struct SettingsSheet: View {
                         Rule()
                         Toggle(isOn: $taps) { Text("Taps").typo(.ui) }.toggleStyle(SwitchStyle()).padding(.vertical, 12)
                     }
+                    group("Setup") {
+                        // Walks through the name and the keys again; what is stored stays stored.
+                        Button {
+                            onboardingDone = false
+                            dismiss()
+                        } label: { row("Go through the setup again", value: "›") }
+                    }
                 }
                 .padding(.horizontal, Metric.margin)
                 .padding(.top, 2)
@@ -124,6 +135,31 @@ struct SettingsSheet: View {
         .typo(.ui)
         .padding(.vertical, 14.5)
         .contentShape(Rectangle())
+    }
+}
+
+/// What the app calls its owner.
+struct NameScreen: View {
+    @EnvironmentObject private var model: AppModel
+    @State private var draft = ""
+
+    var body: some View {
+        Form {
+            Section {
+                TextField("Your name", text: $draft)
+                    .textContentType(.givenName).textInputAutocapitalization(.words).autocorrectionDisabled()
+                    .onSubmit { model.userName = draft.trimmingCharacters(in: .whitespacesAndNewlines) }
+            } footer: {
+                Text("How the app addresses you.")
+            }
+            .listRowBackground(Color.card)
+        }
+        .scrollContentBackground(.hidden)
+        .background(Color.paper)
+        .navigationTitle("Name")
+        .navigationBarTitleDisplayMode(.inline)
+        .onAppear { draft = model.userName }
+        .onDisappear { model.userName = draft.trimmingCharacters(in: .whitespacesAndNewlines) }
     }
 }
 

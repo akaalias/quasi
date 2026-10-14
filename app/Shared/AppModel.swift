@@ -81,6 +81,12 @@ final class AppModel: ObservableObject {
     static let questionPatience: TimeInterval = 120
     private var questionTimeout: Task<Void, Never>?
 
+    /// What the app calls its owner, given on the first run. Kept with the other preferences,
+    /// not in the keychain: it is not a secret.
+    @Published var userName: String = UserDefaults.standard.string(forKey: "userName") ?? "" {
+        didSet { UserDefaults.standard.set(userName, forKey: "userName") }
+    }
+
     @Published var availableLocales: [Locale] = []
     @Published var localeIdentifier: String {
         didSet { UserDefaults.standard.set(localeIdentifier, forKey: "transcriptionLocale") }

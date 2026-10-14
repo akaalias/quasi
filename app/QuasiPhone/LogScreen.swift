@@ -7,6 +7,8 @@ struct LogScreen: View {
     @State private var showingSettings = UserDefaults.standard.string(forKey: "demo") == "settings"
     @State private var liveDismissed = false
     @State private var path: [String] = []
+    /// The first run asks for the name and the keys; the demo states skip it.
+    @AppStorage(OnboardingFlow.doneKey) private var onboardingDone = UserDefaults.standard.string(forKey: "demo") != nil
 
     var body: some View {
         NavigationStack(path: $path) {
@@ -47,6 +49,7 @@ struct LogScreen: View {
             .background(Color.paper)
             .toolbar(.hidden, for: .navigationBar)
             .navigationDestination(for: String.self) { NoteScreen(id: $0) }
+            .fullScreenCover(isPresented: Binding(get: { !onboardingDone }, set: { onboardingDone = !$0 })) { OnboardingFlow() }
             .sheet(isPresented: $showingSettings) { SettingsSheet() }
             .sheet(isPresented: live) { LiveSheet() }
             .onAppear {

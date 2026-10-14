@@ -14,6 +14,7 @@ struct QuasiPhoneApp: App {
         // app, which saves typing them on the phone. They are stored in the keychain like typed ones.
         let environment = ProcessInfo.processInfo.environment
         if let key = environment["ANTHROPIC_API_KEY"], !key.isEmpty { model.setAnthropicKey(key) }
+        if let key = environment["OPENAI_API_KEY"], !key.isEmpty { model.setOpenAIKey(key) }
         if let token = environment["TODOIST_API_TOKEN"], !token.isEmpty { model.setTodoistToken(token) }
         for (name, secret) in [("LINQ_API_TOKEN", Keychain.Secret.linqToken), ("LINQ_FROM", .linqLine), ("LINQ_TO", .ownNumber)] {
             if let value = environment[name], !value.isEmpty { model.setRelaySetting(value, for: secret) }
