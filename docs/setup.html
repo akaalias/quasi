@@ -144,7 +144,7 @@
     <h3>What you need</h3>
     <ul class="plain">
       <li><b>A Comulytic Note Pro.</b> The one Quasi was built with had been set up with <a href="https://www.comulytic.com" target="_blank" rel="noopener">Comulytic's own app</a> first; a recorder straight from the box has not been tried.</li>
-      <li><b>An iPhone on iOS 26 or later.</b> The transcription is Apple's and runs on the phone; it needs this version.</li>
+      <li><b>An iPhone on iOS 26 or later.</b> The transcription on the phone is Apple's and needs this version.</li>
     </ul>
     <h3>Install it through TestFlight</h3>
     <ol class="how">
@@ -161,7 +161,8 @@
       <li>Wait a few seconds with the app in front of you. It should say <b>Connected</b>.
         <p class="quiet">Only the first connection needs the app in front. After that the phone finds the recorder by itself, locked or not.</p></li>
       <li>Open the settings behind the gear. The first group, <b>Recorder</b>, shows the recorder as nearby, its battery, its free space, and the recordings on it.</li>
-      <li>Check the language under <span class="path">Understanding <i>›</i> Language</span>. Notes are transcribed in this language; the system downloads its model the first time.</li>
+      <li>Check the language under <span class="path">Understanding <i>›</i> Language</span>. Notes are transcribed on the phone in this language; the system downloads its model the first time.
+        <p class="quiet">If your notes wander between languages, store an OpenAI API key under <span class="path">Understanding <i>›</i> OpenAI</span>. Notes are then transcribed by OpenAI in whichever languages you spoke them, with the recording sent there. Without network the phone takes over.</p></li>
       <li>Press record on the recorder, say a few words, and press again.</li>
     </ol>
     <aside class="hear">
@@ -189,7 +190,7 @@
   <section id="notes">
     <p class="kicker">Step 2</p>
     <h2>Let it understand your notes.</h2>
-    <p>So far the phone writes down what you said. To understand it, each transcript is sent to Claude, which finds the tasks and messages you asked for, or finds that there were none. That needs a key from Anthropic. The transcript is the only thing that leaves the phone, and only once a key is stored.</p>
+    <p>So far the phone writes down what you said. To understand it, each transcript is sent to Claude, which finds the tasks and messages you asked for, or finds that there were none. That needs a key from Anthropic. The transcript is the only thing that leaves the phone for this, and only once a key is stored.</p>
     <h3>Get the key</h3>
     <ol class="how">
       <li>Sign in at <a href="https://console.anthropic.com" target="_blank" rel="noopener">console.anthropic.com</a>, or create an account there.</li>

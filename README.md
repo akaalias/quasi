@@ -8,8 +8,8 @@ ever want to check, there is a logbook. Most days you won't open it.
 
 In practice: an iPhone app and a Mac menu bar app that talk directly to a
 [Comulytic Note Pro](https://www.comulytic.com) voice recorder over Bluetooth. No vendor app, no
-account: audio goes from the recorder to your own device and is transcribed there, and tasks you
-ask for are added to Todoist. The phone has to be switched on and within Bluetooth range; it does
+account: audio goes from the recorder to your own device and is transcribed there, or by OpenAI
+if you store a key for that, and tasks you ask for are added to Todoist. The phone has to be switched on and within Bluetooth range; it does
 not have to be looked at.
 
 This is a personal project for one recorder and one owner, not a product. It is not affiliated
@@ -20,8 +20,11 @@ with Comulytic.
 Press record on the recorder, and within a second or two:
 
 - **Live view.** A waveform of what the recorder hears, with a running timer.
-- **Transcript.** When you stop, the audio is transcribed on the device and shown. Audio is
-  saved as `.m4a`, the transcript as `.txt`, named by the recording's start time.
+- **Transcript.** When you stop, the audio is transcribed and shown. On the device by default,
+  in the one language chosen in the settings; with an OpenAI key stored, by OpenAI's
+  `gpt-transcribe`, which follows a note from one language into another and is told which
+  languages to expect. Audio is saved as `.m4a`, the transcript as `.txt`, named by the
+  recording's start time.
 - **Stored recordings.** "Download Stored Recordings" fetches the complete copies from the
   recorder's own storage. Nothing is ever deleted from the recorder.
 - **Tasks.** If you store an Anthropic API key in the app, each transcript is sent to Claude,
@@ -186,7 +189,11 @@ About three quarters of the Swift code is in `app/Shared` and compiled into both
 - `AudioFiles`: keeps the right channel (the microphone; the left mostly carries handling noise)
   and writes mono AAC.
 - `Transcriber`: Apple's on-device `SpeechAnalyzer`. The language model is downloaded by the
-  system on first use; no audio leaves the device.
+  system on first use; no audio leaves the device. Used when no OpenAI key is stored, and as
+  the fallback when OpenAI cannot be reached.
+- `OpenAITranscriber`: the same job done by OpenAI, for notes spoken in more than one language.
+  Sends the recording with the chosen language and the phone's languages as hints, and a prompt
+  that keeps every word in the language it was spoken.
 - `AppModel`: ties these together, and decides when the link may be dropped.
 - `LiveView`: the waveform and transcript.
 

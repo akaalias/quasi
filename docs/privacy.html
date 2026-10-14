@@ -51,7 +51,7 @@
     <h2>What stays on the phone</h2>
     <ul class="plain">
       <li><b>Your recordings.</b> Audio comes from the recorder to your iPhone over Bluetooth and is kept there, in the Files app under On My iPhone › Quasi. Nothing is ever deleted from the recorder.</li>
-      <li><b>Your transcripts.</b> Recordings are transcribed on the phone by Apple's speech framework. No audio leaves the device.</li>
+      <li><b>Your transcripts.</b> Unless you store an OpenAI key, recordings are transcribed on the phone by Apple's speech framework, and no audio leaves the device.</li>
       <li><b>Your contacts.</b> When you ask for a message to be sent, the person you named is looked up in your Contacts on the phone, among the people you have allowed the app to see. Their names and numbers stay there.</li>
       <li><b>Your keys.</b> Each key you store goes into the phone's keychain and is used only to talk to the service it belongs to.</li>
     </ul>
@@ -60,6 +60,7 @@
   <section>
     <h2>What leaves it, and only if you store a key</h2>
     <ul class="plain">
+      <li><b>To OpenAI, with an OpenAI key.</b> The recording of each note, so that it can be transcribed in whichever languages you spoke it, along with the names of the languages to expect. Nothing else; the transcript comes back and is kept on the phone. OpenAI's handling of what it receives is described in <a href="https://openai.com/policies/privacy-policy" target="_blank" rel="noopener">its privacy policy</a>.</li>
       <li><b>To Anthropic, with a Claude key.</b> The transcript of each note, so that Claude can find the tasks and messages you asked for. When a name does not match a contact as written, the names of the people the app may see go along, so that Claude can tell which was meant. Anthropic's handling of what it receives is described in <a href="https://www.anthropic.com/legal/privacy" target="_blank" rel="noopener">its privacy policy</a>.</li>
       <li><b>To Todoist, with a Todoist token.</b> Each task Claude found, with the transcript in its description. The app reads the names of your projects, sections and labels; it never reads your tasks.</li>
       <li><b>To Linq, with the message relay set up.</b> The number of the person you are messaging and the words of the message, in one text sent to your own phone. The relay sees nothing else; your phone sends the message on.</li>
@@ -70,7 +71,7 @@
   <section>
     <h2>What the author sees</h2>
     <p>Nothing. The app has no analytics and talks to no server of its own. If you install it through TestFlight, Apple may share crash reports and the feedback you choose to send with the author, as <a href="https://www.apple.com/legal/privacy/" target="_blank" rel="noopener">Apple's privacy policy</a> describes. That is the whole of it.</p>
-    <p class="quiet">Questions go to <a href="mailto:alexis.rondeau@gmail.com?subject=Quasi%20privacy">alexis.rondeau@gmail.com</a>. This page was last changed on 13 October 2026.</p>
+    <p class="quiet">Questions go to <a href="mailto:alexis.rondeau@gmail.com?subject=Quasi%20privacy">alexis.rondeau@gmail.com</a>. This page was last changed on 14 October 2026.</p>
   </section>
 </main>
 
