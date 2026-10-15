@@ -16,11 +16,13 @@ struct SettingsSheet: View {
         NavigationStack {
             ScrollView {
                 VStack(alignment: .leading, spacing: 0) {
+                    // A sheet has no status bar above it, so the header makes its own room at the top.
                     HStack {
                         Text("Settings").typo(.screenTitle)
                         Spacer()
                         Button { dismiss() } label: { Text("Done").typo(Typo(size: 17.7, weight: .bold, tracking: 0.6)).foregroundStyle(Color.brand) }
                     }
+                    .padding(.top, 22)
                     group("You") {
                         NavigationLink { NameScreen() } label: { row("Name", value: (model.userName.isEmpty ? "Not set" : model.userName) + " ›") }
                     }
@@ -86,7 +88,6 @@ struct SettingsSheet: View {
                     }
                 }
                 .padding(.horizontal, Metric.margin)
-                .padding(.top, 2)
                 .padding(.bottom, 40)
             }
             .foregroundStyle(Color.ink)
