@@ -23,7 +23,15 @@ struct SettingsSheet: View {
                         Button { dismiss() } label: { Text("Done").typo(Typo(size: 17.7, weight: .bold, tracking: 0.6)).foregroundStyle(Color.brand) }
                     }
                     .padding(.top, 22)
-                    Text(AppBuild.line).typo(.ui).foregroundStyle(Color.quiet)
+                    group("This build") {
+                        row("Version", value: AppBuild.version)
+                        Rule()
+                        row("Commit", value: AppBuild.commit)
+                        if let built = AppBuild.built {
+                            Rule()
+                            row("Built", value: built)
+                        }
+                    }
                     group("You") {
                         NavigationLink { NameScreen() } label: { row("Name", value: (model.userName.isEmpty ? "Not set" : model.userName) + " ›") }
                     }
@@ -275,22 +283,24 @@ struct SecretScreen: View {
     }
 }
 
-/// Which build this is: the version, the build number, the commit, and when it was built. The
+/// Which build this is: the version with the build number, the commit, and when it was built. The
 /// commit and the time are written into build-stamp.txt by the "Stamp the build" phase of the project.
 enum AppBuild {
-    static var line: String {
-        let info = Bundle.main.infoDictionary ?? [:]
-        let version = info["CFBundleShortVersionString"] as? String ?? "?"
-        let number = info["CFBundleVersion"] as? String ?? "?"
-        var parts = ["Version \(version), build \(number)"]
-        if let url = Bundle.main.url(forResource: "build-stamp", withExtension: "txt"),
-           let stamp = try? String(contentsOf: url, encoding: .utf8) {
-            let lines = stamp.split(separator: "\n").map(String.init)
-            if let commit = lines.first { parts.append("commit \(commit)") }
-            if lines.count > 1, let date = ISO8601DateFormatter().date(from: lines[1]) {
-                parts.append("built " + date.formatted(.dateTime.day().month(.abbreviated).hour().minute()))
-            }
-        }
-        return parts.joined(separator: " · ")
+    private static let info = Bundle.main.infoDictionary ?? [:]
+    private static let stamp: [String] = {
+        guard let url = Bundle.main.url(forResource: "build-stamp", withExtension: "txt"),
+              let text = try? String(contentsOf: url, encoding: .utf8) else { return [] }
+        return text.split(separator: "\n").map(String.init)
+    }()
+
+    static var version: String {
+        "\(info["CFBundleShortVersionString"] as? String ?? "?") (\(info["CFBundleVersion"] as? String ?? "?"))"
+    }
+
+    static var commit: String { stamp.first ?? "Unknown" }
+
+    static var built: String? {
+        guard stamp.count > 1, let date = ISO8601DateFormatter().date(from: stamp[1]) else { return nil }
+        return date.formatted(.dateTime.day().month(.abbreviated).hour().minute())
     }
 }
