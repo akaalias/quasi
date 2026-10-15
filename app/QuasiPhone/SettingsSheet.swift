@@ -23,6 +23,7 @@ struct SettingsSheet: View {
                         Button { dismiss() } label: { Text("Done").typo(Typo(size: 17.7, weight: .bold, tracking: 0.6)).foregroundStyle(Color.brand) }
                     }
                     .padding(.top, 22)
+                    Text(AppBuild.line).typo(.ui).foregroundStyle(Color.quiet)
                     group("You") {
                         NavigationLink { NameScreen() } label: { row("Name", value: (model.userName.isEmpty ? "Not set" : model.userName) + " ›") }
                     }
@@ -271,5 +272,25 @@ struct SecretScreen: View {
         .background(Color.paper)
         .navigationTitle(title)
         .navigationBarTitleDisplayMode(.inline)
+    }
+}
+
+/// Which build this is: the version, the build number, the commit, and when it was built. The
+/// commit and the time are written into build-stamp.txt by the "Stamp the build" phase of the project.
+enum AppBuild {
+    static var line: String {
+        let info = Bundle.main.infoDictionary ?? [:]
+        let version = info["CFBundleShortVersionString"] as? String ?? "?"
+        let number = info["CFBundleVersion"] as? String ?? "?"
+        var parts = ["Version \(version), build \(number)"]
+        if let url = Bundle.main.url(forResource: "build-stamp", withExtension: "txt"),
+           let stamp = try? String(contentsOf: url, encoding: .utf8) {
+            let lines = stamp.split(separator: "\n").map(String.init)
+            if let commit = lines.first { parts.append("commit \(commit)") }
+            if lines.count > 1, let date = ISO8601DateFormatter().date(from: lines[1]) {
+                parts.append("built " + date.formatted(.dateTime.day().month(.abbreviated).hour().minute()))
+            }
+        }
+        return parts.joined(separator: " · ")
     }
 }
