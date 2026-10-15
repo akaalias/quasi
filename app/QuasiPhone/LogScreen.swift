@@ -15,11 +15,15 @@ struct LogScreen: View {
             ScrollView {
                 VStack(alignment: .leading, spacing: 0) {
                     HStack {
-                        Text(status).typo(.ui).foregroundStyle(Color.quiet)
+                        Button { showingSettings = true } label: { RecorderBadge(connection: model.connection, battery: model.battery) }
+                            .buttonStyle(.plain)
                         Spacer()
                         Button { showingSettings = true } label: {
-                            Image(systemName: "gearshape").font(.system(size: 15)).foregroundStyle(Color.quiet)
+                            Image(systemName: "gearshape.fill").font(.system(size: 14.5, weight: .semibold)).foregroundStyle(Color.ink)
+                                .frame(width: 30.4, height: 30.4)
+                                .background(Color.chip, in: Circle())
                         }
+                        .buttonStyle(.plain)
                         .accessibilityLabel("Settings")
                     }
                     if model.notes.isEmpty {
@@ -69,14 +73,6 @@ struct LogScreen: View {
     private var live: Binding<Bool> {
         Binding(get: { (model.phase == .recording || model.phase == .transcribing) && !liveDismissed && !showingSettings },
                 set: { if !$0 { liveDismissed = true } })
-    }
-
-    private var status: String {
-        switch model.connection {
-        case .ready: return model.battery.map { "Recorder nearby · \($0)%" } ?? "Recorder nearby"
-        case .bluetoothOff: return "Bluetooth is off"
-        default: return "Recorder out of reach"
-        }
     }
 
     private var days: [(day: Date, title: String, notes: [NoteRecord])] {
@@ -235,5 +231,62 @@ struct LiveSheet: View {
         .presentationDetents([.fraction(0.563), .large])
         .presentationDragIndicator(.visible)
         .presentationBackground(Color.sheetPaper)
+    }
+}
+
+/// The recorder at a glance, in a chip at the top of the log: a dot for its state, a few words,
+/// and its battery drawn as one when it is nearby.
+struct RecorderBadge: View {
+    let connection: RecorderClient.State
+    let battery: Int?
+
+    var body: some View {
+        HStack(spacing: 7.6) {
+            dot.frame(width: 7.6, height: 7.6)
+            Text(words).typo(.small).foregroundStyle(connection == .ready ? Color.ink : Color.quiet)
+            if connection == .ready, let battery {
+                BatteryGlyph(level: battery).padding(.leading, 1.5)
+                Text("\(battery)%").typo(.small).foregroundStyle(Color.quiet)
+            }
+        }
+        .padding(.leading, 13.7).padding(.trailing, 15.2).padding(.vertical, 4.6)
+        .background(Color.chip, in: Capsule())
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel(battery.map { connection == .ready ? "\(words), battery \($0) percent" : words } ?? words)
+    }
+
+    /// Filled in ink when the recorder is there, hollow while it is being looked for, quiet otherwise.
+    @ViewBuilder private var dot: some View {
+        switch connection {
+        case .ready: Circle().fill(Color.ink)
+        case .searching, .connecting: Circle().strokeBorder(Color.quiet, lineWidth: 1.5)
+        default: Circle().fill(Color.quiet)
+        }
+    }
+
+    private var words: String {
+        switch connection {
+        case .ready: return "Recorder nearby"
+        case .bluetoothOff: return "Bluetooth is off"
+        default: return "Recorder out of reach"
+        }
+    }
+}
+
+/// A small battery, filled to its level.
+struct BatteryGlyph: View {
+    let level: Int
+
+    var body: some View {
+        HStack(spacing: 1.2) {
+            RoundedRectangle(cornerRadius: 2.6).strokeBorder(Color.quiet, lineWidth: 1)
+                .frame(width: 20.5, height: 10.6)
+                .overlay(alignment: .leading) {
+                    RoundedRectangle(cornerRadius: 1.2).fill(Color.ink)
+                        .frame(width: max(1.5, 16.5 * CGFloat(min(max(level, 0), 100)) / 100), height: 6.6)
+                        .padding(.leading, 2)
+                }
+            RoundedRectangle(cornerRadius: 0.8).fill(Color.quiet).frame(width: 1.6, height: 4.2)
+        }
     }
 }
