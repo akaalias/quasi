@@ -169,6 +169,8 @@ private struct KeyStep: View {
             .padding(.top, 28)
             if let problem {
                 Text(problem).typo(.ui).foregroundStyle(Color.brand).padding(.top, Metric.gap)
+            } else if isStored && !replacing {
+                Text("This was set up before and still works. Next keeps it as it is.").typo(.ui).foregroundStyle(Color.quiet).padding(.top, Metric.gap)
             } else if !isStored || replacing {
                 HStack(spacing: 4) {
                     Text("Create one at").typo(.ui).foregroundStyle(Color.quiet)
@@ -247,6 +249,9 @@ private struct RelayStep: View {
                 .padding(.horizontal, 19.8).padding(.vertical, 6)
                 .background(Color.card, in: RoundedRectangle(cornerRadius: Metric.radius))
                 .padding(.top, 28)
+                if tokenStored && !replacingToken {
+                    Text("The relay was set up before. Next keeps it as it is.").typo(.ui).foregroundStyle(Color.quiet).padding(.top, Metric.gap)
+                }
                 HStack(spacing: 4) {
                     Text("How to set up the shortcut:").typo(.ui).foregroundStyle(Color.quiet)
                     Link("setup page", destination: URL(string: "https://alexisrondeau.me/quasi/setup.html#messages")!).typo(.ui).foregroundStyle(Color.brand)
