@@ -10,6 +10,8 @@ struct Case: Decodable {
     let recorded_at: String
     let transcript: String
     let catalog: TaskCatalog
+    /// The note recorded just before, if the case has one.
+    let previous: String?
 }
 
 let berlin = TimeZone(identifier: "Europe/Berlin")!
@@ -79,8 +81,9 @@ struct Runner {
                         attempt += 1
                         let start = Date()
                         do {
-                            let result = try await TaskExtractor.extraction(from: item.transcript, recordedAt: recordedAt,
-                                                                            catalog: item.catalog, timeZone: berlin, apiKey: key)
+                            let result = try await TaskExtractor.extraction(from: item.transcript, recordedAt: recordedAt, catalog: item.catalog,
+                                                                            previous: item.previous.map { TaskExtractor.Previous(transcript: $0, recordedAt: recordedAt.addingTimeInterval(-120)) },
+                                                                            timeZone: berlin, apiKey: key)
                             let latency = Date().timeIntervalSince(start)
                             // A different model answering (a fallback, a reroute) would make the numbers mean something else.
                             guard result.model.hasPrefix(TaskExtractor.model) else {
@@ -88,7 +91,10 @@ struct Runner {
                                 return
                             }
                             let drafts = result.drafts.compactMap { try? JSONSerialization.jsonObject(with: encoder.encode($0)) }
-                            append(["id": item.id, "rep": rep, "drafts": drafts, "model": result.model, "attempts": attempt,
+                            let messages = result.messages.compactMap { try? JSONSerialization.jsonObject(with: encoder.encode($0)) }
+                            let timers = result.timers.compactMap { try? JSONSerialization.jsonObject(with: encoder.encode($0)) }
+                            append(["id": item.id, "rep": rep, "drafts": drafts, "messages": messages, "timers": timers, "cancelled": result.cancelled,
+                                    "model": result.model, "attempts": attempt,
                                     "latency_s": (latency * 100).rounded() / 100,
                                     "usage": ["input_tokens": result.inputTokens, "output_tokens": result.outputTokens]], to: outputs)
                             let answer = drafts.isEmpty ? "no task" : (try? JSONSerialization.data(withJSONObject: drafts, options: [.prettyPrinted, .sortedKeys]))
