@@ -11,13 +11,17 @@ struct QuasiPhoneApp: App {
         Platform.openForBackgroundUse()
         let model = AppModel()
         // For development: `tools/phone.sh` passes the secrets from `.env` when it launches the
-        // app, which saves typing them on the phone. They are stored in the keychain like typed ones.
+        // app, which saves typing them on the phone. They only fill in what the phone does not
+        // have yet: a key typed on the phone is never replaced by an older one from the Mac.
         let environment = ProcessInfo.processInfo.environment
-        if let key = environment["ANTHROPIC_API_KEY"], !key.isEmpty { model.setAnthropicKey(key) }
-        if let key = environment["OPENAI_API_KEY"], !key.isEmpty { model.setOpenAIKey(key) }
-        if let token = environment["TODOIST_API_TOKEN"], !token.isEmpty { model.setTodoistToken(token) }
+        func fill(_ name: String, _ secret: Keychain.Secret, _ store: (String) -> Void) {
+            if let value = environment[name], !value.isEmpty, Keychain.read(secret) == nil { store(value) }
+        }
+        fill("ANTHROPIC_API_KEY", .anthropicKey) { model.setAnthropicKey($0) }
+        fill("OPENAI_API_KEY", .openAIKey) { model.setOpenAIKey($0) }
+        fill("TODOIST_API_TOKEN", .todoistToken) { model.setTodoistToken($0) }
         for (name, secret) in [("LINQ_API_TOKEN", Keychain.Secret.linqToken), ("LINQ_FROM", .linqLine), ("LINQ_TO", .ownNumber)] {
-            if let value = environment[name], !value.isEmpty { model.setRelaySetting(value, for: secret) }
+            fill(name, secret) { model.setRelaySetting($0, for: secret) }
         }
         // `-demo home|live|note|settings` at launch shows a staged state (see tools/screens.sh).
         if let demo = UserDefaults.standard.string(forKey: "demo") {
