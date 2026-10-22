@@ -16,6 +16,13 @@ rising notes left hanging, and the end answers it.
     answer_asking         the app has a question of its own: the question motif, higher and
                           slower, left hanging for the speaker to answer
     answer_failed         processing failed: the question falls away unanswered
+    answer_reminders_N    N reminders added (1 to 5): N quick notes, higher and brighter than a
+                          task's, like a small bell, then the home chord
+    answer_timer          a timer started: tick-tock tick-tock on the chime, the clock is running,
+                          then the home chord
+    cancel                something was called off: two notes stepping down, "never mind"; played
+                          before whatever answer follows
+    answer_cancelled      called off, and nothing else asked for: the two notes, then the home note
 
 Usage: tools/make_step_sounds.py      (writes QuasiPhone/Sounds/*.wav)
 """
@@ -117,3 +124,16 @@ render("answer_message", [(0.0, chime(G5, seconds=0.4, decay=7)), (0.18, chime(E
 # The app asks back: the opening question again, a fourth higher and slower, and nothing resolves it.
 render("answer_asking", [(0.0, chime(C6, seconds=0.6, decay=4)), (0.32, chime(E6, 0.9, seconds=1.6, decay=2.2))])
 render("answer_failed", [(0.0, chime(AB5, seconds=0.6, decay=4)), (0.35, chime(FS5 / 1.5, seconds=2.0, decay=1.5, glow=0.3))])
+
+# A reminder: the tasks' counting, a sixth higher and brighter, like a small bell.
+for count in range(1, 6):
+    bells = [(i * 0.2, chime(E6, seconds=0.5, decay=6, glow=0.9)) for i in range(count)]
+    landing = (count - 1) * 0.2 + 0.26
+    render(f"answer_reminders_{count}", bells + [(landing, note) for note in home_chord])
+# A timer: the clock starts, tick-tock tick-tock on the chime, and then home.
+render("answer_timer", [(i * 0.16, chime(C6 if i % 2 == 0 else G5, 0.9, seconds=0.35, decay=9)) for i in range(4)]
+       + [(0.7, note) for note in home_chord])
+# Called off: two notes stepping down, the second leaning into the home note.
+never_mind = [(0.0, chime(E6, 0.8, seconds=0.5, decay=6)), (0.17, chime(B5, 0.8, seconds=0.7, decay=5))]
+render("cancel", never_mind, loudness=0.6)
+render("answer_cancelled", never_mind + [(0.45, chime(C6, 0.8, seconds=1.0, decay=3.5))], loudness=0.6)

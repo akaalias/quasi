@@ -8,6 +8,8 @@ enum LiveStep: Equatable {
     case captured(Bool)
     /// `true` if audio and transcript of the whole recording are saved.
     case transcribed(Bool)
+    /// The speaker called something off while talking; the answer that follows is played after "never mind".
+    case calledOff
     /// The transcript was acted on.
     case processed(Processing)
 
@@ -15,6 +17,10 @@ enum LiveStep: Equatable {
         /// Nothing was asked for, or nothing is set up to act on it.
         case nothingToDo
         case tasksAdded(Int)
+        /// Only reminders were added, to Apple Reminders.
+        case remindersAdded(Int)
+        /// A timer was started (and anything else besides).
+        case timersStarted(Int)
         /// Messages handed to the phone's own messaging, and any tasks added besides.
         case messagesSent(Int)
         /// The app has a question (which person is meant) and waits for the next recording.
@@ -616,7 +622,10 @@ final class AppModel: ObservableObject {
                     $0.timers = found.timers.map { StartedTimer(draft: $0) }
                     $0.cancelled = found.cancelled
                 }
-                if !found.cancelled.isEmpty { record("\(id) called off: \(found.cancelled.joined(separator: "; "))") }
+                if !found.cancelled.isEmpty {
+                    record("\(id) called off: \(found.cancelled.joined(separator: "; "))")
+                    if notes.first?.id == id { onLiveStep?(.calledOff) }
+                }
                 guard !tasks.isEmpty || !found.messages.isEmpty || !found.timers.isEmpty else {
                     show(found.cancelled.isEmpty ? "Nothing to do in this note" : "Called off: \(found.cancelled.joined(separator: ", "))")
                     update(id) { $0.outcome = .note; $0.tasks = [] }
@@ -637,7 +646,7 @@ final class AppModel: ObservableObject {
         if messages == .asking { return .asking }
 
         guard !tasks.isEmpty else {
-            return settle(id, messages: messages, tasksAdded: timersStarted)
+            return settle(id, messages: messages, tasksAdded: timersStarted, done: timersStarted > 0 ? .timersStarted(timersStarted) : nil)
         }
         let summary = Self.summary(of: tasks.map(\.draft))
         show("Adding: \(summary)")
@@ -671,7 +680,10 @@ final class AppModel: ObservableObject {
         }
         show(added == 0 ? "\(tasks.count == 1 ? "Task" : "Tasks"): \(summary)" : "Added: \(summary)")
         update(id) { $0.tasks = tasks }
-        return settle(id, messages: messages, tasksAdded: added + timersStarted)
+        let reminders = tasks.filter { $0.reminderID != nil }.count
+        let done: LiveStep.Processing? = timersStarted > 0 ? .timersStarted(timersStarted)
+            : reminders > 0 && reminders == added ? .remindersAdded(reminders) : nil
+        return settle(id, messages: messages, tasksAdded: added + timersStarted, done: done)
     }
 
     /// Set by the iPhone app: starts a countdown on the phone and returns its id.
@@ -733,7 +745,8 @@ final class AppModel: ObservableObject {
     }
 
     /// The note's final outcome once its messages and tasks have been seen to, and the step to play.
-    private func settle(_ id: String, messages: LiveStep.Processing, tasksAdded: Int = 0) -> LiveStep.Processing {
+    /// `done` is the step to play when it is not plain tasks: reminders only, or a timer.
+    private func settle(_ id: String, messages: LiveStep.Processing, tasksAdded: Int = 0, done: LiveStep.Processing? = nil) -> LiveStep.Processing {
         if messages == .failed { return .failed }
         if case .messagesSent(let count) = messages {
             update(id) { $0.outcome = .messageSent }
@@ -741,7 +754,7 @@ final class AppModel: ObservableObject {
         }
         update(id) { $0.outcome = tasksAdded > 0 ? .taskAdded : .note }
         if tasksAdded == 0 { Task { await keepInAppleNotes(id) } }
-        return tasksAdded > 0 ? .tasksAdded(tasksAdded) : .nothingToDo
+        return tasksAdded > 0 ? done ?? .tasksAdded(tasksAdded) : .nothingToDo
     }
 
     /// Sends the note's messages that have not gone yet. The first whose recipient is not

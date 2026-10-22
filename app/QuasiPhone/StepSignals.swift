@@ -41,7 +41,14 @@ final class StepSignals {
     private var loaded: [String: SystemSoundID] = [:]
     private var ticking: Task<Void, Never>?
 
+    /// Something was called off in the note being read: its answer begins with "never mind".
+    private var calledOff = false
+
     func play(_ step: LiveStep) {
+        if step == .calledOff {
+            calledOff = true     // heard with the answer, not now: the ticking goes on
+            return
+        }
         // Work goes on after a note is captured and after it is transcribed; everything else ends it.
         ticking?.cancel()
         stopTicking()
@@ -56,14 +63,26 @@ final class StepSignals {
         case .started: (name, failed) = ("question", false)
         case .captured(let ok): (name, failed) = (ok ? "wood_1" : "wood_fail_1", !ok)
         case .transcribed(let ok): (name, failed) = (ok ? "wood_2" : "wood_fail_2", !ok)
-        case .processed(.nothingToDo): (name, failed) = ("answer_nothing", false)
+        case .calledOff: return
+        case .processed(.nothingToDo): (name, failed) = (calledOff ? "answer_cancelled" : "answer_nothing", false)
         case .processed(.tasksAdded(let count)): (name, failed) = ("answer_tasks_\(min(max(count, 1), 5))", false)
+        case .processed(.remindersAdded(let count)): (name, failed) = ("answer_reminders_\(min(max(count, 1), 5))", false)
+        case .processed(.timersStarted): (name, failed) = ("answer_timer", false)
         case .processed(.messagesSent): (name, failed) = ("answer_message", false)
         case .processed(.asking): (name, failed) = ("answer_asking", false)
         case .processed(.failed): (name, failed) = ("answer_failed", true)
         }
+        // Called off, and something else was still done: "never mind" first, then that answer.
+        let prefix = calledOff && name.hasPrefix("answer_") && name != "answer_cancelled" ? sound(named: "cancel") : nil
+        if case .processed = step { calledOff = false }
         if soundsOn, let sound = sound(named: name) {
-            AudioServicesPlaySystemSound(sound)
+            if let prefix {
+                AudioServicesPlaySystemSoundWithCompletion(prefix) {
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.05) { AudioServicesPlaySystemSound(sound) }
+                }
+            } else {
+                AudioServicesPlaySystemSound(sound)
+            }
         }
         guard tapsOn else { return }
         if failed {
