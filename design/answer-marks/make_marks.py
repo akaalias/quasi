@@ -257,7 +257,23 @@ PAGES = [
 PITCH_LIFT = {79: 0, 83: -5, 84: -6, 88: -10}
 
 
-def subtle(scene, pitch=False, sign=False, fill=False, lit=False):
+def simple_bell(cx, cy, ink):
+    """A bell in two parts: a dome and its clapper."""
+    return path(f"M{cx-5} {cy+3} V{cy} a5 5 0 0 1 10 0 V{cy+3} Z", stroke=ink, fill=ink, width=1.4) + circle(cx, cy + 6.5, 1.6, stroke=ink, fill=ink, width=0)
+
+
+CANCEL_SIGNS = {
+    "dash": lambda cx, ink: line([(cx - 6, MID), (cx + 6, MID)], stroke=ink, width=2.4),
+    "cross": lambda cx, ink: path(f"M{cx-4.5} {MID-4.5} L{cx+4.5} {MID+4.5} M{cx+4.5} {MID-4.5} L{cx-4.5} {MID+4.5}", stroke=ink, width=2.2),
+    "back": lambda cx, ink: path(f"M{cx+4} {MID} H{cx-5} M{cx-1.5} {MID-3.5} L{cx-5} {MID} L{cx-1.5} {MID+3.5}", stroke=ink, width=2.2),
+}
+REMINDER_SIGNS = {
+    "bell": lambda cx, ink: simple_bell(cx, MID - 3, ink),
+    "dot": lambda cx, ink: circle(cx, MID, 3.4, stroke=ink, fill=ink, width=0),
+}
+
+
+def subtle(scene, pitch=False, sign=False, fill=False, lit=False, cancel="dash", reminder="bell"):
     """Today's marks, with one small addition, as the strike-through was added for failures.
     `lit` draws the card as it looks while its sound plays: the marks in orange."""
     name, kind, notes = scene
@@ -278,13 +294,12 @@ def subtle(scene, pitch=False, sign=False, fill=False, lit=False):
             elif sign and kind == "message":
                 out.append(path(f"M{cx-5} {MID+5} L{cx+5} {MID-5} M{cx-1} {MID-5} h6 v6", stroke=ink, width=2.2))
             elif sign and kind == "reminder":
-                out.append(bell(cx, MID - 1, ink).replace('stroke-width="2.2"', 'stroke-width="1.8"'))
+                out.append(REMINDER_SIGNS[reminder](cx, ink))
             elif sign and kind == "timer":
                 out.append(path(f"M{cx} {MID} V{MID-7} M{cx} {MID} L{cx+5} {MID+3}", stroke=ink, width=2.2))
                 out.append(circle(cx, MID, 1.6, stroke=ink, fill=ink, width=0))
             elif sign and kind == "cancelled":
-                out.append(path(f"M{cx+5} {MID+4} A6 6 0 1 0 {cx-5} {MID-3}", stroke=ink, width=2))
-                out.append(path(f"M{cx-8} {MID-7} L{cx-5} {MID-3} L{cx-1} {MID-5}", stroke=ink, width=2))
+                out.append(CANCEL_SIGNS[cancel](cx, ink))
             x += 34
         elif role == "fall":
             y = MID if i == 0 else MID + 8
@@ -299,7 +314,7 @@ def subtle(scene, pitch=False, sign=False, fill=False, lit=False):
             else:
                 out.append(circle(x + 9, y, r, stroke=tone))
             if sign and last:      # a question mark's dot, below the open note
-                out.append(circle(x + 9, y + 15, 1.8, stroke=tone, fill=tone, width=0))
+                out.append(circle(x + 9, y + 17, 3.2, stroke=tone, fill=tone, width=0))
             x += 22
         else:
             lift = -9 if kind == "message" and i == 1 else 0
@@ -346,6 +361,30 @@ h2 {{ font: 600 8pt/1 -apple-system, Helvetica, sans-serif; letter-spacing: .16e
 """
 
 
+def build_sign():
+    draw = lambda sc, lit=False, **k: subtle(sc, sign=True, lit=lit, **k)
+    cards = "".join(f'<div class="card small">{draw(sc)}<b>{sc[0]}</b></div>' for sc in SCENES)
+    lit = "".join(f'<div class="card small">{draw(sc, lit=True)}<b>{sc[0]}</b></div>' for sc in SCENES
+                  if sc[0] in ("Set a reminder", "Start a timer", "You change your mind"))
+    change = next(sc for sc in SCENES if sc[1] == "cancelled")
+    remind = next(sc for sc in SCENES if sc[1] == "reminder")
+    names = {"dash": "A dash: taken away", "cross": "A small cross", "back": "An arrow back", "bell": "A bell, in two parts", "dot": "One dot: a point in time"}
+    alts = "".join(f'<div class="card small">{draw(change, cancel=k)}<b>{names[k]}</b></div>' for k in CANCEL_SIGNS)
+    alts += "".join(f'<div class="card small">{draw(remind, reminder=k)}<b>{names[k]}</b></div>' for k in REMINDER_SIGNS)
+    lead = ("Revised: the question's dot is a small filled circle; the reminder's bell is reduced to a dome and its clapper; "
+            "changing your mind is a short dash, something taken away, which cannot be mistaken for the failure's stroke: "
+            "that one is diagonal and reaches past the circle. The alternatives for those two are at the bottom.")
+    page = (f'<section class="page"><div class="kicker">Subtle 2, revised</div><h1>A sign in the last circle</h1><p class="lead">{lead}</p>'
+            f'<div class="grid three">{cards}</div><h2>While the sound plays</h2><div class="grid three">{lit}</div>'
+            f'<h2>Alternatives: changing your mind, the reminder</h2><div class="grid three">{alts}</div></section>')
+    html = f'<!doctype html><html><head><meta charset="utf-8"><title>Answer marks, signs</title><style>{CSS}</style></head><body>{page}</body></html>'
+    source = os.path.join(HERE, "answer-marks-sign.html")
+    open(source, "w").write(html)
+    subprocess.run([CHROME, "--headless=new", "--disable-gpu", "--no-pdf-header-footer",
+                    f"--print-to-pdf={os.path.join(HERE, 'answer-marks-sign.pdf')}", "file://" + source], check=True, capture_output=True)
+    print("wrote answer-marks-sign.pdf")
+
+
 def build_subtle():
     pages = []
     for kicker, title, lead, draw in SUBTLE:
@@ -377,3 +416,4 @@ def build():
 if __name__ == "__main__":
     build()
     build_subtle()
+    build_sign()
