@@ -74,7 +74,7 @@ struct SettingsSheet: View {
                             await ReminderBook.requestAccess()
                         }
                         Rule()
-                        Text("“Remind me…” goes to Apple Reminders, with an alert at the time you said. Everything else goes to Todoist.")
+                        Text("“Remind me…” goes to Apple Reminders, with an alert at the time you said. Everything else goes to Todoist. The alert comes from the Reminders app: open it once, so it may send notifications.")
                             .typo(.ui).foregroundStyle(Color.quiet).padding(.vertical, 12)
                     }
                     group("Timers") {
