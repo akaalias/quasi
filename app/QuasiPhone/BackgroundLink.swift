@@ -7,8 +7,14 @@ import UIKit
 @MainActor
 final class BackgroundLink {
     private var task: UIBackgroundTaskIdentifier = .invalid
+    private var renewed = Date.distantPast
 
+    /// Called for every frame, dozens of times a second while audio streams; a new task every
+    /// few seconds is plenty, and asking for one each time cost processor time in the background.
     func renew() {
+        let now = Date()
+        guard task == .invalid || now.timeIntervalSince(renewed) >= 3 else { return }
+        renewed = now
         let previous = task
         task = UIApplication.shared.beginBackgroundTask(withName: "Recorder link") { [weak self] in
             MainActor.assumeIsolated { self?.end() }

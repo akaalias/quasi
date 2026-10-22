@@ -342,14 +342,8 @@ final class AppModel: ObservableObject {
         let decoder = LiveMP3Decoder()
         decoder.onSamples = { [weak self] samples in self?.appendLive(samples) }
         self.decoder = decoder
-        let listener = LiveTranscriber()
-        listener.onText = { [weak self] settled, tentative in
-            guard let self, self.liveTranscriber === listener else { return }
-            self.liveText = settled
-            self.liveTentative = tentative
-        }
-        liveTranscriber = listener
-        Task { await listener.start(locale: locale, sampleRate: decoder.sampleRate) }
+        liveTranscriber = nil
+        if isOnScreen { startLiveTranscriber() }
         phase = .recording
         record("recording started (\(name ?? "name not known yet")), app \(Platform.appState)")
         let session = recordingStart
@@ -361,6 +355,42 @@ final class AppModel: ObservableObject {
         }
         onLiveSessionStarted?()
         onLiveStep?(.started)
+    }
+
+    /// Whether anyone can see the live view. While nobody can (the phone locked, the app in the
+    /// background), the waveform and the live transcript are not worked out at all: drawing them
+    /// for every packet kept the processor so busy that iOS stopped the app 50 seconds into a
+    /// recording. When the view comes back mid-recording, both catch up from what arrived.
+    var isOnScreen = true {
+        didSet {
+            guard isOnScreen, !oldValue, phase == .recording else { return }
+            if liveTranscriber == nil { startLiveTranscriber() }
+            liveTranscriber?.feed(liveSamples)
+            pendingLevel = []
+            levels = Self.levels(of: Array(liveSamples.suffix(Self.levelWindow * Self.maxLevels)))
+        }
+    }
+
+    private func startLiveTranscriber() {
+        let listener = LiveTranscriber()
+        listener.onText = { [weak self] settled, tentative in
+            guard let self, self.liveTranscriber === listener, self.isOnScreen else { return }
+            self.liveText = settled
+            self.liveTentative = tentative
+        }
+        liveTranscriber = listener
+        let sampleRate = decoder?.sampleRate ?? 16_000
+        Task { await listener.start(locale: locale, sampleRate: sampleRate) }
+    }
+
+    /// The waveform's bars for these samples, one per window.
+    private static func levels(of samples: [Float]) -> [Float] {
+        stride(from: 0, to: samples.count - levelWindow + 1, by: levelWindow).map { start in
+            let window = samples[start..<start + levelWindow]
+            let rms = sqrt(window.reduce(0) { $0 + $1 * $1 } / Float(levelWindow))
+            // Map -55 dB ... -10 dB to 0 ... 1.
+            return min(max((20 * log10(max(rms, 1e-6)) + 55) / 45, 0), 1)
+        }
     }
 
     private func noteLiveAudio(_ bytes: Int) {
@@ -393,17 +423,13 @@ final class AppModel: ObservableObject {
 
     private func appendLive(_ samples: [Float]) {
         liveSamples.append(contentsOf: samples)
+        guard isOnScreen else { return }    // nobody to show it to (see isOnScreen)
         liveTranscriber?.feed(samples)
         pendingLevel.append(contentsOf: samples)
-        var newLevels: [Float] = []
-        while pendingLevel.count >= Self.levelWindow {
-            let window = pendingLevel.prefix(Self.levelWindow)
-            let rms = sqrt(window.reduce(0) { $0 + $1 * $1 } / Float(Self.levelWindow))
-            // Map -55 dB ... -10 dB to 0 ... 1.
-            newLevels.append(min(max((20 * log10(max(rms, 1e-6)) + 55) / 45, 0), 1))
-            pendingLevel.removeFirst(Self.levelWindow)
-        }
-        guard !newLevels.isEmpty else { return }
+        let whole = pendingLevel.count / Self.levelWindow * Self.levelWindow
+        guard whole > 0 else { return }
+        let newLevels = Self.levels(of: Array(pendingLevel.prefix(whole)))
+        pendingLevel.removeFirst(whole)
         levels = Array((levels + newLevels).suffix(Self.maxLevels))
     }
 

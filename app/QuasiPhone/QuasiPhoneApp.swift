@@ -42,6 +42,15 @@ struct QuasiPhoneApp: App {
             MainActor.assumeIsolated { model.loadLog() }
         }
         model.startTimer = { try await TimerClock.start($0) }
+        // The live view is only worked out while someone can see it (see AppModel.isOnScreen).
+        // Woken in the background by the recorder, the app starts with nobody looking.
+        model.isOnScreen = UIApplication.shared.applicationState != .background
+        NotificationCenter.default.addObserver(forName: UIApplication.didEnterBackgroundNotification, object: nil, queue: .main) { _ in
+            MainActor.assumeIsolated { model.isOnScreen = false }
+        }
+        NotificationCenter.default.addObserver(forName: UIApplication.willEnterForegroundNotification, object: nil, queue: .main) { _ in
+            MainActor.assumeIsolated { model.isOnScreen = true }
+        }
         let signals = StepSignals()
         model.onLiveStep = { signals.play($0) }
     }
