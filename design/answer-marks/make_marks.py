@@ -50,8 +50,8 @@ def path(d, stroke=QUIET, fill="none", width=2.4):
     return f'<path d="{d}" fill="{fill}" stroke="{stroke}" stroke-width="{width}" stroke-linecap="round" stroke-linejoin="round"/>'
 
 
-def svg(body):
-    return f'<svg viewBox="0 0 {W} {H}" width="{W}" height="{H}">{body}</svg>'
+def svg(body, width=W):
+    return f'<svg viewBox="0 0 {width} {H}" width="{width}" height="{H}">{body}</svg>'
 
 
 # ---------------------------------------------------------------- Today
@@ -252,6 +252,81 @@ PAGES = [
      badge),
 ]
 
+# ---------------------------------------------------------------- Subtle: on top of today's marks
+
+PITCH_LIFT = {79: 0, 83: -5, 84: -6, 88: -10}
+
+
+def subtle(scene, pitch=False, sign=False, fill=False, lit=False):
+    """Today's marks, with one small addition, as the strike-through was added for failures.
+    `lit` draws the card as it looks while its sound plays: the marks in orange."""
+    name, kind, notes = scene
+    tone = BRAND if lit and kind not in ("failed", "lost", "deaf") else QUIET
+    out, x = prefix_today(kind)
+    if lit:
+        out = [o.replace(QUIET, BRAND) if kind not in ("failed", "lost", "deaf") else o for o in out]
+    done = kind in ("task", "message", "reminder", "timer")
+    for i, (_, p, role) in enumerate(notes):
+        last = i == len(notes) - 1
+        if role in ("chord", "home"):
+            cx = x + 14
+            filled = fill and done
+            out.append(circle(cx, MID, 13, stroke=tone, fill=tone if filled else "none"))
+            ink = PAPER if filled else tone
+            if sign and kind == "task":
+                out.append(path(f"M{cx-5.5} {MID+0.5} L{cx-1.5} {MID+4.5} L{cx+6} {MID-4.5}", stroke=ink, width=2.2))
+            elif sign and kind == "message":
+                out.append(path(f"M{cx-5} {MID+5} L{cx+5} {MID-5} M{cx-1} {MID-5} h6 v6", stroke=ink, width=2.2))
+            elif sign and kind == "reminder":
+                out.append(bell(cx, MID - 1, ink).replace('stroke-width="2.2"', 'stroke-width="1.8"'))
+            elif sign and kind == "timer":
+                out.append(path(f"M{cx} {MID} V{MID-7} M{cx} {MID} L{cx+5} {MID+3}", stroke=ink, width=2.2))
+                out.append(circle(cx, MID, 1.6, stroke=ink, fill=ink, width=0))
+            elif sign and kind == "cancelled":
+                out.append(path(f"M{cx+5} {MID+4} A6 6 0 1 0 {cx-5} {MID-3}", stroke=ink, width=2))
+                out.append(path(f"M{cx-8} {MID-7} L{cx-5} {MID-3} L{cx-1} {MID-5}", stroke=ink, width=2))
+            x += 34
+        elif role == "fall":
+            y = MID if i == 0 else MID + 8
+            out.append(circle(x + 8, y, 7 if i == 0 else 11, stroke=INK))
+            if last: out.append(line([(x + 1, y + 14), (x + 17, y - 14)], stroke=QUIET, width=2.4))
+            x += 26
+        elif role == "hang":
+            r, y = 9, MID - (8 if i else 0)
+            if fill and last:     # a question: half answered
+                out.append(circle(x + 9, y, r, stroke=tone))
+                out.append(path(f"M{x} {y} a{r} {r} 0 0 0 {2*r} 0 z", stroke="none", fill=tone, width=0))
+            else:
+                out.append(circle(x + 9, y, r, stroke=tone))
+            if sign and last:      # a question mark's dot, below the open note
+                out.append(circle(x + 9, y + 15, 1.8, stroke=tone, fill=tone, width=0))
+            x += 22
+        else:
+            lift = -9 if kind == "message" and i == 1 else 0
+            if pitch:
+                lift = PITCH_LIFT.get(p, 0) if kind != "message" else (-9 if i == 1 else 0)
+            out.append(circle(x + 7, MID + lift, 7, stroke=tone)); x += 20
+    return svg("".join(out), width=252)
+
+
+LIT = ["Create three tasks", "Send a message", "Set a reminder", "Start a timer", "You change your mind", "The internet is gone"]
+
+SUBTLE = [
+    ("Today", "How the examples look now",
+     "Every card starts with the same four marks, and the endings differ only in how many small circles come before the big one. The strike-through for a failure is the one detail that sets an ending apart. Each direction below adds one more detail of that size, and keeps everything else as it is.",
+     lambda s, lit=False: subtle(s, lit=lit)),
+    ("Subtle 1", "Follow the pitch",
+     "Only the positions change. The quick notes sit as high as they sound, as the message's leap already does: the reminder's bell sits high, the timer's tick-tock goes up and down, calling off steps down, tasks stay level. Nothing new to learn, and the shape of each ending gets its own outline.",
+     lambda s, lit=False: subtle(s, pitch=True, lit=lit)),
+    ("Subtle 2", "A sign in the last circle",
+     "The closing circle carries a tiny sign, the way a failure carries its stroke: a check for tasks, an arrow out for a message, a bell for a reminder, a clock hand for a timer, an undo curve for calling off. A note kept stays empty. A question gets a dot under its open note. The most explicit of the three.",
+     lambda s, lit=False: subtle(s, sign=True, lit=lit)),
+    ("Subtle 3", "Fill what was done",
+     "The closing circle is filled when something was done (tasks, a message, a reminder, a timer) and stays an outline when nothing was: a note kept, something called off. A question is half filled. One rule, readable from across the page, and it combines with either of the other two.",
+     lambda s, lit=False: subtle(s, fill=True, lit=lit)),
+]
+
+
 CSS = f"""
 @page {{ size: A4; margin: 0; }}
 * {{ box-sizing: border-box; }}
@@ -265,7 +340,25 @@ p.lead {{ color: {QUIET}; max-width: 160mm; margin: 0 0 7mm; }}
 .card {{ background: {CARD}; border-radius: 14px; padding: 4mm 5mm 3.5mm; }}
 .card svg {{ display: block; width: 100%; height: auto; }}
 .card b {{ display: block; font-size: 10pt; margin-top: 1mm; }}
+h2 {{ font: 600 8pt/1 -apple-system, Helvetica, sans-serif; letter-spacing: .16em; text-transform: uppercase; color: {QUIET}; margin: 7mm 0 3mm; }}
+.grid.three {{ grid-template-columns: 1fr 1fr 1fr; gap: 3mm; }}
+.card.small {{ padding: 2.5mm 4mm 2mm; }} .card.small b {{ font-size: 9pt; }}
 """
+
+
+def build_subtle():
+    pages = []
+    for kicker, title, lead, draw in SUBTLE:
+        cards = "".join(f'<div class="card small">{draw(sc)}<b>{sc[0]}</b></div>' for sc in SCENES)
+        lit = "".join(f'<div class="card small">{draw(sc, lit=True)}<b>{sc[0]}</b></div>' for sc in SCENES if sc[0] in LIT)
+        pages.append(f'<section class="page"><div class="kicker">{kicker}</div><h1>{title}</h1><p class="lead">{lead}</p>'
+                     f'<div class="grid three">{cards}</div><h2>While the sound plays</h2><div class="grid three">{lit}</div></section>')
+    html = f'<!doctype html><html><head><meta charset="utf-8"><title>Answer marks, subtle</title><style>{CSS}</style></head><body>{"".join(pages)}</body></html>'
+    source = os.path.join(HERE, "answer-marks-subtle.html")
+    open(source, "w").write(html)
+    subprocess.run([CHROME, "--headless=new", "--disable-gpu", "--no-pdf-header-footer",
+                    f"--print-to-pdf={os.path.join(HERE, 'answer-marks-subtle.pdf')}", "file://" + source], check=True, capture_output=True)
+    print("wrote answer-marks-subtle.pdf")
 
 
 def build():
@@ -283,3 +376,4 @@ def build():
 
 if __name__ == "__main__":
     build()
+    build_subtle()
