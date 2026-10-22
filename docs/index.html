@@ -126,7 +126,7 @@
   .try { text-align: center; } .try p { margin-left: auto; margin-right: auto; }
   a.cta { display: inline-block; margin-top: 8px; background: var(--brand); color: #fff; text-decoration: none; font: 600 17px/1 var(--app); padding: 16px 26px; border-radius: 999px; }
   a.cta:hover { filter: brightness(.96); }
-  /* The three things it can do: each with its icon, drawn in the same line as the Lock Screen glyphs. */
+  /* The things it can do: each with its icon, drawn in the same line as the Lock Screen glyphs. */
   .can { list-style: none; padding: 0; margin: 28px 0 20px; display: grid; gap: 14px; }
   .can li { display: flex; gap: 18px; align-items: flex-start; background: var(--card); border-radius: 22px; padding: 20px 22px; }
   .can svg { flex: none; width: 44px; height: 44px; fill: none; stroke: var(--brand); stroke-width: 2.2; stroke-linecap: round; stroke-linejoin: round; margin-top: 2px; }
@@ -342,14 +342,20 @@
 
   <section>
     <p class="kicker">What it can do</p>
-    <h2>Quasi only does three things. For now.</h2>
+    <h2>Quasi only does six things. For now.</h2>
     <ul class="can">
       <li><svg viewBox="0 0 44 44" aria-hidden="true"><rect x="12" y="4" width="20" height="28" rx="10"/><path d="M7 22a15 15 0 0 0 30 0M22 37v4M16 41h12"/></svg>
-        <div><b>Take a voice note.</b><p>Press the button, talk the way you think, press again. The note is written down, in whatever mix of languages you spoke it, and kept with the recording in a logbook you can read later.</p></div></li>
+        <div><b>Take a voice note.</b><p>Press the button, talk the way you think, press again. The note is written down, in whatever mix of languages you spoke it, and kept with the recording in a logbook you can read later. If you like, it goes into Apple Notes as well.</p></div></li>
       <li><svg viewBox="0 0 44 44" aria-hidden="true"><path d="M9 7h26a4 4 0 0 1 4 4v15a4 4 0 0 1-4 4H19l-9 7v-7H9a4 4 0 0 1-4-4V11a4 4 0 0 1 4-4Z"/><path d="M13 16h18M13 22h11"/></svg>
         <div><b>Send an iMessage to a friend.</b><p>"Send a message to Alex that I'll be five minutes late." The message goes out from your own number, to Alex in your contacts, while the phone stays locked in your pocket. If there are two people called Alex, Quasi asks which, and your next recording is the answer.</p></div></li>
       <li><svg viewBox="0 0 44 44" aria-hidden="true"><path d="M6 12l3.5 3.5L16 9M6 24l3.5 3.5L16 21M6 36l3.5 3.5L16 33M22 12h17M22 24h17M22 36h17"/></svg>
         <div><b>Add tasks to Todoist.</b><p>"Add a task, call the plumber tomorrow morning." One task or several, with the day, time, repeat, project and priority you said, and the words you said them in.</p></div></li>
+      <li><svg viewBox="0 0 44 44" aria-hidden="true"><path d="M22 6a11 11 0 0 1 11 11v8l4 6H7l4-6v-8A11 11 0 0 1 22 6ZM18 35a4 4 0 0 0 8 0"/></svg>
+        <div><b>Set a reminder.</b><p>"Remind me at five to call my mother." It goes into Apple Reminders, and your phone reminds you at five, like any other reminder.</p></div></li>
+      <li><svg viewBox="0 0 44 44" aria-hidden="true"><circle cx="22" cy="25" r="14"/><path d="M22 25v-7M18 5h8M22 5v6M33 12l3-3"/></svg>
+        <div><b>Start a timer.</b><p>"Set a timer for ten minutes, pasta." The countdown runs on your Lock Screen and rings like the Clock app's timer.</p></div></li>
+      <li><svg viewBox="0 0 44 44" aria-hidden="true"><path d="M14 12 6 20l8 8"/><path d="M6 20h21a11 11 0 0 1 0 22h-6"/></svg>
+        <div><b>Change your mind.</b><p>"Send Franziska a message that I'll be late. Oh, never mind, don't send that." Whatever you call off while you talk is not sent, added or started, and the logbook says what you called off.</p></div></li>
     </ul>
   </section>
 
@@ -374,7 +380,7 @@
     <p>The app is where you check what happened, not where things happen: your words in a serif, the app's in plain type, and one orange that only ever means "I did something".</p>
     <aside class="alert">
       <p class="kicker">A prototype, limited on purpose</p>
-      <p><b>For now, Quasi does three things: it keeps what you say as a note, sends a message to someone in your contacts, and turns what you ask for into tasks in Todoist.</b> That is a first exploration, and its scope is small on purpose. Staying with a few situations makes it possible to study them and the sound vocabulary around them in depth, and to learn as much as possible before anything else is added.</p>
+      <p><b>For now, Quasi does a few things: it keeps what you say as a note, sends a message to someone in your contacts, turns what you ask for into tasks in Todoist or reminders in Apple Reminders, starts timers, and lets you call any of it off while you talk.</b> That is a first exploration, and its scope is small on purpose. Staying with a few situations makes it possible to study them and the sound vocabulary around them in depth, and to learn as much as possible before anything else is added.</p>
     </aside>
     <div class="phones">
       <figure><img src="assets/home.png" alt="The log: each note with what became of it"><figcaption>The logbook lists every note, newest first, with one line for each thing that was done about it.</figcaption></figure>
@@ -382,7 +388,7 @@
       <figure><img src="assets/live.png" alt="The recording sheet with waveform and live transcript"><figcaption>If you do look while recording, you see the waveform and your words as you speak.</figcaption></figure>
     </div>
     <h3 class="list-title">On the Lock Screen</h3>
-    <p>If you do want a glance without unlocking, a banner on the Lock Screen shows what Quasi is doing. It has seven states.</p>
+    <p>If you do want a glance without unlocking, a banner on the Lock Screen shows what Quasi is doing. It has seven states, and a timer you started gets a banner of its own.</p>
     <div class="locks">
       <figure><div class="lock"><div class="banner"><svg viewBox="0 0 40 30" style="color:#FF9F0A"><path d="M6.5 12.5v5M11 9v12M15.5 4v22M20 10.5v9M24.5 6.5v17M29 10v10M33.5 12.5v5"/></svg><div><b>Recorder connected</b><span>Last heard at 13:47</span></div><em>85%</em></div><div class="keys"><i></i><i></i></div><i class="bar"></i></div>
         <figcaption>Between recordings, the banner shows that Quasi is running and in touch with the recorder. The number is the recorder's battery.</figcaption></figure>
@@ -398,6 +404,8 @@
         <figcaption>When Bluetooth is off, the banner says so.</figcaption></figure>
       <figure><div class="lock"><div class="banner"><svg viewBox="0 0 40 30" style="color:#FFD60A"><path d="M20 3.5 34.5 26.5h-29ZM20 11.5v7.5M20 22.6v.1"/></svg><div><b>Lost contact</b><span>Open Quasi to reconnect</span></div></div><div class="keys"><i></i><i></i></div><i class="bar"></i></div>
         <figcaption>If the app stops running, the banner turns to this by itself after five minutes.</figcaption></figure>
+      <figure><div class="lock"><div class="banner"><svg viewBox="0 0 40 30" style="color:#FF9F0A"><circle cx="20" cy="17" r="10"/><path d="M20 17v-5M17 3.5h6M20 3.5v3.5"/></svg><div><b>Pasta</b><span>Started by Quasi</span></div><em>9:42</em></div><div class="keys"><i></i><i></i></div><i class="bar"></i></div>
+        <figcaption>A timer you started counts down in a banner of its own, which you can pause or stop from there.</figcaption></figure>
     </div>
   </section>
 
@@ -503,6 +511,15 @@
     { id: "which", name: "Quasi asks which Alex", note: { answer: "answer_asking", talk: 3000, reply: { talk: 1300, answer: "answer_message" } },
       about: "You know two people called Alex. Your phone will not guess, so it asks: the opening question again, higher, left hanging. You press record, say \"Müller\", and the message goes out.",
       after: "While the question is open, the Lock Screen banner shows it. If you say nothing for two minutes, the answer falls, and the note in the logbook keeps a button for each Alex." },
+    { id: "reminder", name: "Set a reminder", note: { answer: "answer_tasks_1", talk: 2200 },
+      about: "You say \"remind me at five to call my mother\". It goes into Apple Reminders. The answer is one quick note and then the chord, as for a task.",
+      after: "At five, your phone reminds you like any other reminder. In the logbook, the note says \"Reminder\" and marks the words that asked for it." },
+    { id: "timer", name: "Start a timer", note: { answer: "answer_tasks_1", talk: 1600 },
+      about: "You say \"set a timer for ten minutes, pasta\". The countdown starts on your Lock Screen, and the answer is one quick note and then the chord.",
+      after: "The timer rings like the Clock app's, with the phone still in your pocket. You can pause or stop it from the Lock Screen." },
+    { id: "cancel", name: "You change your mind", note: { answer: "answer_nothing", talk: 3600 },
+      about: "You say \"send Franziska a message that I'll be late\", and then \"oh, never mind, don't send that\". Nothing is sent, and the answer is the home note alone, as for a note that asks for nothing.",
+      after: "In the logbook, the note says what you called off: \"Called off · message to Franziska\"." },
     { id: "offline", name: "The internet is gone", note: { answer: "answer_failed", work: 2000, online: false },
       about: "Your phone has no internet when you stop, for instance on the underground. It has your words, but it cannot work out what you asked for. The answer falls and rings out.",
       after: "Your note is safe. The logbook says \"Not added yet\", and \"Try again\" finishes the job once your phone is online." },

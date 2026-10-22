@@ -37,11 +37,24 @@ Press record on the recorder, and within a second or two:
   Alex from your own number, with the phone still in your pocket. No app may send an iMessage
   itself, so Quasi texts your phone through [Linq](https://linqapp.com) (a service with a line
   of its own) and an automation in Shortcuts, set up once by hand, sends it on. The person is
-  looked up in Contacts, among the people you have chosen; if the name could mean several of
-  them, or nobody, a chime asks, and your next recording is the answer. The transcript and, when
-  a name does not match as written, the names of those chosen contacts go to Claude; the
+  looked up in Contacts, among the people you have chosen. One person of exactly that name gets
+  the message at once. Anything less sure (a spelling like "Franciska" for Franziska, a short
+  form like "Franzi", several people) goes to Claude with the sentence and the chosen contacts'
+  names, and the message only goes out if Claude picks one person whose name is also spelled
+  close to what was heard; otherwise a chime asks, and your next recording is the answer. The
   relay sees only the number and the text. Claude, Todoist and Linq are the only places where
   text leaves your device, and only if you store their keys.
+- **Reminders.** "Remind me at five to call my mother": anything said as "remind me…" goes to
+  Apple Reminders instead of Todoist, with an alert at the time said.
+- **Timers.** "Set a timer for ten minutes, pasta" starts an AlarmKit countdown, which shows on
+  the Lock Screen and rings like the Clock app's timer.
+- **Calling it off.** "Oh, never mind, don't send that": whatever you call off while you talk
+  is not sent, added or started, and the log says what was called off.
+- **The note before.** "Make my previous note into a task" works: Claude is also given the note
+  recorded just before, within fifteen minutes, and uses it only when the new note points back.
+- **Apple Notes.** No app may write into Notes. With the relay set up and the setting on, a
+  note that asks for nothing is texted to the phone as `quasi|note|…`, and the relay shortcut
+  makes the note.
 
 On the Mac this is a menu bar item with a small floating window that appears when a recording
 starts. Files go to `~/Recordings/Comulytic`.
@@ -146,6 +159,10 @@ split in two. Median 2 seconds and about two thirds of a cent per note. The case
 the same hand as the prompt, so treat this as an optimistic score. On the iPhone, notes recorded
 in daily use have produced single and several tasks; the newer fields (time, repeats, priority,
 project and so on) have mostly been exercised by the eval.
+
+A second eval, `evals/actions`, has 31 notes that call things off, ask for reminders or
+timers, or point back at the note before. On 2026-10-22 all 31 were read correctly, and the task
+eval stayed at 206 of 206 with the new instructions.
 
 Adding to Todoist was tested from a script with one task (created with the right title, due day
 and description, then deleted). It has not been used from the apps yet.

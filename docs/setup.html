@@ -88,7 +88,7 @@
   ul.facts { list-style: none; padding: 0; margin: 0 0 16px; display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
   ul.facts li { background: var(--card); border-radius: 14px; padding: 12px 16px; font-size: 15px; } ul.facts b { display: block; margin-bottom: 2px; font-size: 17px; }
   @media (max-width: 520px) { ul.facts { grid-template-columns: 1fr; } }
-  /* The shortcut's four actions, drawn as Shortcuts draws them: one card each. */
+  /* The shortcut's actions, drawn as Shortcuts draws them: one card each. */
   .actions { display: grid; gap: 8px; margin: 16px 0 20px; }
   .action { background: var(--sheet); border: 1px solid var(--rule); border-radius: 14px; padding: 12px 16px; font-size: 15px; }
   .action b { display: block; margin-bottom: 2px; } .action span { color: var(--quiet); }
@@ -334,19 +334,24 @@
     </ol>
 
     <h3 id="shortcut">C. The shortcut</h3>
-    <p>The shortcut does the sending: it receives the text from Linq, splits it at the bars, and sends the third part to the second.</p>
+    <p>The shortcut does the sending: it receives the text from Linq, splits it at the bars, and sends the third part to the second. When the second part is the word <em>note</em>, it makes a note of the third part in Apple Notes instead, for the setting that keeps plain notes there.</p>
     <ul class="plain">
       <li><b>Ready-made:</b> open <a href="https://github.com/akaalias/quasi/raw/main/app/tools/Quasi%20Relay.shortcut">this file</a> on the phone, and Shortcuts adds it.</li>
-      <li><b>By hand:</b> in Shortcuts, add a new shortcut, name it <b>Quasi Relay</b>, and add these four actions.</li>
+      <li><b>By hand:</b> in Shortcuts, add a new shortcut, name it <b>Quasi Relay</b>, and add these actions.</li>
+      <li><b>Had it before 22 October 2026?</b> Open the file again and replace the old one, so that notes can go to Apple Notes. The automation stays as it is.</li>
     </ul>
     <div class="actions">
       <div class="action"><b>Split Text</b><span>Split <em>Shortcut Input</em> by <em>Custom</em>, separator <em>|</em></span></div>
       <div class="action"><b>Get Item from List</b><span>Get <em>Item at Index</em> <em>2</em> from <em>Split Text</em></span></div>
       <div class="action"><b>Get Item from List</b><span>Get <em>Item at Index</em> <em>3</em> from <em>Split Text</em></span></div>
+      <div class="action"><b>If</b><span><em>Item from List</em> (the second) <em>is</em> <em>note</em></span></div>
+      <div class="action"><b>Create Note</b><span>Create a note with <em>Item from List</em> (the third), with <em>Show When Run</em> turned off</span></div>
+      <div class="action"><b>Otherwise</b><span></span></div>
       <div class="action"><b>Send Message</b><span>Send <em>Item from List</em> (the third) to <em>Item from List</em> (the second), with <em>Show When Run</em> turned off</span></div>
+      <div class="action"><b>End If</b><span></span></div>
     </div>
     <ul class="plain">
-      <li><b>The last action is the one to get right.</b> Tap the arrow on it to see <b>Show When Run</b>, and turn it off. Otherwise every message would stop and wait for you to tap Send.</li>
+      <li><b>Send Message is the action to get right.</b> Tap the arrow on it to see <b>Show When Run</b>, and turn it off. Otherwise every message would stop and wait for you to tap Send.</li>
       <li><b>iOS may ask once</b>, the first time the shortcut sends a message, whether to allow it. Choose to always allow.</li>
     </ul>
 
