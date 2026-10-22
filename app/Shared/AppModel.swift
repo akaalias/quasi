@@ -139,7 +139,7 @@ final class AppModel: ObservableObject {
     init() {
         localeIdentifier = UserDefaults.standard.string(forKey: "transcriptionLocale") ?? Locale.current.identifier
         try? FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true)
-        notes = NoteLog.load(from: folder)
+        loadLog()
 
         client.onStateChange = { [weak self] state in
             guard let self, !self.staged else { return }
@@ -224,7 +224,7 @@ final class AppModel: ObservableObject {
     /// recording really is, which shows the notes that only partly arrived, and a recording made
     /// since the log began that has no entry gets one: nothing recorded goes unmentioned.
     private func reconcile(with files: [RecorderFile]) {
-        guard let earliest = notes.map(\.date).min() else { return }
+        guard logLoaded, let earliest = notes.map(\.date).min() else { return }
         var changed = false
         for file in files {
             if let index = notes.firstIndex(where: { $0.id == file.localBaseName }) {
@@ -239,7 +239,7 @@ final class AppModel: ObservableObject {
         }
         guard changed else { return }
         notes.sort { $0.date > $1.date }
-        NoteLog.save(notes, to: folder)
+        saveLog()
     }
 
     /// Keeps the last known state of the recorder in `recorder.txt` in the log folder.
@@ -511,6 +511,25 @@ final class AppModel: ObservableObject {
 
     // MARK: The log
 
+    /// Whether the saved log has been read. Until it has, nothing is written over it.
+    private var logLoaded = false
+
+    /// Reads the saved log, unless that is done already or the phone keeps it closed for now
+    /// (then the platform calls this again once the phone is unlocked). Notes that arrived in
+    /// the meantime are added to it.
+    func loadLog() {
+        guard !logLoaded, let saved = NoteLog.load(from: folder) else { return }
+        let arrived = notes.filter { note in !saved.contains { $0.id == note.id } }
+        notes = (saved + arrived).sorted { $0.date > $1.date }
+        logLoaded = true
+        saveLog()
+    }
+
+    private func saveLog() {
+        guard logLoaded else { return }
+        NoteLog.save(notes, to: folder)
+    }
+
     /// Adds a note to the log, or replaces the one with the same id.
     private func log(_ note: NoteRecord) {
         if let index = notes.firstIndex(where: { $0.id == note.id }) {
@@ -519,13 +538,13 @@ final class AppModel: ObservableObject {
             notes.append(note)
             notes.sort { $0.date > $1.date }
         }
-        NoteLog.save(notes, to: folder)
+        saveLog()
     }
 
     private func update(_ id: String, _ change: (inout NoteRecord) -> Void) {
         guard let index = notes.firstIndex(where: { $0.id == id }) else { return }
         change(&notes[index])
-        NoteLog.save(notes, to: folder)
+        saveLog()
     }
 
     // MARK: Tasks and messages

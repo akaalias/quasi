@@ -33,6 +33,10 @@ struct QuasiPhoneApp: App {
             activity.linkIsAlive()
             lockScreen.linkIsAlive()
         }
+        // Woken before the phone's first unlock, the app cannot read its log yet: it reads it as soon as it can.
+        NotificationCenter.default.addObserver(forName: UIApplication.protectedDataDidBecomeAvailableNotification, object: nil, queue: .main) { _ in
+            MainActor.assumeIsolated { model.loadLog() }
+        }
         let signals = StepSignals()
         model.onLiveStep = { signals.play($0) }
     }
@@ -43,6 +47,7 @@ struct QuasiPhoneApp: App {
                 // Again whenever the phone is unlocked with the app in front, in case the first try came too early.
                 .onReceive(NotificationCenter.default.publisher(for: UIApplication.didBecomeActiveNotification)) { _ in
                     Platform.openForBackgroundUse()
+                    model.loadLog()
                     // Contacts can only be asked for with the app in front; messages are looked up in the background.
                     if model.hasMessageRelay, ContactBook.access == .notDetermined {
                         Task { _ = await ContactBook.requestAccess() }

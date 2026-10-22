@@ -120,23 +120,51 @@ extension NoteRecord {
 enum NoteLog {
     private static func file(in folder: URL) -> URL { folder.appendingPathComponent("log.json") }
 
-    static func load(from folder: URL) -> [NoteRecord] {
-        let decoder = JSONDecoder()
-        decoder.dateDecodingStrategy = .iso8601
-        if let data = try? Data(contentsOf: file(in: folder)), let notes = try? decoder.decode([NoteRecord].self, from: data) {
-            return notes
+    /// The saved log, or nil while its files are there but cannot be read: after the phone
+    /// restarts, the app can be woken by the recorder before the phone is first unlocked, and
+    /// until then iOS keeps the files closed. A log read then would come out empty, and saved,
+    /// would replace the real one, so the caller must wait and try again.
+    static func load(from folder: URL) -> [NoteRecord]? {
+        let manager = FileManager.default
+        let log = file(in: folder)
+        if manager.fileExists(atPath: log.path) {
+            guard let data = try? Data(contentsOf: log) else { return nil }
+            let decoder = JSONDecoder()
+            decoder.dateDecodingStrategy = .iso8601
+            if let notes = try? decoder.decode([NoteRecord].self, from: data) {
+                return restoringTranscripts(notes, from: folder)
+            }
+            // Readable but not understood: kept aside rather than written over.
+            let stamp = ISO8601DateFormatter().string(from: Date()).replacingOccurrences(of: ":", with: ".")
+            try? manager.moveItem(at: log, to: folder.appendingPathComponent("log unreadable \(stamp).json"))
         }
         // Before there was a log: every saved transcript becomes a plain note.
         let names = DateFormatter()
         names.locale = Locale(identifier: "en_US_POSIX")
         names.dateFormat = "yyyy-MM-dd HH.mm.ss"
-        let files = (try? FileManager.default.contentsOfDirectory(at: folder, includingPropertiesForKeys: nil)) ?? []
-        return files.filter { $0.pathExtension == "txt" }.compactMap { url -> NoteRecord? in
+        let files = (try? manager.contentsOfDirectory(at: folder, includingPropertiesForKeys: nil)) ?? []
+        var notes: [NoteRecord] = []
+        for url in files where url.pathExtension == "txt" {
             let name = url.deletingPathExtension().lastPathComponent
-            guard let date = names.date(from: name) else { return nil }
-            return NoteRecord(id: name, date: date, transcript: (try? String(contentsOf: url, encoding: .utf8)) ?? "", outcome: .note)
+            guard let date = names.date(from: name) else { continue }
+            guard let transcript = try? String(contentsOf: url, encoding: .utf8) else { return nil }
+            notes.append(NoteRecord(id: name, date: date, transcript: transcript, outcome: .note))
         }
-        .sorted { $0.date > $1.date }
+        return notes.sorted { $0.date > $1.date }
+    }
+
+    /// A note whose words are missing from the log but are in its `.txt` file gets them back.
+    /// On 22 October 2026 a log rebuilt while the phone was locked replaced every transcript
+    /// with nothing; the files kept them.
+    private static func restoringTranscripts(_ notes: [NoteRecord], from folder: URL) -> [NoteRecord] {
+        notes.map { note in
+            guard note.transcript.isEmpty, note.outcome == .note,
+                  let text = try? String(contentsOf: folder.appendingPathComponent(note.id + ".txt"), encoding: .utf8),
+                  !text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else { return note }
+            var restored = note
+            restored.transcript = text
+            return restored
+        }
     }
 
     static func save(_ notes: [NoteRecord], to folder: URL) {
