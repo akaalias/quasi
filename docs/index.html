@@ -172,6 +172,22 @@
   .mark.answer.bell i { margin-top: -14px !important; }                                     /* the reminder's bell, higher */
   .mark.answer.tick i { width: 10px; height: 10px; } .mark.answer.tick i:nth-child(odd) { margin-top: -8px !important; }   /* the timer's tick-tock */
   .mark.answer.down i:first-child { margin-top: -12px !important; } .mark.answer.down i + i { margin-top: 8px !important; }   /* never mind: stepping down */
+  /* The sign in the last circle: what was done, drawn small inside the answer's closing note, as
+     the stroke marks what went wrong. Grey at rest; when the note lights up, the paper shows through. */
+  .mark b { position: relative; }
+  .mark.sign-check { --sign: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M7.5 12.5l3 3 6-6.5'/%3E%3C/svg%3E"); }
+  .mark.sign-out { --sign: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M8.5 15.5l7-7M10.5 8.5h5v5'/%3E%3C/svg%3E"); }
+  .mark.sign-in { --sign: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M15.5 8.5l-7 7M8.5 10.5v5h5'/%3E%3C/svg%3E"); }
+  .mark.sign-clock { --sign: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M12 12V7M12 12l3.5 2'/%3E%3C/svg%3E"); }
+  .mark.sign-dash { --sign: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M7.5 12h9'/%3E%3C/svg%3E"); }
+  .mark[class*="sign-"]:not(.sign-ask) b::after { content: ""; position: absolute; inset: -2.5px; background: var(--quiet);
+    -webkit-mask: var(--sign) center / 100% no-repeat; mask: var(--sign) center / 100% no-repeat; transition: background .15s; }
+  .mark[class*="sign-"] b.on::after, .sound.on .mark[class*="sign-"] b::after { background: var(--paper); }
+  /* A question: a dot under the note left hanging. */
+  .mark.sign-ask i:last-child { position: relative; }
+  .mark.sign-ask i:last-child::after { content: ""; position: absolute; left: 50%; top: calc(100% + 5px); width: 6px; height: 6px;
+    border-radius: 50%; background: var(--quiet); transform: translateX(-50%); transition: background .15s; }
+  .mark.sign-ask i.on:last-child::after, .sound.on .mark.sign-ask i:last-child::after { background: var(--lit); }
   .mark.silence i { width: 20px; height: 20px; border-radius: 50%; border-style: dashed; border-width: 2px; }
   .mark.silence i.on, .sound.on .mark.silence i { background: var(--paper); border-color: var(--ink); }      /* silence stays empty */
   /* And a mark for something that went wrong is struck through: one stroke across its last
@@ -466,7 +482,7 @@
     { id: "message", name: "Send a message to a friend", note: { answer: "answer_message", talk: 3000 },
       about: "You say \"send a message to Alex that I'll be five minutes late\". Your phone finds Alex in your contacts, and the message goes out from your own number, with the phone still in your pocket. The answer is a note that leaps up and away, then the chord.",
       after: "In the logbook, the note shows the message and who it went to, and marks the words that asked for it. Alex sees it from you, in your usual thread." },
-    { id: "which", name: "Quasi asks which Alex", note: { answer: "answer_asking", talk: 3000, reply: { talk: 1300, answer: "answer_message" } },
+    { id: "which", name: "Quasi asks which Alex", until: "answer_asking", note: { answer: "answer_asking", talk: 3000, reply: { talk: 1300, answer: "answer_message" } },
       about: "You know two people called Alex. Your phone will not guess, so it asks: the opening question again, higher, left hanging. You press record, say \"Müller\", and the message goes out.",
       after: "While the question is open, the Lock Screen banner shows it. If you say nothing for two minutes, the answer falls, and the note in the logbook keeps a button for each Alex." },
     { id: "reminder", name: "Set a reminder", note: { answer: "answer_reminders_1", talk: 2200 },
@@ -489,9 +505,15 @@
       after: "The recorder still records, and the recording stays on it. Open Quasi once, and it can fetch the recording." },
   ];
   SCENES.forEach(scene => scene.note = Quasi.compose(scene.note));
+  // The marks on a card: the phone's words in order, up to `until` if the card says where to stop
+  // (a note with a reply would not fit on its card; the player shows all of it).
+  const cardWords = scene => {
+    const words = scene.note.words.filter(word => !Quasi.WORDS[word].yours);
+    return scene.until ? words.slice(0, words.indexOf(scene.until) + 1) : words;
+  };
   // The grid: each example as its sentence of marks, a name and what happens.
   document.getElementById("scenes").innerHTML = SCENES.map((scene, n) =>
-    `<button class="scene" data-scene="${n}"><span class="marks">${scene.note.words.filter(word => !Quasi.WORDS[word].yours).map(word => Quasi.mark(Quasi.WORDS[word])).join("")}</span>` +
+    `<button class="scene" data-scene="${n}"><span class="marks">${cardWords(scene).map(word => Quasi.mark(Quasi.WORDS[word])).join("")}</span>` +
     `<small>Example ${n + 2}</small><strong>${scene.name}</strong><span class="about">${scene.about}</span></button>`).join("");
 
   // An example opens over the page, with its own drawing, line and words.
