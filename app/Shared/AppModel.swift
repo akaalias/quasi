@@ -587,6 +587,7 @@ final class AppModel: ObservableObject {
         }
         guard !note.transcript.isEmpty, let key = Keychain.read(.anthropicKey) else {
             update(id) { $0.outcome = .note }
+            await keepInAppleNotes(id)
             return .nothingToDo
         }
         if let question, question.noteID != id, !confirmed {
@@ -602,18 +603,24 @@ final class AppModel: ObservableObject {
         if let token, let fetched = try? await TodoistClient.directory(token: token) { directory = fetched }
 
         var tasks: [AddedTask]
-        if !confirmed, note.outcome == .processingFailed, !(note.tasks.isEmpty && note.messages.isEmpty) {
+        if !confirmed, note.outcome == .processingFailed, !(note.tasks.isEmpty && note.messages.isEmpty && note.timers.isEmpty) {
             // Trying again after something was refused: what was found is known, and what went through stays.
             tasks = note.tasks
         } else {
             do {
                 let found = try await TaskExtractor.extraction(from: note.transcript, recordedAt: note.date, catalog: directory.catalog,
-                                                               confirmed: confirmed, apiKey: key)
+                                                               confirmed: confirmed, previous: previousNote(before: note), apiKey: key)
                 tasks = found.drafts.map { AddedTask(draft: $0) }
-                update(id) { $0.messages = found.messages.map { SentMessage(draft: $0) } }
-                guard !tasks.isEmpty || !found.messages.isEmpty else {
-                    show("Nothing to do in this note")
+                update(id) {
+                    $0.messages = found.messages.map { SentMessage(draft: $0) }
+                    $0.timers = found.timers.map { StartedTimer(draft: $0) }
+                    $0.cancelled = found.cancelled
+                }
+                if !found.cancelled.isEmpty { record("\(id) called off: \(found.cancelled.joined(separator: "; "))") }
+                guard !tasks.isEmpty || !found.messages.isEmpty || !found.timers.isEmpty else {
+                    show(found.cancelled.isEmpty ? "Nothing to do in this note" : "Called off: \(found.cancelled.joined(separator: ", "))")
                     update(id) { $0.outcome = .note; $0.tasks = [] }
+                    await keepInAppleNotes(id)
                     return .nothingToDo
                 }
             } catch {
@@ -623,42 +630,106 @@ final class AppModel: ObservableObject {
             }
         }
 
-        // Messages first: "I'll be five minutes late" cannot wait for Todoist.
+        // Timers first, they count from now; then messages: "I'll be five minutes late" cannot wait for Todoist.
+        let timersStarted = await startTimers(id, show: show)
+        if timersStarted < 0 { return .failed }
         let messages = await deliverMessages(id, show: show)
         if messages == .asking { return .asking }
 
         guard !tasks.isEmpty else {
-            return settle(id, messages: messages)
+            return settle(id, messages: messages, tasksAdded: timersStarted)
         }
         let summary = Self.summary(of: tasks.map(\.draft))
-        guard let token else {
-            show("\(tasks.count == 1 ? "Task" : "Tasks"): \(summary)")
-            update(id) { $0.tasks = tasks }
-            return settle(id, messages: messages)
-        }
-        show("Adding to Todoist: \(summary)")
+        show("Adding: \(summary)")
         var refusal: String?
-        for index in tasks.indices where tasks[index].todoistID == nil {
+        var unsent = 0
+        for index in tasks.indices where !tasks[index].isAdded {
+            let draft = tasks[index].draft
             do {
-                tasks[index].todoistID = try await TodoistClient.add(tasks[index].draft, in: directory, transcript: note.transcript,
-                                                                     recordedAt: note.date, token: token)
+                if draft.reminder {
+                    tasks[index].reminderID = try ReminderBook.add(draft, transcript: note.transcript, recordedAt: note.date)
+                } else if let token {
+                    tasks[index].todoistID = try await TodoistClient.add(draft, in: directory, transcript: note.transcript,
+                                                                         recordedAt: note.date, token: token)
+                } else {
+                    unsent += 1    // no Todoist: the task is found, and kept in the log
+                }
             } catch {
-                refusal = error.localizedDescription
+                refusal = (draft.reminder ? "Reminders: " : "Todoist: ") + error.localizedDescription
             }
         }
+        let added = tasks.filter(\.isAdded).count
         if let refusal {
-            let missing = tasks.filter { $0.todoistID == nil }.count
-            show("Not added to Todoist (\(refusal)): \(summary)")
+            let missing = tasks.count - added - unsent
+            show("Not added (\(refusal)): \(summary)")
             update(id) {
                 $0.outcome = .processingFailed
                 $0.tasks = tasks
-                $0.problem = (tasks.count == 1 ? "Todoist did not take the task" : "Todoist did not take \(missing) of \(tasks.count) tasks") + ": \(refusal)"
+                $0.problem = (missing == 1 ? "One task was not added" : "\(missing) of \(tasks.count) tasks were not added") + ". \(refusal)"
             }
             return .failed
         }
-        show("Added to Todoist: \(summary)")
+        show(added == 0 ? "\(tasks.count == 1 ? "Task" : "Tasks"): \(summary)" : "Added: \(summary)")
         update(id) { $0.tasks = tasks }
-        return settle(id, messages: messages, tasksAdded: tasks.count)
+        return settle(id, messages: messages, tasksAdded: added + timersStarted)
+    }
+
+    /// Set by the iPhone app: starts a countdown on the phone and returns its id.
+    var startTimer: ((TimerDraft) async throws -> String)?
+
+    /// Starts the note's timers that are not running yet. Returns how many were started, or -1 if one failed.
+    private func startTimers(_ id: String, show: (String) -> Void) async -> Int {
+        guard let note = notes.first(where: { $0.id == id }), !note.timers.isEmpty else { return 0 }
+        var started = 0
+        for index in note.timers.indices where note.timers[index].alarmID == nil {
+            let timer = note.timers[index]
+            do {
+                guard let startTimer else { throw TimerClockUnavailable() }
+                let alarm = try await startTimer(timer.draft)
+                update(id) { $0.timers[index].alarmID = alarm }
+                record("\(id) timer started: \(timer.draft.seconds) s \(timer.draft.label)")
+                show("Timer: \(timer.summary)")
+                started += 1
+            } catch {
+                show("Timer not started (\(error.localizedDescription))")
+                update(id) { $0.outcome = .processingFailed; $0.problem = "The timer was not started: \(error.localizedDescription)" }
+                return -1
+            }
+        }
+        return started
+    }
+
+    private struct TimerClockUnavailable: LocalizedError {
+        var errorDescription: String? { "timers cannot be started on this device" }
+    }
+
+    /// Whether plain notes are copied into Apple Notes, through the message relay.
+    @Published var keepsNotesInAppleNotes = UserDefaults.standard.bool(forKey: "keepsNotesInAppleNotes") {
+        didSet { UserDefaults.standard.set(keepsNotesInAppleNotes, forKey: "keepsNotesInAppleNotes") }
+    }
+
+    /// Copies a note that asked for nothing into Apple Notes, if that is turned on: the relay
+    /// texts it to the phone, and the shortcut there makes the note.
+    private func keepInAppleNotes(_ id: String) async {
+        guard keepsNotesInAppleNotes, let settings = MessageRelay.Settings.stored,
+              let note = notes.first(where: { $0.id == id }), !note.inAppleNotes,
+              !note.transcript.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else { return }
+        do {
+            _ = try await MessageRelay.sendNote(note.transcript, recordedAt: note.date, settings: settings)
+            update(id) { $0.inAppleNotes = true }
+            record("\(id) handed to the relay for Apple Notes")
+        } catch {
+            record("\(id) not handed to the relay for Apple Notes: \(error.localizedDescription)")
+        }
+    }
+
+    /// The note recorded just before this one, if it was recent and had words: "make my previous
+    /// note into a task" needs it.
+    private func previousNote(before note: NoteRecord) -> TaskExtractor.Previous? {
+        guard let earlier = notes.filter({ $0.date < note.date }).max(by: { $0.date < $1.date }),
+              note.date.timeIntervalSince(earlier.date) < 15 * 60,
+              !earlier.transcript.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else { return nil }
+        return TaskExtractor.Previous(transcript: earlier.transcript, recordedAt: earlier.date)
     }
 
     /// The note's final outcome once its messages and tasks have been seen to, and the step to play.
@@ -669,6 +740,7 @@ final class AppModel: ObservableObject {
             return .messagesSent(count)
         }
         update(id) { $0.outcome = tasksAdded > 0 ? .taskAdded : .note }
+        if tasksAdded == 0 { Task { await keepInAppleNotes(id) } }
         return tasksAdded > 0 ? .tasksAdded(tasksAdded) : .nothingToDo
     }
 
@@ -689,14 +761,21 @@ final class AppModel: ObservableObject {
                     update(id) { $0.outcome = .processingFailed; $0.problem = "The message could not be sent: Quasi is not allowed to look in Contacts for \(message.draft.recipient). Allow it in Settings → Privacy & Security → Contacts." }
                     return .failed
                 }
-                var found = ContactBook.lookup(message.draft.recipient)
-                if found.isEmpty, let key = Keychain.read(.anthropicKey) {
-                    // Nobody of that name as written: the model knows nicknames and "Alex from the gym".
-                    // Only the names the app may see are sent, and only then.
-                    found = (try? await Clarifier.match(message.draft.recipient, in: message.draft.source, among: ContactBook.everyone().map(\.candidate), apiKey: key)) ?? []
-                    record("\(id) \(message.draft.recipient) matched by the model to \(found.map(\.name))")
+                // One person of exactly that name is sent to at once, and no names leave the phone.
+                // Anything less sure goes to the model with the sentence ("…that I love her"),
+                // and is only sent if the model picks one person whose name is also spelled
+                // close to what was heard. Otherwise the app asks.
+                let local = ContactBook.lookup(message.draft.recipient)
+                var found = local.people
+                var sure = local.fit == .exact && found.count == 1
+                if !sure, let key = Keychain.read(.anthropicKey),
+                   let picked = try? await Clarifier.match(message.draft.recipient, in: message.draft.source,
+                                                           among: ContactBook.everyone().map(\.candidate), apiKey: key) {
+                    record("\(id) \(message.draft.recipient): spelled like \(local.people.map(\.name)) (\(local.fit)), the model says \(picked.map(\.name))")
+                    if !picked.isEmpty { found = picked }
+                    sure = picked.count == 1 && local.fit >= .close && local.people.contains(picked[0])
                 }
-                guard found.count == 1 else {
+                guard sure, found.count == 1 else {
                     message.candidates = found
                     update(id) { $0.messages[index] = message }
                     ask(id, index: index, recipient: message.draft.recipient, candidates: found, show: show)
@@ -727,6 +806,7 @@ final class AppModel: ObservableObject {
     /// Asks out loud which person is meant, and gives up on the message if nobody answers in time.
     private func ask(_ id: String, index: Int, recipient: String, candidates: [Candidate], show: (String) -> Void) {
         let text = candidates.isEmpty ? "Who is \(recipient)? Nobody of that name is in Contacts."
+            : candidates.count == 1 ? "\(recipient): do you mean \(candidates[0].name)?"
             : "Which \(recipient): " + candidates.map(\.name).joined(separator: " or ") + "?"
         show(text)
         let asked = Date()
@@ -786,7 +866,7 @@ final class AppModel: ObservableObject {
         }
         let outcome = await deliverMessages(id, show: show)
         if outcome == .asking { return .asking }
-        let tasksAdded = notes.first { $0.id == id }?.tasks.filter { $0.todoistID != nil }.count ?? 0
+        let tasksAdded = notes.first { $0.id == id }.map { $0.tasks.filter(\.isAdded).count + $0.timers.filter { $0.alarmID != nil }.count } ?? 0
         return settle(id, messages: outcome, tasksAdded: tasksAdded)
     }
 
@@ -799,7 +879,7 @@ final class AppModel: ObservableObject {
         update(id) { $0.messages[index].recipientName = person.name; $0.messages[index].recipientNumber = person.number; $0.messages[index].candidates = [] }
         let outcome = await deliverMessages(id) { [weak self] text in if self?.notes.first?.id == id { self?.taskNote = text } }
         guard outcome != .asking else { return }
-        let tasksAdded = notes.first { $0.id == id }?.tasks.filter { $0.todoistID != nil }.count ?? 0
+        let tasksAdded = notes.first { $0.id == id }.map { $0.tasks.filter(\.isAdded).count + $0.timers.filter { $0.alarmID != nil }.count } ?? 0
         _ = settle(id, messages: outcome, tasksAdded: tasksAdded)
     }
 
@@ -817,7 +897,7 @@ final class AppModel: ObservableObject {
         }
     }
 
-    /// Removes what this note created in Todoist and keeps the note: one of its tasks, or all of them.
+    /// Removes what this note created in Todoist or Reminders and keeps the note: one of its tasks, or all of them.
     func undoTask(_ id: String, index: Int? = nil) async {
         guard let note = notes.first(where: { $0.id == id }) else { return }
         let chosen = index.map { [$0] } ?? Array(note.tasks.indices)
@@ -833,6 +913,14 @@ final class AppModel: ObservableObject {
                     continue
                 }
             }
+            if let reminderID = remaining[position].reminderID {
+                do {
+                    try ReminderBook.remove(reminderID)
+                } catch {
+                    refusal = error.localizedDescription
+                    continue
+                }
+            }
             remaining.remove(at: position)
         }
         update(id) {
@@ -840,7 +928,7 @@ final class AppModel: ObservableObject {
             $0.problem = refusal.map { "The task could not be removed: \($0)" }
             if remaining.isEmpty {
                 $0.outcome = .note
-            } else if remaining.allSatisfy({ $0.todoistID != nil }) {
+            } else if remaining.allSatisfy(\.isAdded) {
                 $0.outcome = .taskAdded
             }
         }

@@ -41,9 +41,25 @@ enum MessageRelay {
         return "\(marker)|\(number)|\(clean)"
     }
 
+    /// What the automation receives for a note to keep in Apple Notes: `quasi|note|<text>`.
+    /// The shortcut makes a note of it instead of sending a message.
+    static func noteEnvelope(_ text: String, recordedAt: Date) -> String {
+        let heading = "Voice note, " + recordedAt.formatted(date: .abbreviated, time: .shortened)
+        return "\(marker)|note|\(heading)\n\n\(text.replacingOccurrences(of: "|", with: "/"))"
+    }
+
+    /// Hands a plain note to the phone, to be kept in Apple Notes. Returns the relay's id for it.
+    static func sendNote(_ text: String, recordedAt: Date, settings: Settings) async throws -> String {
+        try await post(noteEnvelope(text, recordedAt: recordedAt), settings: settings)
+    }
+
     /// Hands the message to the phone and returns the relay's id for it. The phone's automation
     /// does the sending; this only knows that the text reached the relay.
     static func send(to number: String, text: String, settings: Settings) async throws -> String {
+        try await post(envelope(to: number, text: text), settings: settings)
+    }
+
+    private static func post(_ value: String, settings: Settings) async throws -> String {
         var request = URLRequest(url: URL(string: "https://api.linqapp.com/api/partner/v3/chats")!)
         request.httpMethod = "POST"
         request.timeoutInterval = 30
@@ -53,7 +69,7 @@ enum MessageRelay {
         let body: [String: Any] = [
             "from": settings.line,
             "to": [settings.ownNumber],
-            "message": ["parts": [["type": "text", "value": envelope(to: number, text: text)]]],
+            "message": ["parts": [["type": "text", "value": value]]],
         ]
         request.httpBody = try JSONSerialization.data(withJSONObject: body)
         let (data, response) = try await URLSession.shared.data(for: request)

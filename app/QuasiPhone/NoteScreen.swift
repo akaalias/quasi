@@ -27,16 +27,26 @@ struct NoteScreen: View {
                         Text(marked(note)).typo(.transcript).textSelection(.enabled)
                             .padding(.top, 11.4).padding(.bottom, 22.8)
                     }
+                    ForEach(Array(note.timers.enumerated()), id: \.offset) { _, timer in
+                        timerCard(timer).padding(.bottom, Metric.gap)
+                    }
                     ForEach(Array(note.messages.enumerated()), id: \.offset) { index, message in
                         messageCard(message, note: note, index: index).padding(.bottom, Metric.gap)
                     }
                     ForEach(Array(note.tasks.enumerated()), id: \.offset) { index, task in
-                        card(for: task.draft, added: task.todoistID != nil).padding(.bottom, Metric.gap)
+                        card(for: task.draft, added: task.isAdded).padding(.bottom, Metric.gap)
                         // With several tasks, each has its own way back; a single one uses the note's.
                         if note.tasks.count > 1 {
-                            act(task.todoistID != nil ? "Undo this one" : "Drop this one") { await model.undoTask(id, index: index) }
+                            act(task.isAdded ? "Undo this one" : "Drop this one") { await model.undoTask(id, index: index) }
                                 .padding(.bottom, Metric.gap)
                         }
+                    }
+                    if !note.cancelled.isEmpty {
+                        Text("Called off while you spoke").typo(.uiStrong)
+                        Text(note.cancelled.joined(separator: " · ")).typo(.ui).foregroundStyle(Color.quiet).padding(.bottom, Metric.gap)
+                    }
+                    if note.inAppleNotes {
+                        Text("Kept in Apple Notes").typo(.ui).foregroundStyle(Color.quiet).padding(.bottom, Metric.gap)
                     }
                     if let shortfall = note.shortfall {
                         Text(shortfall).typo(.ui)
@@ -73,7 +83,7 @@ struct NoteScreen: View {
     /// The transcript with the words that asked for each task or message marked, so the reasons are visible.
     private func marked(_ note: NoteRecord) -> AttributedString {
         var text = AttributedString(note.transcript)
-        for source in note.tasks.map(\.draft.source) + note.messages.map(\.draft.source) where !source.isEmpty {
+        for source in note.tasks.map(\.draft.source) + note.messages.map(\.draft.source) + note.timers.map(\.draft.source) where !source.isEmpty {
             if let range = text.range(of: source) {
                 text[range].backgroundColor = .mark
             }
@@ -83,16 +93,31 @@ struct NoteScreen: View {
 
     private func card(for task: TaskDraft, added: Bool) -> some View {
         VStack(alignment: .leading, spacing: 0) {
-            Text(added ? "✓ Added to Todoist" : "Task found").typo(.uiStrong).foregroundStyle(Color.brand).padding(.bottom, 7.6)
+            Text(task.reminder ? (added ? "✓ Added to Reminders" : "Reminder found") : (added ? "✓ Added to Todoist" : "Task found"))
+                .typo(.uiStrong).foregroundStyle(Color.brand).padding(.bottom, 7.6)
             Text(task.title).typo(.cardTitle)
             Rule().padding(.vertical, Metric.gap)
             field("Due", Self.day(task.dueDate, time: task.dueTime) ?? (task.due.isEmpty ? "None said" : "“\(task.due)”"))
             if !task.recurrence.isEmpty { field("Repeats", task.recurrence) }
             if let deadline = Self.day(task.deadlineDate, time: "") { field("Deadline", deadline) }
-            field("Project", task.project.isEmpty ? "Inbox" : task.section.isEmpty ? task.project : "\(task.project) / \(task.section)")
+            if !task.reminder {
+                field("Project", task.project.isEmpty ? "Inbox" : task.section.isEmpty ? task.project : "\(task.project) / \(task.section)")
+            }
             field("Priority", task.priority > 0 ? "p\(task.priority)" : "None said")
             if task.durationMinutes > 0 { field("Takes", "\(task.durationMinutes) min") }
             if !task.labels.isEmpty { field("Labels", task.labels.joined(separator: ", ")) }
+        }
+        .padding(.horizontal, 19.8)
+        .padding(.vertical, 18.3)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(Color.card, in: RoundedRectangle(cornerRadius: Metric.radius))
+    }
+
+    /// A timer: how long, and whether it runs.
+    private func timerCard(_ timer: StartedTimer) -> some View {
+        VStack(alignment: .leading, spacing: 0) {
+            Text(timer.alarmID != nil ? "✓ Timer started" : "Timer found").typo(.uiStrong).foregroundStyle(Color.brand).padding(.bottom, 7.6)
+            Text(timer.summary).typo(.cardTitle)
         }
         .padding(.horizontal, 19.8)
         .padding(.vertical, 18.3)
@@ -105,7 +130,7 @@ struct NoteScreen: View {
         VStack(alignment: .leading, spacing: 0) {
             Text(message.isSent ? "✓ Sent to \(message.recipientName ?? message.draft.recipient)"
                  : message.recipientNumber != nil ? "Message for \(message.recipientName ?? message.draft.recipient)"
-                 : message.candidates.isEmpty ? "Who is \(message.draft.recipient)?" : "Which \(message.draft.recipient)?")
+                 : message.candidates.isEmpty ? "Who is \(message.draft.recipient)?" : message.candidates.count == 1 ? "Is this \(message.draft.recipient)?" : "Which \(message.draft.recipient)?")
                 .typo(.uiStrong).foregroundStyle(Color.brand).padding(.bottom, 7.6)
             Text("“\(message.draft.text)”").typo(.cardTitle)
             if message.isSent, let number = message.recipientNumber {

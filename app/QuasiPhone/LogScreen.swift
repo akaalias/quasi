@@ -130,6 +130,9 @@ struct NoteRow: View {
     @ViewBuilder private var outcome: some View {
         switch note.outcome {
         case .messageSent:
+            ForEach(Array(note.timers.filter { $0.alarmID != nil }.enumerated()), id: \.offset) { _, timer in
+                Text("✓ Timer · \(timer.summary)").typo(.uiStrong).foregroundStyle(Color.brand)
+            }
             ForEach(Array(note.messages.enumerated()), id: \.offset) { _, message in
                 if message.isSent {
                     Text("✓ Sent to \(message.recipientName ?? message.draft.recipient)").typo(.uiStrong).foregroundStyle(Color.brand)
@@ -137,17 +140,20 @@ struct NoteRow: View {
                 }
             }
             ForEach(Array(note.tasks.prefix(2).enumerated()), id: \.offset) { _, task in
-                Text("✓ Added · \(task.draft.title)").typo(.uiStrong).foregroundStyle(Color.brand)
+                Text("✓ \(task.draft.reminder ? "Reminder" : "Added") · \(task.draft.title)").typo(.uiStrong).foregroundStyle(Color.brand)
             }
         case .asking:
             if let message = note.messages.first(where: { !$0.isSent && $0.recipientNumber == nil }) {
-                Text(message.candidates.isEmpty ? "Who is \(message.draft.recipient)?" : "Which \(message.draft.recipient)?").typo(.uiStrong)
+                Text(message.candidates.isEmpty ? "Who is \(message.draft.recipient)?" : message.candidates.count == 1 ? "Is this \(message.draft.recipient)?" : "Which \(message.draft.recipient)?").typo(.uiStrong)
                 Text("Say the name into the recorder.").typo(.ui).foregroundStyle(Color.quiet)
             }
         case .taskAdded:
+            ForEach(Array(note.timers.filter { $0.alarmID != nil }.enumerated()), id: \.offset) { _, timer in
+                Text("✓ Timer · \(timer.summary)").typo(.uiStrong).foregroundStyle(Color.brand)
+            }
             // One line per task, three at most, so a long list does not push the next note off the screen.
             ForEach(Array(note.tasks.prefix(3).enumerated()), id: \.offset) { _, task in
-                Text("✓ Added · \(task.draft.title)").typo(.uiStrong).foregroundStyle(Color.brand)
+                Text("✓ \(task.draft.reminder ? "Reminder" : "Added") · \(task.draft.title)").typo(.uiStrong).foregroundStyle(Color.brand)
                 if !AppModel.details(of: task.draft).isEmpty {
                     Text(AppModel.details(of: task.draft).joined(separator: " · ")).typo(.ui).foregroundStyle(Color.quiet)
                 }
@@ -171,8 +177,10 @@ struct NoteRow: View {
             } else if let task = note.tasks.first {
                 Text(note.tasks.count == 1 ? "Task found, not sent: \(task.draft.title)" : "\(note.tasks.count) tasks found, not sent")
                     .typo(.ui).foregroundStyle(Color.quiet)
+            } else if !note.cancelled.isEmpty {
+                Text("Called off · \(note.cancelled.joined(separator: ", "))").typo(.ui).foregroundStyle(Color.quiet)
             } else {
-                Text("Kept as a note").typo(.ui).foregroundStyle(Color.quiet)
+                Text(note.inAppleNotes ? "Kept in Apple Notes" : "Kept as a note").typo(.ui).foregroundStyle(Color.quiet)
             }
         }
     }

@@ -6,6 +6,7 @@ import WidgetKit
 struct QuasiWidgets: WidgetBundle {
     var body: some Widget {
         RecorderLiveActivity()
+        TimerLiveActivity()
         RecorderWidget()
     }
 }

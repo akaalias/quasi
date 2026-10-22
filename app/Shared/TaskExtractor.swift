@@ -26,6 +26,41 @@ struct TaskDraft: Codable, Equatable {
     var project = ""
     var section = ""
     var labels: [String] = []
+    /// The speaker asked to be reminded ("remind me to…"): it goes to Apple Reminders, not Todoist.
+    var reminder = false
+}
+
+extension TaskDraft {
+    private enum CodingKeys: String, CodingKey {
+        case title, notes, source, due, dueDate, dueTime, recurrence, deadlineDate, priority, durationMinutes, project, section, labels, reminder
+    }
+
+    // Written out so that logs from before a field existed still read.
+    init(from decoder: Decoder) throws {
+        let c = try decoder.container(keyedBy: CodingKeys.self)
+        title = try c.decode(String.self, forKey: .title)
+        notes = try c.decodeIfPresent(String.self, forKey: .notes) ?? ""
+        source = try c.decodeIfPresent(String.self, forKey: .source) ?? ""
+        due = try c.decodeIfPresent(String.self, forKey: .due) ?? ""
+        dueDate = try c.decodeIfPresent(String.self, forKey: .dueDate) ?? ""
+        dueTime = try c.decodeIfPresent(String.self, forKey: .dueTime) ?? ""
+        recurrence = try c.decodeIfPresent(String.self, forKey: .recurrence) ?? ""
+        deadlineDate = try c.decodeIfPresent(String.self, forKey: .deadlineDate) ?? ""
+        priority = try c.decodeIfPresent(Int.self, forKey: .priority) ?? 0
+        durationMinutes = try c.decodeIfPresent(Int.self, forKey: .durationMinutes) ?? 0
+        project = try c.decodeIfPresent(String.self, forKey: .project) ?? ""
+        section = try c.decodeIfPresent(String.self, forKey: .section) ?? ""
+        labels = try c.decodeIfPresent([String].self, forKey: .labels) ?? []
+        reminder = try c.decodeIfPresent(Bool.self, forKey: .reminder) ?? false
+    }
+}
+
+/// A countdown the speaker asked to start.
+struct TimerDraft: Codable, Equatable {
+    var seconds: Int
+    /// What it is for, in the speaker's words ("pasta"). Empty if not said.
+    var label = ""
+    var source = ""
 }
 
 /// One message the speaker asked to have sent to someone, as it should be typed to them.
@@ -84,7 +119,8 @@ enum TaskExtractor {
 
     Naming things as tasks or to-dos is asking for them, even without the word "add": "a few \
     tasks for tomorrow, which is, I need to wash the car and buy groceries", "my to-dos for \
-    today: ...", "one to-do for Thursday, ...". Each thing named is a task. A plain "I need to \
+    today: ...", "one to-do for Thursday, ...", "I have a task to ...", "I had a task to flesh out \
+    the idea of an article about ...", "there's a task in this: ...". Each thing named is a task. A plain "I need to \
     ...", "the plan is ..." or "tomorrow is busy, I have to ..." names no task and stays a note.
 
     A direct request ("add a task", "new task", "remind me to", "put that on my list" and the \
@@ -102,7 +138,8 @@ enum TaskExtractor {
     class, order the cake" are each a single task; the steps, items and details belong in its \
     title or notes. The speaker would be annoyed to find one errand cut into three to-dos.
     - Something the speaker only intends or mentions, next to a real request, is not a task.
-    - If the speaker takes a task back ("scratch the second one", "forget the gym one"), leave it out.
+    - If the speaker takes a task back ("scratch the second one", "forget the gym one"), leave it \
+    out (see calling things off, below).
     What the speaker says about several tasks at once applies to each of them ("all for \
     tomorrow", "both in Work", "two urgent tasks").
 
@@ -148,6 +185,9 @@ enum TaskExtractor {
     choose a project from the topic alone.
     - labels: only labels the speaker asks for ("label it errands", "tag that as waiting"), as \
     exact names from the list. Leave out any that match nothing in the list.
+    - reminder: true if the speaker asks to be reminded ("remind me to…", "remind me at five \
+    to…", "set a reminder", "erinnere mich"): such a task goes to their reminders app instead of \
+    the to-do list. False for "add a task", "to-do", "put it on my list" and the like.
 
     Separately, find every message the speaker asks to have sent to someone: "send a message to \
     Alex that I'll be five minutes late", "text Maria, I'm on my way", "tell my mother I'll call \
@@ -164,12 +204,39 @@ enum TaskExtractor {
     recipient. Never add anything the speaker did not say.
     - source: the sentence that asks for it, copied character for character.
     Answer with an empty list of messages if the note asks for none, which is most notes.
+
+    Separately, find every timer the speaker asks to start: "set a timer for ten minutes", \
+    "timer, 25 minutes, pasta", "start a countdown of 90 seconds", "stell einen Timer auf fünf \
+    Minuten". A timer counts down from now and rings at the end. Being reminded at a time of day \
+    ("remind me at five", "in an hour remind me to…") is a task with reminder true, not a timer. \
+    Each timer has:
+    - seconds: how long, in seconds ("ten minutes" is 600, "an hour and a half" is 5400).
+    - label: what it is for, in a word or two in the speaker's language ("pasta", "Tee"), or \
+    empty if they did not say.
+    - source: the sentence that asks for it, copied character for character.
+
+    The note recorded just before this one may be given too, for context. Take nothing from it \
+    on its own: it was read when it was recorded. Only when this note points back at it ("make \
+    my previous note into a task", "add that last one as a task", "send what I just said to \
+    Alex", "remind me of that tomorrow") does the task, message or reminder come from what the \
+    earlier note says; give `source` from this note then.
+
+    Calling things off. The speaker may change their mind while talking: "oh, never mind, cancel \
+    that", "actually, don't send that", "scratch the task", "forget it, don't do any of it", \
+    "doch nicht", "vergiss es". Whatever they call off is left out of every list: a task, \
+    message or timer they asked for and then called off is not given. "Cancel that" or "never \
+    mind" right after a request calls off that request; "do not send the message" calls off the \
+    message; "cancel everything", "don't do any of it" calls off all of them. A request made \
+    after the calling off still counts. Changing a detail ("no, make it Friday") is a \
+    correction, not calling off. In `cancelled`, list what was called off, each in a few words \
+    in the speaker's language ("message to Franziska", "task: buy milk"); empty if nothing was.
     """
 
     private static let schema: [String: Any] = [
         "type": "object",
-        "properties": ["tasks": ["type": "array", "items": taskSchema], "messages": ["type": "array", "items": messageSchema]],
-        "required": ["tasks", "messages"],
+        "properties": ["tasks": ["type": "array", "items": taskSchema], "messages": ["type": "array", "items": messageSchema],
+                       "timers": ["type": "array", "items": timerSchema], "cancelled": ["type": "array", "items": ["type": "string"]]],
+        "required": ["tasks", "messages", "timers", "cancelled"],
         "additionalProperties": false,
     ]
 
@@ -189,9 +256,10 @@ enum TaskExtractor {
             "project": ["type": "string"],
             "section": ["type": "string"],
             "labels": ["type": "array", "items": ["type": "string"]],
+            "reminder": ["type": "boolean"],
         ],
         "required": ["title", "notes", "source", "due", "due_date", "due_time", "recurrence", "deadline_date",
-                     "priority", "duration_minutes", "project", "section", "labels"],
+                     "priority", "duration_minutes", "project", "section", "labels", "reminder"],
         "additionalProperties": false,
     ]
 
@@ -202,10 +270,20 @@ enum TaskExtractor {
         "additionalProperties": false,
     ]
 
+    private static let timerSchema: [String: Any] = [
+        "type": "object",
+        "properties": ["seconds": ["type": "integer"], "label": ["type": "string"], "source": ["type": "string"]],
+        "required": ["seconds", "label", "source"],
+        "additionalProperties": false,
+    ]
+
     /// One answer from the model, with what it cost.
     struct Extraction {
         var drafts: [TaskDraft]
         var messages: [MessageDraft] = []
+        var timers: [TimerDraft] = []
+        /// What the speaker called off in the note, in a few words each.
+        var cancelled: [String] = []
         var model: String
         var inputTokens: Int
         var outputTokens: Int
@@ -221,7 +299,7 @@ enum TaskExtractor {
 
     /// The message the model is given for one note: when it was recorded, where tasks can go, and the transcript.
     static func message(transcript: String, recordedAt: Date, catalog: TaskCatalog, confirmed: Bool = false,
-                        timeZone: TimeZone = .current) -> String {
+                        previous: Previous? = nil, timeZone: TimeZone = .current) -> String {
         let day = DateFormatter()
         day.locale = Locale(identifier: "en_US_POSIX")
         day.timeZone = timeZone
@@ -236,6 +314,11 @@ enum TaskExtractor {
         if !catalog.labels.isEmpty {
             parts.append("Labels: " + catalog.labels.joined(separator: ", "))
         }
+        if let previous {
+            let minutes = max(0, Int(recordedAt.timeIntervalSince(previous.recordedAt) / 60))
+            parts.append("The note recorded just before, \(minutes == 0 ? "less than a minute" : minutes == 1 ? "a minute" : "\(minutes) minutes") earlier, "
+                         + "for context only:\n\n\(previous.transcript)")
+        }
         parts.append("Transcript of the voice note:\n\n\(transcript)")
         if confirmed {
             parts.append("The speaker has looked at this note afterwards and asked for it to be made into tasks. "
@@ -245,8 +328,15 @@ enum TaskExtractor {
         return parts.joined(separator: "\n\n")
     }
 
+    /// The note recorded just before, which the new one may point back at.
+    struct Previous {
+        var transcript: String
+        var recordedAt: Date
+    }
+
     static func extraction(from transcript: String, recordedAt: Date = Date(), catalog: TaskCatalog = TaskCatalog(),
-                           confirmed: Bool = false, timeZone: TimeZone = .current, apiKey: String) async throws -> Extraction {
+                           confirmed: Bool = false, previous: Previous? = nil, timeZone: TimeZone = .current,
+                           apiKey: String) async throws -> Extraction {
         var request = URLRequest(url: URL(string: "https://api.anthropic.com/v1/messages")!)
         request.httpMethod = "POST"
         request.timeoutInterval = 60
@@ -258,7 +348,8 @@ enum TaskExtractor {
             "model": model,
             "max_tokens": 4000,
             "system": instructions,
-            "messages": [["role": "user", "content": message(transcript: transcript, recordedAt: recordedAt, catalog: catalog, confirmed: confirmed, timeZone: timeZone)]],
+            "messages": [["role": "user", "content": message(transcript: transcript, recordedAt: recordedAt, catalog: catalog, confirmed: confirmed,
+                                                                         previous: previous, timeZone: timeZone)]],
             // Low effort: this is a quick read, and the answer should arrive within a second or two.
             "output_config": ["effort": "low", "format": ["type": "json_schema", "schema": schema]],
             // If a safety classifier declines the request, the API retries it on another model.
@@ -281,6 +372,8 @@ enum TaskExtractor {
         }
         let usage = json["usage"] as? [String: Any] ?? [:]
         return Extraction(drafts: answer.tasks.compactMap { $0.draft(in: catalog) }, messages: answer.messages.compactMap(\.draft),
+                          timers: answer.timers.compactMap(\.draft),
+                          cancelled: answer.cancelled.map { $0.trimmingCharacters(in: .whitespacesAndNewlines) }.filter { !$0.isEmpty },
                           model: json["model"] as? String ?? "",
                           inputTokens: usage["input_tokens"] as? Int ?? 0, outputTokens: usage["output_tokens"] as? Int ?? 0)
     }
@@ -288,6 +381,21 @@ enum TaskExtractor {
     private struct Answer: Decodable {
         let tasks: [Item]
         let messages: [MessageItem]
+        let timers: [TimerItem]
+        let cancelled: [String]
+    }
+
+    private struct TimerItem: Decodable {
+        let seconds: Int
+        let label: String
+        let source: String
+
+        /// A day at most: anything longer is a reminder, not a timer.
+        var draft: TimerDraft? {
+            guard seconds > 0, seconds <= 24 * 3600 else { return nil }
+            return TimerDraft(seconds: seconds, label: label.trimmingCharacters(in: .whitespacesAndNewlines),
+                              source: source.trimmingCharacters(in: .whitespacesAndNewlines))
+        }
     }
 
     private struct MessageItem: Decodable {
@@ -317,6 +425,7 @@ enum TaskExtractor {
         let project: String
         let section: String
         let labels: [String]
+        let reminder: Bool
 
         /// The entry as a draft, with anything malformed or not in the catalog dropped.
         func draft(in catalog: TaskCatalog) -> TaskDraft? {
@@ -338,6 +447,7 @@ enum TaskExtractor {
                 draft.section = project.sections.first { same($0, self.section) } ?? ""
             }
             draft.labels = labels.compactMap { wanted in catalog.labels.first { same($0, wanted) } }
+            draft.reminder = reminder
             return draft
         }
 

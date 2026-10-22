@@ -37,6 +37,7 @@ struct QuasiPhoneApp: App {
         NotificationCenter.default.addObserver(forName: UIApplication.protectedDataDidBecomeAvailableNotification, object: nil, queue: .main) { _ in
             MainActor.assumeIsolated { model.loadLog() }
         }
+        model.startTimer = { try await TimerClock.start($0) }
         let signals = StepSignals()
         model.onLiveStep = { signals.play($0) }
     }
@@ -51,6 +52,14 @@ struct QuasiPhoneApp: App {
                     // Contacts can only be asked for with the app in front; messages are looked up in the background.
                     if model.hasMessageRelay, ContactBook.access == .notDetermined {
                         Task { _ = await ContactBook.requestAccess() }
+                    }
+                    // Reminders and timers are asked for in the pocket, where no permission can be asked.
+                    // One question at a time, and only once each.
+                    if model.hasAnthropicKey {
+                        Task {
+                            if ReminderBook.isUndecided { await ReminderBook.requestAccess() }
+                            if TimerClock.isUndecided { await TimerClock.requestAccess() }
+                        }
                     }
                 }
         }

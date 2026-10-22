@@ -3,14 +3,14 @@
 
 The relay texts the phone `quasi|<number>|<text>`. This shortcut splits that at the bars and
 sends the text to the number with Messages, from the owner's own number, without showing
-anything. The automation that runs it ("when a message containing `quasi|` arrives, run
+anything. For `quasi|note|<text>` it makes a note of the text in Apple Notes instead. The automation that runs it ("when a message containing `quasi|` arrives, run
 immediately") has to be made by hand in the Shortcuts app; automations cannot be imported.
 
 Usage: tools/make_relay_shortcut.py      (writes tools/Quasi Relay.shortcut, signed so it can be imported)
 """
 import os, plistlib, subprocess, tempfile, uuid
 
-split, item2, item3 = (str(uuid.uuid4()).upper() for _ in range(3))
+split, item2, item3, branch = (str(uuid.uuid4()).upper() for _ in range(4))
 
 
 def ref(u, name):
@@ -33,10 +33,20 @@ actions = [
      "WFWorkflowActionParameters": {"UUID": item2, "WFItemSpecifier": "Item At Index", "WFItemIndex": 2, "WFInput": attachment(split, "Split Text")}},
     {"WFWorkflowActionIdentifier": "is.workflow.actions.getitemfromlist",
      "WFWorkflowActionParameters": {"UUID": item3, "WFItemSpecifier": "Item At Index", "WFItemIndex": 3, "WFInput": attachment(split, "Split Text")}},
+    # "note" in the second place: keep the text in Apple Notes. Otherwise it is a number: send the text there.
+    {"WFWorkflowActionIdentifier": "is.workflow.actions.conditional",
+     "WFWorkflowActionParameters": {"GroupingIdentifier": branch, "WFControlFlowMode": 0, "WFCondition": 4,
+                                    "WFConditionalActionString": "note", "WFInput": {"Type": "Variable", "Variable": attachment(item2, "Item from List")}}},
+    {"WFWorkflowActionIdentifier": "com.apple.mobilenotes.SharingExtension",
+     "WFWorkflowActionParameters": {"ShowWhenRun": False, "WFCreateNoteInput": token_string(item3, "Item from List")}},
+    {"WFWorkflowActionIdentifier": "is.workflow.actions.conditional",
+     "WFWorkflowActionParameters": {"GroupingIdentifier": branch, "WFControlFlowMode": 1}},
     {"WFWorkflowActionIdentifier": "is.workflow.actions.sendmessage",
      "WFWorkflowActionParameters": {"ShowWhenRun": False,
                                     "WFSendMessageContent": token_string(item3, "Item from List"),
                                     "WFSendMessageActionRecipients": token_string(item2, "Item from List")}},
+    {"WFWorkflowActionIdentifier": "is.workflow.actions.conditional",
+     "WFWorkflowActionParameters": {"GroupingIdentifier": branch, "WFControlFlowMode": 2}},
 ]
 workflow = {
     "WFWorkflowClientVersion": "2607.0.3",

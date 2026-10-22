@@ -11,6 +11,8 @@ struct SettingsSheet: View {
     @State private var choosingContacts = false
     /// Access to Contacts can change in the phone's Settings while this sheet is up.
     @State private var contactsAccess = ContactBook.access
+    /// Redrawn when the app comes back from the phone's Settings, where access may have changed.
+    @State private var accessChecked = Date()
 
     var body: some View {
         NavigationStack {
@@ -67,6 +69,31 @@ struct SettingsSheet: View {
                             SecretScreen(title: "Todoist", prompt: "Todoist API token", isStored: model.hasTodoistToken,
                                          explanation: "With a token, a task you asked for is added to Todoist, filed under the project and labels you named.") { model.setTodoistToken($0) }
                         } label: { row("Todoist", value: (model.hasTodoistToken ? "Connected" : "Not set") + " ›") }
+                        Rule()
+                        access("Apple Reminders", allowed: ReminderBook.isAllowed, undecided: ReminderBook.isUndecided) {
+                            await ReminderBook.requestAccess()
+                        }
+                        Rule()
+                        Text("“Remind me…” goes to Apple Reminders, with an alert at the time you said. Everything else goes to Todoist.")
+                            .typo(.ui).foregroundStyle(Color.quiet).padding(.vertical, 12)
+                    }
+                    group("Timers") {
+                        access("Timers", allowed: TimerClock.isAllowed, undecided: TimerClock.isUndecided) {
+                            await TimerClock.requestAccess()
+                        }
+                        Rule()
+                        Text("“Set a timer for ten minutes” starts a countdown on the Lock Screen that rings like the Clock app's.")
+                            .typo(.ui).foregroundStyle(Color.quiet).padding(.vertical, 12)
+                    }
+                    group("Notes") {
+                        Toggle(isOn: $model.keepsNotesInAppleNotes) { Text("Keep plain notes in Apple Notes").typo(.ui) }
+                            .toggleStyle(SwitchStyle()).padding(.vertical, 12)
+                            .disabled(!model.hasMessageRelay)
+                        Rule()
+                        Text(model.hasMessageRelay
+                             ? "A note that asks for nothing is copied into Apple Notes. Apps cannot write there, so it goes through the iMessage relay, and the Quasi Relay shortcut makes the note."
+                             : "Needs the iMessage relay: apps cannot write into Apple Notes, so the note goes through it.")
+                            .typo(.ui).foregroundStyle(Color.quiet).padding(.vertical, 12)
                     }
                     group("Messages") {
                         NavigationLink { RelayScreen() } label: { row("iMessage relay", value: (model.hasMessageRelay ? "Set up" : "Not set") + " ›") }
@@ -105,9 +132,23 @@ struct SettingsSheet: View {
             .contactAccessPicker(isPresented: $choosingContacts) { _ in }
             .onReceive(NotificationCenter.default.publisher(for: UIApplication.didBecomeActiveNotification)) { _ in
                 contactsAccess = ContactBook.access
+                accessChecked = Date()
             }
         }
         .tint(.brand)
+    }
+
+    /// A permission: allowed, asked for here the first time, or refused and so changed in the phone's Settings.
+    @ViewBuilder
+    private func access(_ name: String, allowed: Bool, undecided: Bool, request: @escaping () async -> Bool) -> some View {
+        let _ = accessChecked
+        if allowed {
+            row(name, value: "Allowed")
+        } else if undecided {
+            Button { Task { _ = await request(); accessChecked = Date() } } label: { row(name, value: "Allow ›") }
+        } else {
+            Link(destination: URL(string: UIApplication.openSettingsURLString)!) { row(name, value: "Not allowed ›") }
+        }
     }
 
     private var recorder: String {

@@ -42,13 +42,16 @@ enum Clarifier {
     ]
 
     private static let matchInstructions = """
-    A voice assistant was asked to send a message to a person named in a voice note, and found \
-    nobody of quite that name in its owner's contacts. You get the name as heard by speech \
-    recognition, the sentence it came from, and the owner's contacts, numbered. Say which \
-    contacts could be meant: a nickname or short form ("Toby" for Tobias, "Mum", "Jo"), a name \
-    heard wrongly but sounding alike, a company or detail the speaker used to say who they mean \
-    ("Alex from the gym"). Give every contact that plausibly fits, in order of likelihood, and an \
-    empty list if none does. Do not pick someone just because they are the only contact.
+    A voice assistant was asked to send a message to a person named in a voice note, and has to \
+    work out who in its owner's contacts is meant. You get the name as heard by speech \
+    recognition, the sentence it came from, and the contacts, numbered. Speech recognition spells \
+    names as it pleases ("Franciska" for Franziska), and people use nicknames and short forms \
+    ("Toby" for Tobias, "Franzi", "Mum") or a detail ("Alex from the gym"). Use everything the \
+    sentence gives away: the pronoun used for the person, a company, a relationship. A name that \
+    only begins like the one heard is a weak match: "Franciska" is not Franz. Give every contact \
+    that plausibly fits, most likely first, and an empty list if none does. Do not pick someone \
+    just because they are the only contact.
+
     """
 
     private static let matchSchema: [String: Any] = [

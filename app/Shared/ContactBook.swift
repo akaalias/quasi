@@ -32,33 +32,16 @@ enum ContactBook {
         (try? await CNContactStore().requestAccess(for: .contacts)) ?? false
     }
 
-    /// Everyone whose name matches what was said, each with one number to text. A full name
-    /// that matches one person wins outright; otherwise every person with a matching first
-    /// name, last name or nickname is a candidate. Speech recognition spells names as it
-    /// pleases ("Toby" for Tobi, Tobias), so a word also matches a name it shares its first
-    /// letters with.
-    static func lookup(_ spoken: String) -> [Candidate] {
-        let words = spoken.split(whereSeparator: { !$0.isLetter && $0 != "-" }).map { fold(String($0)) }
-        guard !words.isEmpty else { return [] }
-        return everyone().filter { person in
-            // Every word said has to fit one of the person's names.
-            words.allSatisfy { word in person.names.contains { alike(word, $0) } }
-        }
-        .map(\.candidate)
-    }
-
-    /// Whether a word heard could be a name: one is the start of the other, or they begin alike
-    /// for at least three letters and half of the shorter ("toby" and "tobias", "jonny" and "jonathan").
-    static func alike(_ heard: String, _ name: String) -> Bool {
-        if name.hasPrefix(heard) || heard.hasPrefix(name) { return true }
-        let shared = zip(heard, name).prefix { $0 == $1 }.count
-        return shared >= 3 && shared * 2 >= min(heard.count, name.count)
+    /// The people whose names fit what was said best, and how well (see `NameMatch`).
+    static func lookup(_ spoken: String) -> (fit: NameMatch.Fit, people: [Candidate]) {
+        let found = NameMatch.best(spoken, among: everyone()) { $0.names }
+        return (found.fit, found.people.map(\.candidate))
     }
 
     /// One person the app may message, with the names they go by.
     struct Person {
         var candidate: Candidate
-        /// Given name, family name and nickname, folded for matching.
+        /// Given name, family name and nickname.
         var names: [String]
     }
 
@@ -79,13 +62,9 @@ enum ContactBook {
             if let label = number.label.map({ CNLabeledValue<CNPhoneNumber>.localizedString(forLabel: $0) }), !label.isEmpty { details.append(label) }
             let candidate = Candidate(name: CNContactFormatter.string(from: contact, style: .fullName) ?? contact.givenName,
                                       number: number.value.stringValue, detail: details.joined(separator: " · "))
-            people.append(Person(candidate: candidate, names: [contact.givenName, contact.familyName, contact.nickname].filter { !$0.isEmpty }.map(fold)))
+            people.append(Person(candidate: candidate, names: [contact.givenName, contact.familyName, contact.nickname].filter { !$0.isEmpty }))
         }
         return people.sorted { $0.candidate.name < $1.candidate.name }
-    }
-
-    private static func fold(_ text: String) -> String {
-        text.folding(options: [.diacriticInsensitive, .caseInsensitive], locale: nil)
     }
 
     /// The number to text: the one labelled iPhone or mobile, failing that the main one, failing that the first.

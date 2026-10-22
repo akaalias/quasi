@@ -12,5 +12,9 @@
 	<true/>
 	<key>LSSupportsOpeningDocumentsInPlace</key>
 	<true/>
+	<key>NSRemindersFullAccessUsageDescription</key>
+	<string>Quasi adds a reminder when you say "remind me…" into the recorder.</string>
+	<key>NSAlarmKitUsageDescription</key>
+	<string>Quasi starts a timer when you say "set a timer for ten minutes" into the recorder.</string>
 </dict>
 </plist>

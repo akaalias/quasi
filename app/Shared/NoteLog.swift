@@ -36,6 +36,27 @@ struct NoteRecord: Codable, Identifiable, Equatable {
     var problem: String?
     /// For a note that answered a question the app asked: what the answer was taken to be.
     var answer: String?
+    /// The timers this note started.
+    var timers: [StartedTimer] = []
+    /// What the speaker called off while talking, in a few words each ("message to Franziska").
+    var cancelled: [String] = []
+    /// Whether the note was handed to the relay to be kept in Apple Notes.
+    var inAppleNotes = false
+}
+
+/// A timer found in a note, and whether it runs.
+struct StartedTimer: Codable, Equatable {
+    var draft: TimerDraft
+    /// The AlarmKit id once it has been started.
+    var alarmID: String?
+
+    /// "10 min · pasta"
+    var summary: String {
+        let seconds = draft.seconds
+        let time = seconds % 3600 == 0 ? "\(seconds / 3600) h" : seconds % 60 == 0 ? (seconds >= 3600 ? "\(seconds / 3600) h \(seconds % 3600 / 60) min" : "\(seconds / 60) min")
+            : seconds < 60 ? "\(seconds) s" : "\(seconds / 60) min \(seconds % 60) s"
+        return draft.label.isEmpty ? time : "\(time) · \(draft.label)"
+    }
 }
 
 /// A message found in a note, and whether it went.
@@ -67,6 +88,10 @@ struct AddedTask: Codable, Equatable {
     var draft: TaskDraft
     /// The id of the task in Todoist once it has been added there, so it can be removed again.
     var todoistID: String?
+    /// The id of the reminder in Apple Reminders, for a task the speaker asked to be reminded of.
+    var reminderID: String?
+
+    var isAdded: Bool { todoistID != nil || reminderID != nil }
 }
 
 extension NoteRecord {
@@ -86,6 +111,9 @@ extension NoteRecord {
         problem = try values.decodeIfPresent(String.self, forKey: .problem)
         answer = try values.decodeIfPresent(String.self, forKey: .answer)
         messages = try values.decodeIfPresent([SentMessage].self, forKey: .messages) ?? []
+        timers = try values.decodeIfPresent([StartedTimer].self, forKey: .timers) ?? []
+        cancelled = try values.decodeIfPresent([String].self, forKey: .cancelled) ?? []
+        inAppleNotes = try values.decodeIfPresent(Bool.self, forKey: .inAppleNotes) ?? false
         if let tasks = try values.decodeIfPresent([AddedTask].self, forKey: .tasks) {
             self.tasks = tasks
         } else {
