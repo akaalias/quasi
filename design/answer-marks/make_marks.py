@@ -268,12 +268,14 @@ CANCEL_SIGNS = {
     "back": lambda cx, ink: path(f"M{cx+4} {MID} H{cx-5} M{cx-1.5} {MID-3.5} L{cx-5} {MID} L{cx-1.5} {MID+3.5}", stroke=ink, width=2.2),
 }
 REMINDER_SIGNS = {
+    # the message's arrow turned round: it comes back to you
+    "back": lambda cx, ink: path(f"M{cx+5} {MID-5} L{cx-5} {MID+5} M{cx+1} {MID+5} h-6 v-6", stroke=ink, width=2.2),
     "bell": lambda cx, ink: simple_bell(cx, MID - 3, ink),
     "dot": lambda cx, ink: circle(cx, MID, 3.4, stroke=ink, fill=ink, width=0),
 }
 
 
-def subtle(scene, pitch=False, sign=False, fill=False, lit=False, cancel="dash", reminder="bell"):
+def subtle(scene, pitch=False, sign=False, fill=False, lit=False, cancel="dash", reminder="back"):
     """Today's marks, with one small addition, as the strike-through was added for failures.
     `lit` draws the card as it looks while its sound plays: the marks in orange."""
     name, kind, notes = scene
@@ -370,13 +372,13 @@ def build_sign():
     remind = next(sc for sc in SCENES if sc[1] == "reminder")
     names = {"dash": "A dash: taken away", "cross": "A small cross", "back": "An arrow back", "bell": "A bell, in two parts", "dot": "One dot: a point in time"}
     alts = "".join(f'<div class="card small">{draw(change, cancel=k)}<b>{names[k]}</b></div>' for k in CANCEL_SIGNS)
-    alts += "".join(f'<div class="card small">{draw(remind, reminder=k)}<b>{names[k]}</b></div>' for k in REMINDER_SIGNS)
-    lead = ("Revised: the question's dot is a small filled circle; the reminder's bell is reduced to a dome and its clapper; "
+    alts += "".join(f'<div class="card small">{draw(sc)}<b>{sc[0]}</b></div>' for sc in SCENES if sc[1] in ("message", "reminder"))
+    lead = ("Revised: the question's dot is a small filled circle; the reminder is the message's arrow turned round, coming back to you; "
             "changing your mind is a short dash, something taken away, which cannot be mistaken for the failure's stroke: "
-            "that one is diagonal and reaches past the circle. The alternatives for those two are at the bottom.")
+            "that one is diagonal and reaches past the circle. At the bottom: three options for changing your mind, and the two arrows side by side.")
     page = (f'<section class="page"><div class="kicker">Subtle 2, revised</div><h1>A sign in the last circle</h1><p class="lead">{lead}</p>'
             f'<div class="grid three">{cards}</div><h2>While the sound plays</h2><div class="grid three">{lit}</div>'
-            f'<h2>Alternatives: changing your mind, the reminder</h2><div class="grid three">{alts}</div></section>')
+            f'<h2>Changing your mind: three options · The two arrows side by side</h2><div class="grid three">{alts}</div></section>')
     html = f'<!doctype html><html><head><meta charset="utf-8"><title>Answer marks, signs</title><style>{CSS}</style></head><body>{page}</body></html>'
     source = os.path.join(HERE, "answer-marks-sign.html")
     open(source, "w").write(html)
